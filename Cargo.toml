@@ -1,0 +1,41 @@
+[package]
+name = "envio"
+version = "0.1.0"
+rust-version = "1.64.0"
+description = "Envio is a command-line tool that simplifies the management of environment variables across multiple profiles. It allows users to easily switch between different configurations and apply them to their current environment. Envio also encrypts sensitive environment variable values to ensure secure storage and transmission"
+edition = "2021"
+authors = ["Humble Penguin <humblepenguinoffical@gmail.com>"]
+repository = "https://github.com/humblepenguinn/envio/"
+license = "MIT/Apache-2.0"
+readme = "README.md"
+
+
+[lib]
+name = "envio"
+path = "src/lib.rs"
+
+[dependencies]
+clap = { version = "4.1.8", features = ["derive"] }
+colored = "2.0.0"
+comfy-table = "6.1.4"
+home = "0.5.4"
+indicatif = "0.17.3"
+inquire = "0.6.0"
+magic-crypt = "3.1.12"
+tokio = "1.26.0"
+url = "2.3.1"
+
+
+[dependencies.reqwest]
+version = "0.11.14"
+default-features = false
+features = ["rustls-tls-native-roots"]
+
+[build-dependencies]
+chrono = "0.4.20"
+clap = { version = "4.1.8", features = ["derive"] }
+clap_mangen = "0.2.9"
+clap_complete = "4.1.4"
+
+
+
