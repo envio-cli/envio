@@ -17,7 +17,7 @@ Please keep the following in mind at all times:
 
 Please avoid:
 
-* Opening pull requests for issues marked `hmmm`, `needs-investigation`, or `blocked`.
+* Opening pull requests for issues marked `needs-triage`, `needs-investigation`, or `blocked`.
 * Opening pull requests for any issue marked `maintainers`. These issues require additional context from
   the maintainers/code owners and any external pull requests will not be accepted.
 
