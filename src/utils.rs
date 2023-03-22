@@ -33,9 +33,6 @@ pub fn get_cwd() -> PathBuf {
         std::env::current_dir().unwrap()
     }
 }
-pub fn check_for_updates() -> bool {
-    false
-}
 
 pub async fn download_file(url: &str, file_name: &str) {
     let client = Client::new();
