@@ -3,7 +3,7 @@
 </h1>
 
 <div align="center">
-<h2 align="center">A Command Line Tool for Managing Environment Variables</h2>
+<h2 align="center">A Modern And Secure CLI Tool For Managing Environment Variables</h2>
 
 [![CICD](https://github.com/humblepenguinn/envio/actions/workflows/CICD.yml/badge.svg)](https://github.com/humblepenguinn/envio/workflows/CICD.yml)
 [![Version info](https://img.shields.io/crates/v/envio.svg)](https://crates.io/crates/envio)
@@ -23,8 +23,7 @@
 
 ## About
 
-`envio` is a command line tool designed to make it easy to manage environment variables in your shell sessions. With `envio`, you can easily add, remove, and modify environment variables from the command line.
-
+`envio` is an open source CLI tool that helps make managing environment variables a breeze. With `envio`, users can create encrypted profiles that contain a collection of environment variables associated with a specific project or use case. `envio` ensures security and simplifies the development process by allowing users to easily switch between profiles as needed and load them in their current terminal session for immediate use.
 
 Some key features of `envio` include:
 - Create profiles to store environment variables
