@@ -31,7 +31,7 @@ $ envio add myprofile DATABASE_URL=postgres://localhost/mydb MY_VERY_SECRETIVE_K
 To edit an existing variable, you can use the `envio update <profile_name> <key>=<new_value>` command. For example, to change the value of the DATABASE_URL variable in the `myprofile` profile to postgres://myhost/mydb, you would run the command:
 
 ```sh
-$ envio update myprofile DATABASE_URL=postgres://myhost/mydb.
+$ envio update myprofile DATABASE_URL=postgres://myhost/mydb
 ```
 
 ## Removing Environment Variables in a Profile
