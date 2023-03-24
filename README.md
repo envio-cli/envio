@@ -50,7 +50,7 @@ The benefit of using profiles is that users can easily manage and switch between
 You can install `envio` through a few methods
 
 ### Releases
-You can head over to the [releases page]() and download the offical `envio` binaries from there for your target operating system. `Windows MSI installers` are also available
+You can head over to the [releases page](https://github.com/humblepenguinn/envio/releases/latest) and download the offical `envio` binaries from there for your target operating system. `Windows MSI installers` are also available
 
 ### Cargo Repository
 You can install `envio` through the Cargo repository using the following command:
