@@ -19,7 +19,7 @@
 
 ---
 
-<img alt="Demo" src="assets/demo.gif" width="600" />
+<img alt="Demo" src="https://vhs.charm.sh/vhs-4CTjlTKDNnQqgXYMPFe4ot.gif" width="600" />
 
 ## About
 
