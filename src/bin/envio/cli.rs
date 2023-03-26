@@ -23,6 +23,8 @@ pub enum Command {
     Load(CommandArgs),
     #[clap(name = "unload", about = "Unload a profile from the current session")]
     Unload(CommandArgs),
+    #[clap(name = "launch", about = "Launch a program with a profile")]
+    Launch(CommandArgs),
     #[clap(
         name = "remove",
         about = "Remove a environment variable from a profile"

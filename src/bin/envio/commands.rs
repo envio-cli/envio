@@ -133,6 +133,34 @@ impl Command {
                 profile.unload_profile();
             }
 
+            Command::Launch(command_args) => {
+                if command_args.args.is_empty() {
+                    println!("{}: Invalid number of arguments", "Error".red());
+                    return;
+                }
+
+                let profile_name = command_args.args[0].clone();
+                let profile = if let Some(p) = get_profile(profile_name, get_userkey()) {
+                    p
+                } else {
+                    return;
+                };
+
+                let program_to_launch = command_args.args[1].clone();
+
+                let output = std::process::Command::new(program_to_launch)
+                    .envs(profile.envs)
+                    .args(&command_args.args[2..])
+                    .output()
+                    .expect("Failed to execute process");
+
+                if output.stderr.is_empty() {
+                    println!("{}", String::from_utf8(output.stdout).unwrap());
+                } else {
+                    println!("{}", String::from_utf8(output.stderr).unwrap());
+                }
+            }
+
             Command::Remove(command_args) => {
                 if command_args.args.is_empty() {
                     println!("{}: Invalid number of arguments", "Error".red());

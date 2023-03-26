@@ -27,6 +27,9 @@ _envio() {
             envio,import)
                 cmd="envio__import"
                 ;;
+            envio,launch)
+                cmd="envio__launch"
+                ;;
             envio,list)
                 cmd="envio__list"
                 ;;
@@ -60,6 +63,9 @@ _envio() {
             envio__help,import)
                 cmd="envio__help__import"
                 ;;
+            envio__help,launch)
+                cmd="envio__help__launch"
+                ;;
             envio__help,list)
                 cmd="envio__help__list"
                 ;;
@@ -85,7 +91,7 @@ _envio() {
 
     case "${cmd}" in
         envio)
-            opts="-h --help create add load unload remove list update export import version help"
+            opts="-h --help create add load unload launch remove list update export import version help"
             if [[ ${cur} == -* || ${COMP_CWORD} -eq 1 ]] ; then
                 COMPREPLY=( $(compgen -W "${opts}" -- "${cur}") )
                 return 0
@@ -141,7 +147,7 @@ _envio() {
             return 0
             ;;
         envio__help)
-            opts="create add load unload remove list update export import version help"
+            opts="create add load unload launch remove list update export import version help"
             if [[ ${cur} == -* || ${COMP_CWORD} -eq 2 ]] ; then
                 COMPREPLY=( $(compgen -W "${opts}" -- "${cur}") )
                 return 0
@@ -211,6 +217,20 @@ _envio() {
             return 0
             ;;
         envio__help__import)
+            opts=""
+            if [[ ${cur} == -* || ${COMP_CWORD} -eq 3 ]] ; then
+                COMPREPLY=( $(compgen -W "${opts}" -- "${cur}") )
+                return 0
+            fi
+            case "${prev}" in
+                *)
+                    COMPREPLY=()
+                    ;;
+            esac
+            COMPREPLY=( $(compgen -W "${opts}" -- "${cur}") )
+            return 0
+            ;;
+        envio__help__launch)
             opts=""
             if [[ ${cur} == -* || ${COMP_CWORD} -eq 3 ]] ; then
                 COMPREPLY=( $(compgen -W "${opts}" -- "${cur}") )
@@ -309,6 +329,20 @@ _envio() {
             return 0
             ;;
         envio__import)
+            opts="-h --help [ARGS]..."
+            if [[ ${cur} == -* || ${COMP_CWORD} -eq 2 ]] ; then
+                COMPREPLY=( $(compgen -W "${opts}" -- "${cur}") )
+                return 0
+            fi
+            case "${prev}" in
+                *)
+                    COMPREPLY=()
+                    ;;
+            esac
+            COMPREPLY=( $(compgen -W "${opts}" -- "${cur}") )
+            return 0
+            ;;
+        envio__launch)
             opts="-h --help [ARGS]..."
             if [[ ${cur} == -* || ${COMP_CWORD} -eq 2 ]] ; then
                 COMPREPLY=( $(compgen -W "${opts}" -- "${cur}") )
