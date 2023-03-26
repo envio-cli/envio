@@ -17,11 +17,11 @@
 //!    return;
 //! }
 //!
-//! let profile_name = &args[1];
+//! let profile_name = args[1].to_string();
 //! let key = &args[2]; // All profiles have a key that is used to encrypt the environment variables, this ensures that the environment variables are secure
 //!
 //!
-//!  for (env_var, value) in &envio::get_profile(profile_name.to_string(), key.to_string()).unwrap().envs {
+//!  for (env_var, value) in &envio::get_profile(profile_name, key).unwrap().envs {
 //!    println!("{}: {}", env_var, value);
 //! }
 //! ```
@@ -41,7 +41,7 @@ use colored::Colorize;
 use comfy_table::{Attribute, Cell, Table};
 
 use crate::{
-    crypto::{decrypt, encrypt, hash_string},
+    crypto::{decrypt, encrypt},
     utils::{download_file, get_configdir, get_cwd, get_homedir},
 };
 
@@ -49,7 +49,7 @@ pub struct Profile {
     pub name: String,
     pub envs: HashMap<String, String>,
     pub profile_file_path: PathBuf,
-    key_hash: String,
+    key: String,
 }
 
 impl Profile {
@@ -57,13 +57,13 @@ impl Profile {
         name: String,
         envs: HashMap<String, String>,
         profile_file_path: PathBuf,
-        key_hash: String,
+        key: String,
     ) -> Self {
         Profile {
             name,
             envs,
             profile_file_path,
-            key_hash,
+            key,
         }
     }
 
@@ -233,12 +233,7 @@ impl Profile {
         println!("{}", "Exported envs".bold());
     }
 
-    pub fn push_changes(&mut self, user_key: String) {
-        if hash_string(&user_key) != self.key_hash {
-            println!("{}: Invalid key", "Error".red());
-            return;
-        }
-
+    pub fn push_changes(&mut self) {
         let mut file = std::fs::OpenOptions::new()
             .write(true)
             .append(false)
@@ -255,9 +250,7 @@ impl Profile {
             buffer = buffer + key + "=" + self.envs.get(key).unwrap() + "\n";
         }
 
-        buffer = buffer + &self.key_hash;
-
-        let encrypted_data = encrypt(user_key, buffer);
+        let encrypted_data = encrypt(self.key.clone(), buffer);
         if let Err(e) = file.write_all(encrypted_data.as_slice()) {
             println!("{}: {}", "Error".red(), e);
         }
@@ -272,7 +265,7 @@ impl Profile {
     }
 }
 
-pub fn create_profile(name: String, envs: Option<HashMap<String, String>>, user_key: String) {
+pub fn create_profile(name: String, envs: Option<HashMap<String, String>>, user_key: &str) {
     if check_profile(name.clone()) {
         println!("{}: Profile already exists", "Error".red());
         return;
@@ -303,9 +296,8 @@ pub fn create_profile(name: String, envs: Option<HashMap<String, String>>, user_
         std::fs::File::create(&profile_file).unwrap()
     };
 
-    let key_hash = hash_string(&user_key);
     if envs.is_empty() {
-        if let Err(e) = file.write_all(encrypt(user_key, key_hash).as_slice()) {
+        if let Err(e) = file.write_all(encrypt(user_key.to_string(), "".to_string()).as_slice()) {
             println!("{}: {}", "Error".red(), e);
         }
 
@@ -318,9 +310,7 @@ pub fn create_profile(name: String, envs: Option<HashMap<String, String>>, user_
         buffer = buffer + key + "=" + envs.get(&key.to_string()).unwrap() + "\n";
     }
 
-    buffer = buffer + &key_hash;
-
-    if let Err(e) = file.write_all(encrypt(user_key, buffer).as_slice()) {
+    if let Err(e) = file.write_all(encrypt(user_key.to_string(), buffer).as_slice()) {
         println!("{}: {}", "Error".red(), e);
     }
 
@@ -452,7 +442,7 @@ pub fn import_profile(file_path: String, profile_name: String) {
     }
 }
 
-pub fn get_profile(profile_name: String, key: String) -> Option<Profile> {
+pub fn get_profile(profile_name: String, key: &str) -> Option<Profile> {
     if !check_profile(profile_name.clone()) {
         println!("{}: Profile does not exist", "Error".red());
         return None;
@@ -472,22 +462,12 @@ pub fn get_profile(profile_name: String, key: String) -> Option<Profile> {
     let mut encrypted_contents = Vec::new();
     file.read_to_end(&mut encrypted_contents).unwrap();
 
-    let mut content = decrypt(key, &encrypted_contents);
-
-    if content.is_empty() {
-        content = String::from("");
-    }
+    let content = decrypt(key.to_string(), &encrypted_contents);
 
     let mut envs = HashMap::new();
-    let mut key_hash = String::new();
 
     for line in content.lines() {
         if line.is_empty() {
-            continue;
-        }
-
-        if !line.contains('=') && !line.is_empty() {
-            key_hash = line.to_string();
             continue;
         }
 
@@ -503,7 +483,7 @@ pub fn get_profile(profile_name: String, key: String) -> Option<Profile> {
         profile_name,
         envs,
         profile_file_path,
-        key_hash,
+        key.to_string(),
     ))
 }
 

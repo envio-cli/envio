@@ -54,7 +54,7 @@ impl Command {
                     prompt.unwrap()
                 };
 
-                create_profile(command_args.args[0].clone(), None, user_key)
+                create_profile(command_args.args[0].clone(), None, &user_key)
             }
             Command::Add(command_args) => {
                 if command_args.args.len() <= 1 {
@@ -64,7 +64,7 @@ impl Command {
 
                 let profile_name = command_args.args[0].clone();
 
-                let mut profile = if let Some(p) = get_profile(profile_name, get_userkey()) {
+                let mut profile = if let Some(p) = get_profile(profile_name, &get_userkey()) {
                     p
                 } else {
                     return;
@@ -98,7 +98,7 @@ impl Command {
                 }
 
                 println!("{}", "Applying Changes".green());
-                profile.push_changes(get_userkey());
+                profile.push_changes();
             }
 
             Command::Load(command_args) => {
@@ -108,7 +108,7 @@ impl Command {
                 }
 
                 let profile_name = command_args.args[0].clone();
-                let profile = if let Some(p) = get_profile(profile_name, get_userkey()) {
+                let profile = if let Some(p) = get_profile(profile_name, &get_userkey()) {
                     p
                 } else {
                     return;
@@ -124,7 +124,7 @@ impl Command {
                 }
 
                 let profile_name = command_args.args[0].clone();
-                let profile = if let Some(p) = get_profile(profile_name, get_userkey()) {
+                let profile = if let Some(p) = get_profile(profile_name, &get_userkey()) {
                     p
                 } else {
                     return;
@@ -140,7 +140,7 @@ impl Command {
                 }
 
                 let profile_name = command_args.args[0].clone();
-                let profile = if let Some(p) = get_profile(profile_name, get_userkey()) {
+                let profile = if let Some(p) = get_profile(profile_name, &get_userkey()) {
                     p
                 } else {
                     return;
@@ -171,7 +171,7 @@ impl Command {
                     delete_profile(command_args.args[0].clone());
                 } else {
                     let profile_name = command_args.args[0].clone();
-                    let mut profile = if let Some(p) = get_profile(profile_name, get_userkey()) {
+                    let mut profile = if let Some(p) = get_profile(profile_name, &get_userkey()) {
                         p
                     } else {
                         return;
@@ -182,7 +182,7 @@ impl Command {
                     }
 
                     println!("{}", "Applying Changes".green());
-                    profile.push_changes(get_userkey());
+                    profile.push_changes();
                 }
             }
             Command::List(command_args) => {
@@ -196,7 +196,7 @@ impl Command {
                 if profile_name == "profiles" {
                     list_profiles()
                 } else {
-                    let profile = if let Some(p) = get_profile(profile_name, get_userkey()) {
+                    let profile = if let Some(p) = get_profile(profile_name, &get_userkey()) {
                         p
                     } else {
                         return;
@@ -214,7 +214,7 @@ impl Command {
 
                 let profile_name = command_args.args[0].clone();
 
-                let mut profile = if let Some(p) = get_profile(profile_name, get_userkey()) {
+                let mut profile = if let Some(p) = get_profile(profile_name, &get_userkey()) {
                     p
                 } else {
                     return;
@@ -247,7 +247,7 @@ impl Command {
                 }
 
                 println!("{}", "Applying Changes".green());
-                profile.push_changes(get_userkey());
+                profile.push_changes();
             }
 
             Command::Export(command_args) => {
@@ -263,7 +263,7 @@ impl Command {
                     file_name = command_args.args[1].clone();
                 }
 
-                let profile = if let Some(p) = get_profile(profile_name, get_userkey()) {
+                let profile = if let Some(p) = get_profile(profile_name, &get_userkey()) {
                     p
                 } else {
                     return;

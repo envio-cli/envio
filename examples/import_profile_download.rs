@@ -15,7 +15,7 @@ fn main() {
 
     // Check that the profile was downloaded correctly
     // Make sure you have the key that was used to encrypt the profile file or else you won't be able to decrypt it
-    let key = args[3].to_string();
+    let key = &args[3];
 
     for (env_var, value) in &envio::get_profile(profile_name, key).unwrap().envs {
         println!("{}: {}", env_var, value);
