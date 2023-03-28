@@ -3,12 +3,18 @@ use magic_crypt::{new_magic_crypt, MagicCryptTrait};
 use std::collections::hash_map::DefaultHasher;
 use std::hash::{Hash, Hasher};
 
+/*
+ * Encrypt a string with a key
+ */
 pub fn encrypt(key: String, data: String) -> Vec<u8> {
     let mc = new_magic_crypt!(key, 256);
 
     mc.encrypt_str_to_bytes(data)
 }
 
+/*
+ * Decrypt a string with a key
+ */
 pub fn decrypt(key: String, encrypted_data: &[u8]) -> String {
     let mc = new_magic_crypt!(key, 256);
 
@@ -21,6 +27,10 @@ pub fn decrypt(key: String, encrypted_data: &[u8]) -> String {
     }
 }
 
+/*
+ * NOT USED YET
+ * Hash a string
+ */
 pub fn hash_string(input: &str) -> String {
     let mut hasher = DefaultHasher::new();
     input.hash(&mut hasher);

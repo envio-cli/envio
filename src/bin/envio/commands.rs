@@ -9,6 +9,10 @@ use envio::{
 
 use crate::cli::Command;
 
+/**
+ * Get the user key from the user using the inquire crate
+ * @return {String} The user key
+*/
 fn get_userkey() -> String {
     println!("{}", "Loading Profile".green());
     println!("{}", "Enter your encryption key".green());
@@ -28,6 +32,9 @@ fn get_userkey() -> String {
 }
 
 impl Command {
+    /**
+     * Run the subcommand that was passed to the program
+     */
     pub fn run(&self) {
         match self {
             Command::Create(command_args) => {
@@ -90,7 +97,7 @@ impl Command {
                     }
 
                     if profile.envs.contains_key(key.unwrap()) {
-                        println!("{}: Key already exists in profile use the update command to update the value", "Error".red());
+                        println!("{}: The Environment variable `{}` already exists in profile use the update command to update the value", "Error".red(), key.unwrap());
                         return;
                     }
 
@@ -239,8 +246,9 @@ impl Command {
                         profile.edit_env(key.unwrap().to_owned(), value.unwrap().to_owned())
                     } else {
                         println!(
-                            "{}: Key does not exists in profile use the `add` command to add the key",
-                            "Error".red()
+                            "{}: The Environment Variable `{}` does not exist in profile use the `add` command to add the variable",
+                            "Error".red(),
+                            key.unwrap()
                         );
                         return;
                     }

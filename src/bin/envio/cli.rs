@@ -3,17 +3,31 @@ use clap::Parser;
 //use crate::commands::Command;
 
 #[derive(Parser)]
+/*
+ * Clap Application
+*/
 pub struct Cli {
     #[command(subcommand)]
     pub command: Command,
 }
 
 #[derive(Debug, Args)]
+/*
+ * The CommandArgs struct is used to parse the arguments of the subcommands
+*/
 pub struct CommandArgs {
     pub args: Vec<String>,
 }
 
 #[derive(clap::Subcommand, Debug)]
+/*
+ * The Command enum is a list of all possible subcommands
+ * When a subcommand is passed to the application, clap returns the corresponding enum variant
+ * The enum variant then calls the run method which is implemented in the command.rs file.
+ *
+ * When adding a new subcommand, add it to this enum and then write a match arm in the run method
+ * which is located in the command.rs file
+*/
 pub enum Command {
     #[clap(name = "create", about = "Create a new profile")]
     Create(CommandArgs),

@@ -45,6 +45,10 @@ use crate::{
     utils::{download_file, get_configdir, get_cwd, get_homedir},
 };
 
+/*
+ * The Profile struct is used to store the environment variables of a profile
+ * It also stores the name of the profile and the path to the profile file
+*/
 pub struct Profile {
     pub name: String,
     pub envs: HashMap<String, String>,
@@ -67,6 +71,9 @@ impl Profile {
         }
     }
 
+    /*
+     * Load the environment variables of the profile into the current session
+     */
     pub fn load_profile(&self) {
         if cfg!(windows) {
             for (env, value) in &self.envs {
@@ -81,6 +88,8 @@ impl Profile {
             return;
         }
 
+        // Create a shell script that will be used to load the environment variables
+        // Unix specific code
         #[cfg(any(target_family = "unix"))]
         {
             let configdir = get_configdir();
@@ -141,6 +150,9 @@ impl Profile {
         }
     }
 
+    /*
+     * Unload the environment variables of the profile from the current session
+     */
     pub fn unload_profile(&self) {
         if cfg!(windows) {
             for env in self.envs.keys() {
@@ -156,6 +168,7 @@ impl Profile {
             }
         }
 
+        // Unix specific code
         #[cfg(any(target_family = "unix"))]
         {
             let file = std::fs::OpenOptions::new()
@@ -172,10 +185,17 @@ impl Profile {
         println!("Reload your shell to apply changes");
     }
 
+    /*
+     * Add a new environment variable to the profile
+     */
     pub fn add_env(&mut self, env: String, env_value: String) {
         self.envs.insert(env, env_value);
     }
 
+    /*
+     * Edit an existing environment variable of the profile
+     * If the environment variable does not exists, it will print an error message
+     */
     pub fn edit_env(&mut self, env: String, new_value: String) {
         if let std::collections::hash_map::Entry::Occupied(mut e) = self.envs.entry(env.clone()) {
             e.insert(new_value);
@@ -184,6 +204,10 @@ impl Profile {
         }
     }
 
+    /*
+     * Remove an existing environment variable of the profile
+     * If the environment variable does not exists, it will print an error message
+     */
     pub fn remove_env(&mut self, env: String) {
         if self.envs.contains_key(&env) {
             self.envs.remove(&env);
@@ -192,8 +216,10 @@ impl Profile {
         }
     }
 
+    /*
+     * List all the environment variables of the profile
+     */
     pub fn list_envs(&self) {
-        println!("Listing envs from profile: {}", self.name);
         let mut table = Table::new();
         table.set_header(vec![
             Cell::new("Environment Variable").add_attribute(Attribute::Bold),
@@ -207,6 +233,14 @@ impl Profile {
         println!("{table}");
     }
 
+    /*
+    * Export the environment variables of the profile to a file
+
+    * If the file does not exist, it will be created
+    * If the file exists, it will be overwritten
+    * If the profile does not have any environment variables, it will print an error message
+    * The file will be created in the current working directory
+    */
     pub fn export_envs(&self, file_name: String) {
         let mut file = std::fs::OpenOptions::new()
             .create(true)
@@ -233,6 +267,9 @@ impl Profile {
         println!("{}", "Exported envs".bold());
     }
 
+    /*
+     * Push the changes to the profile file
+     */
     pub fn push_changes(&mut self) {
         let mut file = std::fs::OpenOptions::new()
             .write(true)
@@ -265,6 +302,10 @@ impl Profile {
     }
 }
 
+/*
+ * Create a new profile
+ * If the profile already exists, it will print an error message
+ */
 pub fn create_profile(name: String, envs: Option<HashMap<String, String>>, user_key: &str) {
     if check_profile(name.clone()) {
         println!("{}: Profile already exists", "Error".red());
@@ -317,6 +358,9 @@ pub fn create_profile(name: String, envs: Option<HashMap<String, String>>, user_
     println!("Created profile: {}", name);
 }
 
+/*
+ * Check if the profile exists
+ */
 pub fn check_profile(name: String) -> bool {
     let configdir = get_configdir();
 
@@ -329,6 +373,10 @@ pub fn check_profile(name: String) -> bool {
     false
 }
 
+/*
+ * Delete a profile
+ * If the profile does not exist, it will print an error message
+ */
 pub fn delete_profile(name: String) {
     if check_profile(name.clone()) {
         let configdir = get_configdir();
@@ -343,6 +391,9 @@ pub fn delete_profile(name: String) {
     }
 }
 
+/*
+ * List all the profiles
+ */
 pub fn list_profiles() {
     let configdir = get_configdir();
     let profile_dir = configdir.join("profiles");
@@ -362,12 +413,19 @@ pub fn list_profiles() {
         profiles.push(profile_name);
     }
 
-    println!("Listing profiles");
+    let mut table = Table::new();
+    table.set_header(vec![Cell::new("Profiles").add_attribute(Attribute::Bold)]);
+
     for profile in profiles {
-        println!("{}", profile);
+        table.add_row(vec![profile]);
     }
+
+    println!("{table}");
 }
 
+/*
+ * Download a profile from a url
+ */
 pub fn download_profile(url: String, profile_name: String) {
     println!("Downloading profile from {}", url);
 
@@ -400,6 +458,9 @@ pub fn download_profile(url: String, profile_name: String) {
     println!("Downloaded profile: {}", profile_name);
 }
 
+/*
+ * Import a profile from a file
+ */
 pub fn import_profile(file_path: String, profile_name: String) {
     if !Path::new(&file_path).exists() {
         println!("{}: File does not exists", "Error".red());
@@ -442,6 +503,15 @@ pub fn import_profile(file_path: String, profile_name: String) {
     }
 }
 
+/*
+ * Returns a profile object from the profile name passed, it checks if the profile exists
+ * All profiles are stored in a directory called `profiles` in the config directory
+ *
+ * If the profile does not exist, it will return None
+ *
+ * If it exists, it will read the contents of the file and decrypt it using the key passed
+ * It will then return a profile object containing the name of the profile and a hashmap of the environment variables
+ */
 pub fn get_profile(profile_name: String, key: &str) -> Option<Profile> {
     if !check_profile(profile_name.clone()) {
         println!("{}: Profile does not exist", "Error".red());
@@ -487,6 +557,8 @@ pub fn get_profile(profile_name: String, key: &str) -> Option<Profile> {
     ))
 }
 
+// Unix specific code
+// Creates a shell script that can be sourced to set the environment variables
 #[cfg(any(target_family = "unix"))]
 pub fn create_shellscript() {
     let configdir = get_configdir();
@@ -506,6 +578,8 @@ pub fn create_shellscript() {
     }
 }
 
+// Unix specific code
+// Returns the shell that is being used
 #[cfg(any(target_family = "unix"))]
 pub fn get_shell() -> String {
     let shell = std::env::var("SHELL").unwrap();
