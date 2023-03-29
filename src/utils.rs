@@ -7,8 +7,10 @@ use indicatif::{ProgressBar, ProgressStyle};
 use reqwest::Client;
 
 /*
- * Get the home directory of the user
- */
+* Get the home directory of the user
+
+@return PathBuf
+*/
 pub fn get_homedir() -> PathBuf {
     if home::home_dir().is_none() {
         println!("{}: Home directory not found", "Error".red());
@@ -19,9 +21,11 @@ pub fn get_homedir() -> PathBuf {
 }
 
 /*
- * Get the config directory which is located in the home directory
- * The directory is called .envio
- */
+* Get the config directory which is located in the home directory
+* The directory is called .envio
+
+@return PathBuf
+*/
 pub fn get_configdir() -> PathBuf {
     let homedir = get_homedir();
 
@@ -29,8 +33,10 @@ pub fn get_configdir() -> PathBuf {
 }
 
 /*
- * Get the current working directory
- */
+* Get the current working directory
+
+@return PathBuf
+*/
 pub fn get_cwd() -> PathBuf {
     if let Err(e) = std::env::current_dir() {
         println!(
@@ -46,8 +52,11 @@ pub fn get_cwd() -> PathBuf {
 }
 
 /*
- * Download a file from a url with a progress bar
- */
+* Download a file from a url with a progress bar
+
+@param url &str
+@param file_name &str
+*/
 pub async fn download_file(url: &str, file_name: &str) {
     let client = Client::new();
     let mut resp = if let Err(e) = client.get(url).send().await {

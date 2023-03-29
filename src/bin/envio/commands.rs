@@ -11,7 +11,8 @@ use crate::cli::Command;
 
 /**
  * Get the user key from the user using the inquire crate
- * @return {String} The user key
+
+ @return String
 */
 fn get_userkey() -> String {
     println!("{}", "Loading Profile".green());

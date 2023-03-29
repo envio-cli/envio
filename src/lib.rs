@@ -57,6 +57,15 @@ pub struct Profile {
 }
 
 impl Profile {
+    /*
+    * Create a new Profile object
+
+    @param name String
+    @param envs HashMap<String, String>
+    @param profile_file_path PathBuf
+    @param key String
+    @return Profile
+    */
     pub fn new(
         name: String,
         envs: HashMap<String, String>,
@@ -186,16 +195,22 @@ impl Profile {
     }
 
     /*
-     * Add a new environment variable to the profile
-     */
+    * Add a new environment variable to the profile
+
+    @param env String
+    @param env_value String
+    */
     pub fn add_env(&mut self, env: String, env_value: String) {
         self.envs.insert(env, env_value);
     }
 
     /*
-     * Edit an existing environment variable of the profile
-     * If the environment variable does not exists, it will print an error message
-     */
+    * Edit an existing environment variable of the profile
+    * If the environment variable does not exists, it will print an error message
+
+    @param env String
+    @param new_value String
+    */
     pub fn edit_env(&mut self, env: String, new_value: String) {
         if let std::collections::hash_map::Entry::Occupied(mut e) = self.envs.entry(env.clone()) {
             e.insert(new_value);
@@ -205,9 +220,11 @@ impl Profile {
     }
 
     /*
-     * Remove an existing environment variable of the profile
-     * If the environment variable does not exists, it will print an error message
-     */
+    * Remove an existing environment variable of the profile
+    * If the environment variable does not exists, it will print an error message
+
+    @param env String
+    */
     pub fn remove_env(&mut self, env: String) {
         if self.envs.contains_key(&env) {
             self.envs.remove(&env);
@@ -240,6 +257,8 @@ impl Profile {
     * If the file exists, it will be overwritten
     * If the profile does not have any environment variables, it will print an error message
     * The file will be created in the current working directory
+
+    @param file_name String
     */
     pub fn export_envs(&self, file_name: String) {
         let mut file = std::fs::OpenOptions::new()
@@ -303,9 +322,13 @@ impl Profile {
 }
 
 /*
- * Create a new profile
- * If the profile already exists, it will print an error message
- */
+* Create a new profile
+* If the profile already exists, it will print an error message
+
+@param name String
+@param envs Option<HashMap<String, String>>
+@param user_key String
+*/
 pub fn create_profile(name: String, envs: Option<HashMap<String, String>>, user_key: &str) {
     if check_profile(name.clone()) {
         println!("{}: Profile already exists", "Error".red());
@@ -359,8 +382,11 @@ pub fn create_profile(name: String, envs: Option<HashMap<String, String>>, user_
 }
 
 /*
- * Check if the profile exists
- */
+* Check if the profile exists
+
+@param name String
+@return bool
+*/
 pub fn check_profile(name: String) -> bool {
     let configdir = get_configdir();
 
@@ -374,9 +400,11 @@ pub fn check_profile(name: String) -> bool {
 }
 
 /*
- * Delete a profile
- * If the profile does not exist, it will print an error message
- */
+* Delete a profile
+* If the profile does not exist, it will print an error message
+
+@param name String
+*/
 pub fn delete_profile(name: String) {
     if check_profile(name.clone()) {
         let configdir = get_configdir();
@@ -424,8 +452,12 @@ pub fn list_profiles() {
 }
 
 /*
- * Download a profile from a url
- */
+* Download the profile from the url and save it to the config directory with the profile name
+* passed
+
+@param url String
+@param profile_name String
+*/
 pub fn download_profile(url: String, profile_name: String) {
     println!("Downloading profile from {}", url);
 
@@ -459,8 +491,11 @@ pub fn download_profile(url: String, profile_name: String) {
 }
 
 /*
- * Import a profile from a file
- */
+* Import a profile from a file
+
+@param file_path String
+@param profile_name String
+*/
 pub fn import_profile(file_path: String, profile_name: String) {
     if !Path::new(&file_path).exists() {
         println!("{}: File does not exists", "Error".red());
@@ -504,14 +539,19 @@ pub fn import_profile(file_path: String, profile_name: String) {
 }
 
 /*
- * Returns a profile object from the profile name passed, it checks if the profile exists
- * All profiles are stored in a directory called `profiles` in the config directory
- *
- * If the profile does not exist, it will return None
- *
- * If it exists, it will read the contents of the file and decrypt it using the key passed
- * It will then return a profile object containing the name of the profile and a hashmap of the environment variables
- */
+* Returns a profile object from the profile name passed, it checks if the profile exists
+* All profiles are stored in a directory called `profiles` in the config directory
+*
+* If the profile does not exist, it will return None
+*
+* If it exists, it will read the contents of the file and decrypt it using the key passed
+* It will then return a profile object containing the name of the profile and a hashmap of the environment variables
+
+@param profile_name String
+@param key String
+
+@return Option<Profile>
+*/
 pub fn get_profile(profile_name: String, key: &str) -> Option<Profile> {
     if !check_profile(profile_name.clone()) {
         println!("{}: Profile does not exist", "Error".red());
@@ -580,6 +620,7 @@ pub fn create_shellscript() {
 
 // Unix specific code
 // Returns the shell that is being used
+// @return String
 #[cfg(any(target_family = "unix"))]
 pub fn get_shell() -> String {
     let shell = std::env::var("SHELL").unwrap();

@@ -4,8 +4,12 @@ use std::collections::hash_map::DefaultHasher;
 use std::hash::{Hash, Hasher};
 
 /*
- * Encrypt a string with a key
- */
+* Encrypt a string with a key
+
+@param key String
+@param data String
+@return Vec<u8>
+*/
 pub fn encrypt(key: String, data: String) -> Vec<u8> {
     let mc = new_magic_crypt!(key, 256);
 
@@ -13,8 +17,12 @@ pub fn encrypt(key: String, data: String) -> Vec<u8> {
 }
 
 /*
- * Decrypt a string with a key
- */
+* Decrypt a string with a key
+
+@param key String
+@param encrypted_data &[u8]
+@return String
+*/
 pub fn decrypt(key: String, encrypted_data: &[u8]) -> String {
     let mc = new_magic_crypt!(key, 256);
 
@@ -28,9 +36,12 @@ pub fn decrypt(key: String, encrypted_data: &[u8]) -> String {
 }
 
 /*
- * NOT USED YET
- * Hash a string
- */
+* NOT USED YET
+* Hash a string
+
+@param input &str
+@return String
+*/
 pub fn hash_string(input: &str) -> String {
     let mut hasher = DefaultHasher::new();
     input.hash(&mut hasher);

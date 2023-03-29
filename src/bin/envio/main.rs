@@ -14,7 +14,8 @@ use cli::Cli;
 
 /*
  * This function is used to get the latest version of envio from github
- * It returns a Option<Version> which is a semver version
+
+ @return Option<Version>
 */
 async fn get_latest_version() -> Option<Version> {
     let url = "https://api.github.com/repos/humblepenguinn/envio/releases/latest";
