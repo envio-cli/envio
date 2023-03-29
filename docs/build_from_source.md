@@ -1,4 +1,4 @@
-# Build from source (Still a work in progress)
+# Build from source
 
 Verify that you have Rust installed:
 
