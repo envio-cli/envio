@@ -107,6 +107,17 @@ For more examples check out the [examples](./examples/) directory
 
 Currently, `envio` is only available as a Rust library
 
+## Contributors
+
+<!-- ALL-CONTRIBUTORS-LIST:START - Do not remove or modify this section -->
+<!-- prettier-ignore-start -->
+<!-- markdownlint-disable -->
+
+<!-- markdownlint-restore -->
+<!-- prettier-ignore-end -->
+
+<!-- ALL-CONTRIBUTORS-LIST:END -->
+
 ## Contributing
 Contributions to `envio` are always welcome! Please see the [Contributing Guidelines](CONTRIBUTING.md) for more information.
 
