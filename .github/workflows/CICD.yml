@@ -5,9 +5,21 @@ env:
 
 on:
   pull_request:
+    paths:
+      - 'src/**'
+      - '.github/**'
+      - 'Cargo.toml'
+      - 'Cargo.lock'
+      - 'build.rs'
   push:
     branches:
       - main
+    paths:
+      - 'src/**'
+      - '.github/**'
+      - 'Cargo.toml'
+      - 'Cargo.lock'
+      - 'build.rs'
     tags:
       - "*"
 
