@@ -1,0 +1,25 @@
+{
+  "files": [
+    "README.md"
+  ],
+  "imageSize": 100,
+  "commit": false,
+  "commitConvention": "angular",
+  "contributors": [
+    {
+      "login": "Vojtch159",
+      "name": "Vojtch",
+      "avatar_url": "https://avatars.githubusercontent.com/u/73985038?v=4",
+      "profile": "https://github.com/Vojtch159",
+      "contributions": [
+        "doc"
+      ]
+    }
+  ],
+  "contributorsPerLine": 7,
+  "skipCi": true,
+  "repoType": "github",
+  "repoHost": "https://github.com",
+  "projectName": "envio",
+  "projectOwner": "humblepenguinn"
+}
