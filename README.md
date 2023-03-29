@@ -11,6 +11,7 @@
 
 <p align="center">
   <a href="#about">About</a> •
+  <a href="#profiles">Profiles</a> •
   <a href="#installation">Installation</a> •
   <a href="#usage">Usage</a> •
   <a href="#contributing">Contributing</a> •
@@ -26,18 +27,13 @@
 `envio` is an open source CLI tool that helps make managing environment variables a breeze. With `envio`, users can create encrypted profiles that contain a collection of environment variables associated with a specific project or use case. `envio` ensures security and simplifies the development process by allowing users to easily switch between profiles as needed and load them in their current terminal session for immediate use.
 
 Some key features of `envio` include:
-- Create profiles to store environment variables
-- Load profiles into terminal sessions
-- Persistent environment variables that are available in future sessions
-- Encrypted profiles
-- Adding new environment variables
-- Removing environment variables
-- Modifying existing environment variables
-- Listing all environment variables
-- Listing profiles
-- Importing profiles from a file
-- Downloading profiles and then importing them
-- Exporting profiles to a file
+- `Encrypted` profiles which can only be decrypted using a `key`
+- Load profiles into your `terminal sessions`
+- `Persistent` environment variables that are available in `future sessions`
+- `Run` programs with your profiles
+- `Importing` profiles from a file
+- `Downloading` profiles and then importing them
+- `Exporting` profiles to a file
 
 ## Profiles
 In `envio`, a profile is a collection of environment variables that are associated with a specific project, application, or use case. Users can create multiple profiles, each with their own set of environment variables, and easily switch between them as needed.
