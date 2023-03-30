@@ -112,6 +112,7 @@ Currently, `envio` is only available as a Rust library
   <tbody>
     <tr>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/Vojtch159"><img src="https://avatars.githubusercontent.com/u/73985038?v=4?s=100" width="100px;" alt="Vojtch"/><br /><sub><b>Vojtch</b></sub></a><br /><a href="https://github.com/humblepenguinn/envio/commits?author=Vojtch159" title="Documentation">📖</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/erjanmx"><img src="https://avatars.githubusercontent.com/u/4899432?v=4?s=100" width="100px;" alt="Erjan Kalybek"/><br /><sub><b>Erjan Kalybek</b></sub></a><br /><a href="https://github.com/humblepenguinn/envio/commits?author=erjanmx" title="Documentation">📖</a></td>
     </tr>
   </tbody>
 </table>
