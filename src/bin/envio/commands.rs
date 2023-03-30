@@ -1,7 +1,12 @@
 use colored::Colorize;
 use inquire::{min_length, Password, PasswordDisplayMode};
+use std::collections::HashMap;
+use std::io::{Read, Write};
+use std::path::Path;
 use url::Url;
 
+use envio::crypto::encrypt;
+use envio::utils::get_configdir;
 use envio::{
     self, check_profile, create_profile, delete_profile, download_profile, get_profile,
     import_profile, list_profiles,
@@ -62,7 +67,77 @@ impl Command {
                     prompt.unwrap()
                 };
 
-                create_profile(command_args.args[0].clone(), None, &user_key)
+                if command_args.args.len() == 1 {
+                    create_profile(command_args.args[0].clone(), None, &user_key);
+                } else if command_args.args.len() == 2 {
+                    if !Path::new(&command_args.args[0]).exists() {
+                        println!("{}: File does not exists", "Error".red());
+                        return;
+                    }
+                    let profile_name = command_args.args[1].clone();
+
+                    let mut file = std::fs::OpenOptions::new()
+                        .read(true)
+                        .open(command_args.args[0].clone())
+                        .unwrap();
+
+                    let mut contents = String::new();
+                    file.read_to_string(&mut contents).unwrap();
+
+                    let buffer = encrypt(user_key, contents.clone());
+
+                    let location = if get_configdir()
+                        .join("profiles")
+                        .join(profile_name.clone() + ".env")
+                        .to_str()
+                        .is_none()
+                    {
+                        println!("{}: Could not get convert path to string", "Error".red());
+                        return;
+                    } else {
+                        get_configdir()
+                            .join("profiles")
+                            .join(profile_name + ".env")
+                            .to_str()
+                            .unwrap()
+                            .to_owned()
+                    };
+                    let mut file = std::fs::OpenOptions::new()
+                        .write(true)
+                        .create(true)
+                        .open(location)
+                        .unwrap();
+
+                    if let Err(e) = file.write(buffer.as_slice()) {
+                        println!("{}: {}", "Error".red(), e);
+                    }
+                    println!("{}: Profile created", "Success".green());
+                } else {
+                    let mut envs = HashMap::new();
+                    for (count, arg) in command_args.args[1..].iter().enumerate() {
+                        if count > command_args.args.len() - 2 {
+                            break;
+                        }
+
+                        let mut split = arg.split('=');
+
+                        let key = split.next();
+                        let value = split.next();
+
+                        if key.is_none() || value.is_none() {
+                            println!("{}: Can not parse arguments", "Error".red());
+                            println!(
+                                "{}",
+                                "Arguments should be in the format of key=value".bold()
+                            );
+                            return;
+                        }
+
+                        envs.insert(key.unwrap().to_owned(), value.unwrap().to_owned());
+                    }
+
+                    create_profile(command_args.args[0].clone(), Some(envs), &user_key);
+                }
             }
             Command::Add(command_args) => {
                 if command_args.args.len() <= 1 {

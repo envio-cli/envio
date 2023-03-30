@@ -351,7 +351,7 @@ pub fn create_profile(name: String, envs: Option<HashMap<String, String>>, user_
         std::fs::create_dir_all(&profile_dir).unwrap();
     }
 
-    let profile_file = profile_dir.join(name.clone() + ".env");
+    let profile_file = profile_dir.join(name + ".env");
 
     let mut file = if let Err(e) = std::fs::File::create(&profile_file) {
         println!("{}: {}", "Error".red(), e);
@@ -378,7 +378,7 @@ pub fn create_profile(name: String, envs: Option<HashMap<String, String>>, user_
         println!("{}: {}", "Error".red(), e);
     }
 
-    println!("Created profile: {}", name);
+    println!("{}: Profile created", "Success".green());
 }
 
 /*

@@ -96,6 +96,11 @@ fn main() {
             println!("{}: {}", "Error".red(), e);
             std::process::exit(1);
         }
+
+        if let Err(e) = std::fs::create_dir(utils::get_configdir().join("profiles")) {
+            println!("{}: {}", "Error".red(), e);
+            std::process::exit(1);
+        }
     }
 
     let args = Cli::parse();
