@@ -71,7 +71,7 @@ impl Command {
                     create_profile(command_args.args[0].clone(), None, &user_key);
                 } else if command_args.args.len() == 2 {
                     if !Path::new(&command_args.args[0]).exists() {
-                        println!("{}: File does not exists", "Error".red());
+                        println!("{}: File does not exist", "Error".red());
                         return;
                     }
                     let profile_name = command_args.args[1].clone();

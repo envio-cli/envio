@@ -111,6 +111,8 @@ impl Profile {
                 shell_config = ".bashrc";
             } else if current_shell.contains("zsh") {
                 shell_config = ".zshrc";
+            } else if current_shell.contains("fish") {
+                shell_config = ".config/fish/config.fish"
             }
 
             if !shellscript_path.exists() {
@@ -415,7 +417,7 @@ pub fn delete_profile(name: String) {
             Err(e) => println!("{}: {}", "Error".red(), e),
         }
     } else {
-        println!("{}: Profile does not exists", "Error".red());
+        println!("{}: Profile does not exist", "Error".red());
     }
 }
 
@@ -498,7 +500,7 @@ pub fn download_profile(url: String, profile_name: String) {
 */
 pub fn import_profile(file_path: String, profile_name: String) {
     if !Path::new(&file_path).exists() {
-        println!("{}: File does not exists", "Error".red());
+        println!("{}: File does not exist", "Error".red());
         return;
     }
 
@@ -623,6 +625,7 @@ pub fn create_shellscript() {
 // @return String
 #[cfg(any(target_family = "unix"))]
 pub fn get_shell() -> String {
+    // Gets your default shell
     let shell = std::env::var("SHELL").unwrap();
     let shell = shell.split('/').collect::<Vec<&str>>();
 
