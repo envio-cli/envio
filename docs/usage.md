@@ -1,4 +1,5 @@
 # Usage
+Before reading the usage make sure you understand what `profiles` (See [profiles](https://github.com/humblepenguinn/envio#profiles)) are in envio
 
 ## Creating a Profile
 
@@ -11,6 +12,21 @@ $ envio create myprofile
 This will create a new profile named myprofile.
 
 All profiles are encrypted so when you create a profile with `envio create`, you will be prompted to enter a key for the profile. This key will be used to encrypt and decrypt the environment variables in the profile. Whenever you run a command that manipulates the enviornment variables of a profile, you will need to provide the key for the profile in order to apply the changes.
+
+If you want to create a profile and import all the enviornment variables from a file you can use the command below:
+
+```sh
+$ envio create <file> <profile_name_to_save_as>
+```
+This will create a profile with all the environment variables from your file. 
+
+Lets say we have a file named '.env' and we want to create a profile named 'myprofile' which imports all the environment variables from the `.env` file, we can run the command below:
+
+```sh
+$ envio create .env myprofile
+```
+
+You can view all the environment variables in your profile using the `list` command (See [List](#list) command)
 
 ## Adding Environment Variables to a Profile
 
@@ -25,6 +41,19 @@ You can add multiple environment variables too
 ```sh
 $ envio add myprofile DATABASE_URL=postgres://localhost/mydb MY_VERY_SECRETIVE_KEY=1234
 ```
+
+Instead of creating a profile first and then adding environment variables, users can directly add environment variables when creating a profile using the `create` command (See [create](#creating-a-profile)):
+```sh
+$ envio create <profile_name> <key>=<value>
+```
+You can add multiple environment variables
+
+So instead of first creating a profile named `myprofile` and then adding environment variables to it. We can directly run the command below:
+```sh
+$ envio create myprofile DATABASE_URL=postgres://localhost/mydb MY_VERY_SECRETIVE_KEY=1234
+```
+
+This will create a profile named `myprofile` with two environment variables, `DATABASE_URL` and `MY_VERY_SECRETIVE_KEY` with values `postgres://localhost/mydb` and `1234` respectively
 
 ## Updating Environment Variables in a Profile
 
@@ -111,3 +140,15 @@ $ envio export <profile_name> <file_to_export_to>
 
 If the `file_to_export_to` argument is not specified, the command will export the environment variables to a file called `.env`
 
+## List
+You can view all your existing profiles and also all the environment variables in a specific profile
+
+To list all the existing profiles, users can run the following command:
+```sh
+$ envio list profiles
+```
+
+To list all the environment variables in a profile, users can run the following command:
+```sh
+$ envio list <profile_name>
+```
