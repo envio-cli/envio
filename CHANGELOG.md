@@ -2,6 +2,32 @@
 
 This document records all notable changes to [envio](https://github.com/humblepenguinn/envio).
 
+# v0.4.0
+## Features
+* Add new argument `--no-pretty-print` to `envio list` command, See [Usage](./docs/usage.md)
+* Add support for `fish` shell #9 
+* 
+## Bug Fixes
+* Fix Security Vulnerability, See [Here](./docs/envio-profile-loading-update.md)
+
+## Other
+* Fix readme typo by @erjanmx in https://github.com/humblepenguinn/envio/pull/10
+* docs: add erjanmx as a contributor for doc by @allcontributors in https://github.com/humblepenguinn/envio/pull/11
+* Bump tokio from 1.26.0 to 1.27.0 by @dependabot in https://github.com/humblepenguinn/envio/pull/12
+
+# v0.3.0
+# Features
+* Users can now create new profiles using files and also pass in environment variables #8 
+* Added support for the `fish` shell #9 
+
+# Bug Fixes
+* Both the config and profiles directory are created at startup, if they do not exist #8 
+
+# Other
+* docs: add Vojtch159 as a contributor for doc by @allcontributors in https://github.com/humblepenguinn/envio/pull/7
+* Bump clap_complete from 4.1.5 to 4.2.0 by @dependabot in https://github.com/humblepenguinn/envio/pull/4
+* Bump reqwest from 0.11.14 to 0.11.16 by @dependabot in https://github.com/humblepenguinn/envio/pull/5
+
 # v0.2.0
 ## Features
 * In addition to being able to load and unload profiles in current terminal sessions, users can now use the `envio launch` sub command to launch programs with specific profiles see [Usage](./docs/usage.md)
