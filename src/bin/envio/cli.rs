@@ -1,6 +1,5 @@
 use clap::Args;
 use clap::Parser;
-//use crate::commands::Command;
 
 #[derive(Parser)]
 /*
@@ -35,6 +34,10 @@ pub enum Command {
     Add(CommandArgs),
     #[clap(name = "load", about = "Load a profile in the current session")]
     Load(CommandArgs),
+    #[cfg(target_family = "unix")]
+    #[clap(name = "unload", about = "Unload a profile from the current session")]
+    Unload,
+    #[cfg(target_family = "windows")]
     #[clap(name = "unload", about = "Unload a profile from the current session")]
     Unload(CommandArgs),
     #[clap(name = "launch", about = "Launch a program with a profile")]

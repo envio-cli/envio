@@ -9,7 +9,7 @@ use envio::crypto::encrypt;
 use envio::utils::get_configdir;
 use envio::{
     self, check_profile, create_profile, delete_profile, download_profile, get_profile,
-    import_profile, list_profiles,
+    import_profile, list_profiles, load_profile, unload_profile,
 };
 
 use crate::cli::Command;
@@ -49,6 +49,22 @@ impl Command {
                     return;
                 }
 
+                let profile_name;
+
+                if command_args.args.len() == 1 {
+                    profile_name = command_args.args[0].clone();
+                } else if command_args.args.len() == 2 {
+                    profile_name = command_args.args[1].clone();
+                } else {
+                    println!("{}: Invalid number of arguments", "Error".red());
+                    return;
+                }
+
+                if check_profile(profile_name.to_string()) {
+                    println!("{}: Profile already exists", "Error".red());
+                    return;
+                }
+
                 let prompt = Password::new("Enter your encryption key:")
                     .with_display_toggle_enabled()
                     .with_display_mode(PasswordDisplayMode::Masked)
@@ -68,13 +84,12 @@ impl Command {
                 };
 
                 if command_args.args.len() == 1 {
-                    create_profile(command_args.args[0].clone(), None, &user_key);
+                    create_profile(profile_name, None, &user_key);
                 } else if command_args.args.len() == 2 {
                     if !Path::new(&command_args.args[0]).exists() {
                         println!("{}: File does not exist", "Error".red());
                         return;
                     }
-                    let profile_name = command_args.args[1].clone();
 
                     let mut file = std::fs::OpenOptions::new()
                         .read(true)
@@ -191,15 +206,30 @@ impl Command {
                 }
 
                 let profile_name = command_args.args[0].clone();
-                let profile = if let Some(p) = get_profile(profile_name, &get_userkey()) {
-                    p
-                } else {
-                    return;
-                };
 
-                profile.load_profile();
+                #[cfg(target_family = "unix")]
+                {
+                    load_profile(&profile_name);
+                }
+
+                #[cfg(target_family = "windows")]
+                {
+                    let profile = if let Some(p) = get_profile(profile_name, &get_userkey()) {
+                        p
+                    } else {
+                        return;
+                    };
+
+                    load_profile(profile);
+                }
             }
 
+            #[cfg(target_family = "unix")]
+            Command::Unload => {
+                unload_profile();
+            }
+
+            #[cfg(target_family = "windows")]
             Command::Unload(command_args) => {
                 if command_args.args.is_empty() {
                     println!("{}: Invalid number of arguments", "Error".red());
@@ -207,13 +237,14 @@ impl Command {
                 }
 
                 let profile_name = command_args.args[0].clone();
+
                 let profile = if let Some(p) = get_profile(profile_name, &get_userkey()) {
                     p
                 } else {
                     return;
                 };
 
-                profile.unload_profile();
+                unload_profile(profile);
             }
 
             Command::Launch(command_args) => {
@@ -275,9 +306,27 @@ impl Command {
                 }
 
                 let profile_name = command_args.args[0].clone();
+                if command_args.args.len() == 2 {
+                    if command_args.args[1] == "--no-pretty-print" {
+                        if profile_name == "profiles" {
+                            list_profiles(true)
+                        } else {
+                            let profile = if let Some(p) = get_profile(profile_name, &get_userkey())
+                            {
+                                p
+                            } else {
+                                return;
+                            };
 
+                            for (key, value) in profile.envs.iter() {
+                                println!("{}={}", key, value);
+                            }
+                        }
+                    }
+                    return;
+                }
                 if profile_name == "profiles" {
-                    list_profiles()
+                    list_profiles(false)
                 } else {
                     let profile = if let Some(p) = get_profile(profile_name, &get_userkey()) {
                         p

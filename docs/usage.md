@@ -79,6 +79,8 @@ You can use the `envio load <profile_name>` command to load the profile and make
 $ envio load myprofile
 ```
 
+On `Windows`, users just need to reload their shell and they can start using their environment variables as before. However, on `Unix-based` operating systems, a new approach has been implemented to load the environment variables securely. Whenever users open their shell, envio now asks users for the key used for the profile that was loaded. They have to type in the key to access their environment variables, which are then stored in a temporary file and sourced in the current session. This ensures that the environment variables are loaded securely and are not accessible to anyone without the correct key.
+
 Now,
 ```sh
 $ echo $DATABASE_URL
@@ -86,10 +88,16 @@ $ echo $DATABASE_URL
 
 ## Unloading a Profile
 
-To unload a profile from the current session, run the command:
+On `Windows`, to unload a profile from the current session, run the command:
 ```sh
 $ envio unload myprofile
 ```
+
+On `Unix-based` operating systems, to unload a profile from the current session, run the `envio unload` command without any arguments:
+```sh
+$ envio unload
+```
+
 ## Launching a Program with a Profile
 
 The `envio launch` command allows you to run a program using a specific profile. This is useful when you need to switch between different sets of environment variables for different projects or environments.
@@ -151,4 +159,16 @@ $ envio list profiles
 To list all the environment variables in a profile, users can run the following command:
 ```sh
 $ envio list <profile_name>
+```
+
+Users can also view their profiles and environment variables in a profile without any visual formatting using the `-no-pretty-print` argument
+
+To list all existing profiles:
+```sh
+$ envio list profiles -- --no-pretty-print
+```
+
+To list all the environment variables in a profile:
+```sh
+$ envio list <profile_name> -- --no-pretty-print
 ```

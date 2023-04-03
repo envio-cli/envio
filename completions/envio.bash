@@ -399,7 +399,7 @@ _envio() {
             return 0
             ;;
         envio__unload)
-            opts="-h --help [ARGS]..."
+            opts="-h --help"
             if [[ ${cur} == -* || ${COMP_CWORD} -eq 2 ]] ; then
                 COMPREPLY=( $(compgen -W "${opts}" -- "${cur}") )
                 return 0

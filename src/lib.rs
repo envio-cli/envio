@@ -34,15 +34,17 @@ use std::{
     collections::HashMap,
     io::{Read, Write},
     path::{Path, PathBuf},
-    process::Command,
 };
+
+#[cfg(target_family = "windows")]
+use std::process::Command;
 
 use colored::Colorize;
 use comfy_table::{Attribute, Cell, Table};
 
 use crate::{
     crypto::{decrypt, encrypt},
-    utils::{download_file, get_configdir, get_cwd, get_homedir},
+    utils::{download_file, get_configdir, get_cwd},
 };
 
 /*
@@ -78,122 +80,6 @@ impl Profile {
             profile_file_path,
             key,
         }
-    }
-
-    /*
-     * Load the environment variables of the profile into the current session
-     */
-    pub fn load_profile(&self) {
-        if cfg!(windows) {
-            for (env, value) in &self.envs {
-                Command::new("setx")
-                    .arg(env)
-                    .arg(value)
-                    .spawn()
-                    .expect("setx command failed");
-            }
-
-            println!("Reload your shell to apply changes");
-            return;
-        }
-
-        // Create a shell script that will be used to load the environment variables
-        // Unix specific code
-        #[cfg(any(target_family = "unix"))]
-        {
-            let configdir = get_configdir();
-            let shellscript_path = configdir.join("setenv.sh");
-            let mut shell_config = "";
-
-            let current_shell = get_shell();
-
-            if current_shell.contains("bash") {
-                shell_config = ".bashrc";
-            } else if current_shell.contains("zsh") {
-                shell_config = ".zshrc";
-            } else if current_shell.contains("fish") {
-                shell_config = ".config/fish/config.fish"
-            }
-
-            if !shellscript_path.exists() {
-                println!("Creating shell script");
-                create_shellscript();
-
-                if !shell_config.is_empty() {
-                    let mut file = std::fs::OpenOptions::new()
-                        .write(true)
-                        .append(true)
-                        .open(
-                            get_homedir().to_str().unwrap().to_owned()
-                                + &format!("/{}", shell_config),
-                        )
-                        .unwrap();
-
-                    let buffer = format!("# envio \nsource {}", shellscript_path.to_str().unwrap());
-                    if let Err(e) = writeln!(file, "{}", buffer) {
-                        println!("{}: {}", "Error".red(), e);
-                    }
-                } else {
-                    println!("The current shell is not supported. Please add the following line to your shell config file: source {}", shellscript_path.to_str().unwrap());
-                }
-            }
-
-            let mut file = std::fs::OpenOptions::new()
-                .write(true)
-                .append(false)
-                .open(&shellscript_path)
-                .unwrap();
-
-            let mut buffer = String::from("");
-
-            for (env, value) in &self.envs {
-                buffer = buffer + &format!("export {}={}\n", env, value);
-            }
-
-            if let Err(e) = writeln!(file, "{}", buffer) {
-                println!("{}: {}", "Error".red(), e);
-            }
-
-            println!(
-                "Reload your shell to apply changes or run `source {}`",
-                format_args!("~/{}", shell_config)
-            );
-        }
-    }
-
-    /*
-     * Unload the environment variables of the profile from the current session
-     */
-    pub fn unload_profile(&self) {
-        if cfg!(windows) {
-            for env in self.envs.keys() {
-                Command::new("REG")
-                    .arg("delete")
-                    .arg("HKCU\\Environment")
-                    .arg("/F")
-                    .arg("/V")
-                    .arg(format!("\"{}\"", env))
-                    .arg("")
-                    .spawn()
-                    .expect("setx command failed");
-            }
-        }
-
-        // Unix specific code
-        #[cfg(any(target_family = "unix"))]
-        {
-            let file = std::fs::OpenOptions::new()
-                .write(true)
-                .append(false)
-                .open(get_configdir().join("setenv.sh"))
-                .unwrap();
-
-            if let Err(e) = file.set_len(0) {
-                println!("{}: {}", "Error".red(), e);
-            }
-        }
-
-        println!("Reload your shell to apply changes");
     }
 
     /*
@@ -424,7 +310,7 @@ pub fn delete_profile(name: String) {
 /*
  * List all the profiles
  */
-pub fn list_profiles() {
+pub fn list_profiles(raw: bool) {
     let configdir = get_configdir();
     let profile_dir = configdir.join("profiles");
 
@@ -434,13 +320,19 @@ pub fn list_profiles() {
     }
 
     let mut profiles = Vec::new();
-
     for entry in std::fs::read_dir(profile_dir).unwrap() {
         let entry = entry.unwrap();
         let path = entry.path();
         let file_name = path.file_name().unwrap().to_str().unwrap().to_owned();
         let profile_name = file_name.replace(".env", "");
         profiles.push(profile_name);
+    }
+
+    if raw {
+        for profile in profiles {
+            println!("{}", profile);
+        }
+        return;
     }
 
     let mut table = Table::new();
@@ -602,20 +494,88 @@ pub fn get_profile(profile_name: String, key: &str) -> Option<Profile> {
 // Unix specific code
 // Creates a shell script that can be sourced to set the environment variables
 #[cfg(any(target_family = "unix"))]
-pub fn create_shellscript() {
+pub fn create_shellscript(profile: &str) {
     let configdir = get_configdir();
     let shellscript_path = configdir.join("setenv.sh");
 
-    let mut file = if let Err(e) = std::fs::File::create(&shellscript_path) {
-        println!("{}: {}", "Error".red(), e);
-        return;
+    let mut file = if let Ok(e) = std::fs::OpenOptions::new()
+        .write(true)
+        .append(false)
+        .open(shellscript_path)
+    {
+        e
     } else {
-        std::fs::File::create(&shellscript_path).unwrap()
+        println!("{}: Could not open file", "Error".red());
+        return;
     };
 
-    let shellscript = "";
+    let shellscript = format!(
+        r#"#!/bin/bash
+# This script was generated by envio and should not be modified!
+
+
+TMP_FILE=$(mktemp)
+
+set +e
+ENV_VARS=$(envio list {} -- --no-pretty-print)
+EXIT_CODE=$?
+SHELL_NAME=$(basename "$SHELL")
+
+
+if [ ! -f "$TMP_FILE" ]; then
+    echo "Failed to create temp file"
+    exit 1
+fi
+
+if [ $EXIT_CODE -ne 0 ]; then
+    echo "Failed to load environment variables"
+    rm "$TMP_FILE"
+else
+    case "$SHELL_NAME" in
+        bash | zsh)
+            echo "$ENV_VARS" | while IFS= read -r line; do
+                echo "export $line" >> "$TMP_FILE"
+            done
+            ;;
+        fish)
+            echo "$ENV_VARS" | while IFS= read -r line; do
+                echo "set -gX $line" >> "$TMP_FILE"
+            done
+            ;;
+        *)
+            echo "Unsupported shell: $SHELL_NAME"
+            exit 1
+            ;;
+    esac
+
+    if [ ! -s "$TMP_FILE" ]; then
+        echo "Temp file is empty"
+        exit 1
+    fi
+
+    source "$TMP_FILE"
+    source "$TMP_FILE" &> /dev/null
+
+    if [ $? -ne 0 ]; then
+        echo "Failed to load environment variables from temp file"
+        exit 1
+    fi
+
+    rm "$TMP_FILE"
+fi
+"#,
+        profile
+    );
 
     if let Err(e) = file.write_all(shellscript.as_bytes()) {
+        println!("{}: {}", "Error".red(), e);
+    }
+
+    if let Err(e) = file.flush() {
+        println!("{}: {}", "Error".red(), e);
+    }
+
+    if let Err(e) = file.sync_all() {
         println!("{}: {}", "Error".red(), e);
     }
 }
@@ -624,10 +584,105 @@ pub fn create_shellscript() {
 // Returns the shell that is being used
 // @return String
 #[cfg(any(target_family = "unix"))]
-pub fn get_shell() -> String {
+pub fn get_shell_config() -> String {
     // Gets your default shell
-    let shell = std::env::var("SHELL").unwrap();
-    let shell = shell.split('/').collect::<Vec<&str>>();
+    // This is used to determine which shell config file to edit
+    let shell_env_value = if let Ok(e) = std::env::var("SHELL") {
+        e
+    } else {
+        println!("{}: Could not get shell", "Error".red());
+        std::process::exit(1);
+    };
 
-    shell[shell.len() - 1].to_string()
+    let shell_as_vec = shell_env_value.split('/').collect::<Vec<&str>>();
+    let shell = shell_as_vec[shell_as_vec.len() - 1];
+
+    let mut shell_config = "";
+    if shell.contains("bash") {
+        shell_config = ".bashrc";
+    } else if shell.contains("zsh") {
+        shell_config = ".zshrc";
+    } else if shell.contains("fish") {
+        shell_config = ".config/fish/config.fish"
+    }
+
+    shell_config.to_string()
+}
+
+/*
+ * Load the environment variables of the profile into the current session
+ */
+#[cfg(any(target_family = "unix"))]
+pub fn load_profile(profile_name: &str) {
+    if !check_profile(profile_name.to_string()) {
+        println!("{}: Profile does not exist", "Error".red());
+        return;
+    }
+
+    let shell_config = get_shell_config();
+
+    create_shellscript(profile_name);
+
+    if !shell_config.is_empty() {
+        println!(
+            "Reload your shell to apply changes or run `source {}`",
+            format_args!("~/{}", shell_config)
+        );
+    } else {
+        println!("Reload your shell to apply changes");
+    }
+}
+
+/*
+ * Windows specific code
+*/
+
+#[cfg(target_family = "windows")]
+pub fn load_profile(profile: Profile) {
+    for (env, value) in &profile.envs {
+        Command::new("setx")
+            .arg(env)
+            .arg(value)
+            .spawn()
+            .expect("setx command failed");
+    }
+
+    println!("Reload your shell to apply changes");
+}
+
+/*
+ * Unload the environment variables of the profile from the current session
+ */
+#[cfg(any(target_family = "unix"))]
+pub fn unload_profile() {
+    let file = std::fs::OpenOptions::new()
+        .write(true)
+        .append(false)
+        .open(get_configdir().join("setenv.sh"))
+        .unwrap();
+
+    if let Err(e) = file.set_len(0) {
+        println!("{}: {}", "Error".red(), e);
+    }
+
+    println!("Reload your shell to apply changes");
+}
+
+/*
+ * Windows specific code
+*/
+#[cfg(target_family = "windows")]
+pub fn unload_profile(profile: Profile) {
+    for env in profile.envs.keys() {
+        Command::new("REG")
+            .arg("delete")
+            .arg("HKCU\\Environment")
+            .arg("/F")
+            .arg("/V")
+            .arg(format!("\"{}\"", env))
+            .arg("")
+            .spawn()
+            .expect("setx command failed");
+    }
+    println!("Reload your shell to apply changes");
 }

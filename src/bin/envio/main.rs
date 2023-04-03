@@ -1,12 +1,16 @@
 mod cli;
 mod commands;
 
+#[cfg(target_family = "unix")]
+use std::io::Write;
+
+use std::io::{BufRead, BufReader};
 use std::path::Path;
+use std::process::Command;
 
 use clap::Parser;
 use colored::Colorize;
 use semver::Version;
-use tokio::runtime::Builder;
 
 use envio::utils;
 
@@ -17,64 +21,61 @@ use cli::Cli;
 
  @return Option<Version>
 */
-async fn get_latest_version() -> Option<Version> {
-    let url = "https://api.github.com/repos/humblepenguinn/envio/releases/latest";
-    let client = reqwest::Client::new();
-    let res = if let Ok(val) = client.get(url).header("User-Agent", "envio").send().await {
-        val
-    } else {
+fn get_latest_version() -> Option<Version> {
+    if Command::new("git").arg("--version").output().is_err() {
+        println!("{}: Git is not installed", "Error".red());
         return None;
-    };
-
-    match res.status() {
-        reqwest::StatusCode::OK => {
-            let body = if let Ok(val) = res.text().await {
-                val
-            } else {
-                return None;
-            };
-
-            if body.contains("tag_name") {
-                let mut tag_name = body.split("tag_name").collect::<Vec<&str>>()[1]
-                    .split('\"')
-                    .collect::<Vec<&str>>()[2];
-
-                tag_name = tag_name.trim_start_matches('v');
-                let latest_version = if let Ok(val) = Version::parse(tag_name) {
-                    val
-                } else {
-                    return None;
-                };
-
-                return Some(latest_version);
-            }
-
-            None
-        }
-
-        _ => None,
     }
+
+    let owner = "humblepenguinn";
+    let repo = "envio";
+    let output = Command::new("git")
+        .arg("ls-remote")
+        .arg(format!("https://github.com/{}/{}.git", owner, repo))
+        .output()
+        .unwrap();
+    let reader = BufReader::new(output.stdout.as_slice());
+    let mut latest_tag = None;
+
+    for line in reader.lines().filter_map(|x| x.ok()) {
+        let parts: Vec<_> = line.split('\t').collect();
+        if parts.len() != 2 {
+            continue;
+        }
+        let (ref_name, _) = (parts[1], parts[0]);
+        if ref_name.starts_with("refs/tags/") {
+            let tag = ref_name.trim_start_matches("refs/tags/").to_owned();
+            latest_tag =
+                latest_tag.map_or(Some(tag.clone()), |latest| Some(std::cmp::max(latest, tag)));
+        }
+    }
+
+    if let Some(mut tag) = latest_tag {
+        tag = tag.trim_start_matches('v').to_string();
+        if let Ok(version) = Version::parse(&tag) {
+            return Some(version);
+        }
+    }
+
+    None
 }
 
 fn main() {
-    let rt = if let Ok(val) = Builder::new_current_thread().enable_all().build() {
-        val
-    } else {
-        println!("{}: Failed to create runtime", "Error".red());
-        return;
-    };
-
-    let latest_version = if let Some(val) = rt.block_on(get_latest_version()) {
+    let latest_version = if let Some(val) = get_latest_version() {
         val
     } else {
         println!("{}:  Failed to get latest version", "Error".red());
-        return;
+        println!(
+            "{}: You can still use envio but won't be notified about new versions!",
+            "Warning".yellow()
+        );
+        Version::parse("0.0.0").unwrap()
     };
 
     let current_version = if let Ok(val) = Version::parse(env!("BUILD_VERSION")) {
         val
     } else {
-        println!("{}: Failed to parse version", "Error".red());
+        println!("{}: Failed to parse current version", "Error".red());
         return;
     };
 
@@ -88,10 +89,7 @@ fn main() {
     }
 
     if !Path::new(&utils::get_configdir()).exists() {
-        println!(
-            "{}",
-            "Config directory does not exist\nCreating config directory".bold()
-        );
+        println!("{}", "Creating config directory".bold());
         if let Err(e) = std::fs::create_dir(utils::get_configdir()) {
             println!("{}: {}", "Error".red(), e);
             std::process::exit(1);
@@ -100,6 +98,46 @@ fn main() {
         if let Err(e) = std::fs::create_dir(utils::get_configdir().join("profiles")) {
             println!("{}: {}", "Error".red(), e);
             std::process::exit(1);
+        }
+    }
+
+    #[cfg(target_family = "unix")]
+    {
+        if !Path::new(&utils::get_configdir().join("setenv.sh")).exists() {
+            println!("{}", "Creating shellscript".bold());
+            if let Err(e) = std::fs::write(utils::get_configdir().join("setenv.sh"), "") {
+                println!("{}: {}", "Error".red(), e);
+                std::process::exit(1);
+            }
+
+            let mut file = std::fs::OpenOptions::new()
+                .write(true)
+                .append(true)
+                .open(
+                    utils::get_homedir().to_str().unwrap().to_owned()
+                        + &format!("/{}", envio::get_shell_config()),
+                )
+                .unwrap();
+
+            let buffer = if envio::get_shell_config().contains("fish") {
+                println!(
+                    "To use the shellscript properly you need to install the {}(https://github.com/edc/bass) plugin for fish",
+                    "bass".bold()
+                );
+                format!(
+                    "# envio DO NOT MODIFY\n bass source {}",
+                    &utils::get_configdir().join("setenv.sh").to_str().unwrap()
+                )
+            } else {
+                format!(
+                    "#envio DO NOT MODIFY\n source {}",
+                    &utils::get_configdir().join("setenv.sh").to_str().unwrap()
+                )
+            };
+
+            if let Err(e) = writeln!(file, "{}", buffer) {
+                println!("{}: {}", "Error".red(), e);
+            }
         }
     }
 
