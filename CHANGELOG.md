@@ -1,6 +1,9 @@
 # Change Log
 
 This document records all notable changes to [envio](https://github.com/humblepenguinn/envio).
+# v0.4.1
+## Bug Fixes
+* Fix slow startup times due to slow update fetching
 
 # v0.4.0
 ## Features

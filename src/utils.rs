@@ -12,11 +12,12 @@ use reqwest::Client;
 @return PathBuf
 */
 pub fn get_homedir() -> PathBuf {
-    if home::home_dir().is_none() {
-        println!("{}: Home directory not found", "Error".red());
-        std::process::exit(1);
-    } else {
-        home::home_dir().unwrap()
+    match dirs::home_dir() {
+        Some(home) => home,
+        None => {
+            println!("{}: Home directory not found", "Error".red());
+            std::process::exit(1);
+        }
     }
 }
 

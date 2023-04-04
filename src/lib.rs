@@ -452,9 +452,7 @@ pub fn get_profile(profile_name: String, key: &str) -> Option<Profile> {
         return None;
     }
 
-    let profile_file_path = home::home_dir()
-        .unwrap()
-        .join(".envio")
+    let profile_file_path = get_configdir()
         .join("profiles")
         .join(format!("{}.env", profile_name));
 
