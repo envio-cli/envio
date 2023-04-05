@@ -1,6 +1,6 @@
 [package]
 name = "envio"
-version = "0.4.0"
+version = "0.4.1"
 rust-version = "1.64.0"
 description = "Envio is a command-line tool that simplifies the management of environment variables across multiple profiles. It allows users to easily switch between different configurations and apply them to their current environment. Envio also encrypts sensitive environment variable values to ensure secure storage and transmission"
 edition = "2021"
