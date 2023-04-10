@@ -1,4 +1,8 @@
 /target
 /build
 
+/TODO
+
+/.env
+
 /.vscode

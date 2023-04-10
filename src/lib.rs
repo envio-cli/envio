@@ -7,22 +7,29 @@
 //! ```
 //! // In this example we get the profile passed as an argument to the program
 //! // and then print the environment variables in that profile
+// In this example we get the profile passed as an argument to the program and then print the environment variables in that profile
+//!let args: Vec<String> = std::env::args().collect();
+
+//!if args.len() != 3 {
+//!   println!("Usage: <profile_name> <key>");
+//!   return;
+//!}
 //!
-//! use envio;
+//!let profile_name = args[1].to_string();
+//!let key = args[2].to_string(); // All profiles have a key that is used to encrypt the environment variables, this ensures that the environment variables are secure
+
+//!// We use the age encryption type here
+//!// If the profile was encrypted with a different encryption type you can use the encryption type that was used to encrypt the profile
+//!// For example if the profile was encrypted with the GPG encryption type you would use the following line instead:
+//!// let encryption_type = envio::crypto::create_encryption_type(key, "gpg"); -- Over here key would be the fingerprint of the GPG key used to encrypt the profile
+//!let encryption_type = envio::crypto::create_encryption_type(key, "age");
 //!
-//! let args: Vec<String> = std::env::args().collect();
-//!
-//! if args.len() != 2 {
-//!    println!("Usage: <profile_name> <key>");
-//!    return;
-//! }
-//!
-//! let profile_name = args[1].to_string();
-//! let key = &args[2]; // All profiles have a key that is used to encrypt the environment variables, this ensures that the environment variables are secure
-//!
-//!
-//!  for (env_var, value) in &envio::get_profile(profile_name, key).unwrap().envs {
-//!    println!("{}: {}", env_var, value);
+//!// print the environment variables in that profile
+//! for (env_var, value) in &envio::get_profile(profile_name, encryption_type)
+//!     .unwrap()
+//!     .envs
+//! {
+//!     println!("{}: {}", env_var, value);
 //! }
 //! ```
 //!
@@ -43,7 +50,7 @@ use colored::Colorize;
 use comfy_table::{Attribute, Cell, Table};
 
 use crate::{
-    crypto::{decrypt, encrypt},
+    crypto::EncryptionType,
     utils::{download_file, get_configdir, get_cwd},
 };
 
@@ -55,30 +62,30 @@ pub struct Profile {
     pub name: String,
     pub envs: HashMap<String, String>,
     pub profile_file_path: PathBuf,
-    key: String,
+    encryption_type: Box<dyn EncryptionType>,
 }
 
 impl Profile {
     /*
     * Create a new Profile object
 
-    @param name String
-    @param envs HashMap<String, String>
-    @param profile_file_path PathBuf
-    @param key String
+    @param name String - the name of the profile
+    @param envs HashMap<String, String> - the environment variables of the profile
+    @param profile_file_path PathBuf - the path to the profile file
+    @param encryption_type Box<dyn EncryptionType> - the encryption type of the profile
     @return Profile
     */
     pub fn new(
         name: String,
         envs: HashMap<String, String>,
         profile_file_path: PathBuf,
-        key: String,
+        encryption_type: Box<dyn EncryptionType>,
     ) -> Self {
         Profile {
             name,
             envs,
             profile_file_path,
-            key,
+            encryption_type,
         }
     }
 
@@ -194,7 +201,9 @@ impl Profile {
             buffer = buffer + key + "=" + self.envs.get(key).unwrap() + "\n";
         }
 
-        let encrypted_data = encrypt(self.key.clone(), buffer);
+        buffer = buffer + &self.encryption_type.get_key();
+
+        let encrypted_data = self.encryption_type.encrypt(buffer);
         if let Err(e) = file.write_all(encrypted_data.as_slice()) {
             println!("{}: {}", "Error".red(), e);
         }
@@ -210,14 +219,47 @@ impl Profile {
 }
 
 /*
+* Parse the environment variables from a string
+* The string should be in the format of KEY=VALUE
+
+* @param buffer String
+* @return HashMap<String, String>
+*/
+pub fn parse_envs_from_string(buffer: String) -> HashMap<String, String> {
+    let mut envs_map = HashMap::new();
+    for buf in buffer.lines() {
+        let mut split = buf.split('=');
+
+        let key = split.next();
+        let value = split.next();
+
+        if key.is_none() || value.is_none() {
+            println!("{}: Can not parse arguments", "Error".red());
+            println!(
+                "{}",
+                "Arguments should be in the format of key=value".bold()
+            );
+            std::process::exit(1);
+        }
+
+        envs_map.insert(key.unwrap().to_owned(), value.unwrap().to_owned());
+    }
+
+    envs_map
+}
+/*
 * Create a new profile
 * If the profile already exists, it will print an error message
 
-@param name String
-@param envs Option<HashMap<String, String>>
-@param user_key String
+@param name String - Name of the new profile
+@param envs Option<HashMap<String, String>> - Environment variables to add to the new profile
+@param encryption_type Box<dyn EncryptionType> - Encryption type to use for the new profile
 */
-pub fn create_profile(name: String, envs: Option<HashMap<String, String>>, user_key: &str) {
+pub fn create_profile(
+    name: String,
+    envs: Option<HashMap<String, String>>,
+    encryption_type: Box<dyn EncryptionType>,
+) {
     if check_profile(name.clone()) {
         println!("{}: Profile already exists", "Error".red());
         return;
@@ -248,21 +290,27 @@ pub fn create_profile(name: String, envs: Option<HashMap<String, String>>, user_
         std::fs::File::create(&profile_file).unwrap()
     };
 
-    if envs.is_empty() {
-        if let Err(e) = file.write_all(encrypt(user_key.to_string(), "".to_string()).as_slice()) {
-            println!("{}: {}", "Error".red(), e);
-        }
-
-        return;
-    }
-
     let mut buffer = String::from("");
 
-    for key in envs.keys() {
-        buffer = buffer + key + "=" + envs.get(&key.to_string()).unwrap() + "\n";
+    if envs.is_empty() {
+        buffer = buffer + &encryption_type.get_key();
+    } else {
+        for key in envs.keys() {
+            buffer = buffer + key + "=" + envs.get(&key.to_string()).unwrap() + "\n";
+        }
+
+        buffer = buffer + &encryption_type.get_key();
     }
 
-    if let Err(e) = file.write_all(encrypt(user_key.to_string(), buffer).as_slice()) {
+    if let Err(e) = file.write_all(encryption_type.encrypt(buffer).as_slice()) {
+        println!("{}: {}", "Error".red(), e);
+    }
+
+    if let Err(e) = file.flush() {
+        println!("{}: {}", "Error".red(), e);
+    }
+
+    if let Err(e) = file.sync_all() {
         println!("{}: {}", "Error".red(), e);
     }
 
@@ -296,10 +344,10 @@ pub fn check_profile(name: String) -> bool {
 pub fn delete_profile(name: String) {
     if check_profile(name.clone()) {
         let configdir = get_configdir();
-        let profile_path = configdir.join("profiles").join(name.clone() + ".env");
+        let profile_path = configdir.join("profiles").join(name + ".env");
 
         match std::fs::remove_file(profile_path) {
-            Ok(_) => println!("Deleted profile: {}", name),
+            Ok(_) => println!("{}: Deleted profile", "Success".green()),
             Err(e) => println!("{}: {}", "Error".red(), e),
         }
     } else {
@@ -329,6 +377,10 @@ pub fn list_profiles(raw: bool) {
     }
 
     if raw {
+        if profiles.is_empty() {
+            println!("{}", "No profiles found".bold());
+            return;
+        }
         for profile in profiles {
             println!("{}", profile);
         }
@@ -438,15 +490,18 @@ pub fn import_profile(file_path: String, profile_name: String) {
 *
 * If the profile does not exist, it will return None
 *
-* If it exists, it will read the contents of the file and decrypt it using the key passed
+* If it exists, it will read the contents of the file and decrypt it using the encryption type passed
 * It will then return a profile object containing the name of the profile and a hashmap of the environment variables
 
-@param profile_name String
-@param key String
+@param profile_name String - The name of the profile
+@param encryption_type Box<dyn EncryptionType> - The encryption type to use to decrypt the profile
 
 @return Option<Profile>
 */
-pub fn get_profile(profile_name: String, key: &str) -> Option<Profile> {
+pub fn get_profile(
+    profile_name: String,
+    mut encryption_type: Box<dyn EncryptionType>,
+) -> Option<Profile> {
     if !check_profile(profile_name.clone()) {
         println!("{}: Profile does not exist", "Error".red());
         return None;
@@ -464,12 +519,17 @@ pub fn get_profile(profile_name: String, key: &str) -> Option<Profile> {
     let mut encrypted_contents = Vec::new();
     file.read_to_end(&mut encrypted_contents).unwrap();
 
-    let content = decrypt(key.to_string(), &encrypted_contents);
+    let content = encryption_type.decrypt(&encrypted_contents);
 
     let mut envs = HashMap::new();
 
     for line in content.lines() {
         if line.is_empty() {
+            continue;
+        }
+
+        if !line.contains('=') {
+            encryption_type.set_key(line.to_string());
             continue;
         }
 
@@ -485,7 +545,7 @@ pub fn get_profile(profile_name: String, key: &str) -> Option<Profile> {
         profile_name,
         envs,
         profile_file_path,
-        key.to_string(),
+        encryption_type,
     ))
 }
 
@@ -515,7 +575,7 @@ pub fn create_shellscript(profile: &str) {
 TMP_FILE=$(mktemp)
 
 set +e
-ENV_VARS=$(envio list {} -- --no-pretty-print)
+ENV_VARS=$(envio list -n {} -v)
 EXIT_CODE=$?
 SHELL_NAME=$(basename "$SHELL")
 

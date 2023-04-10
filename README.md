@@ -21,15 +21,16 @@
 
 ---
 
-<img alt="Demo" src="https://vhs.charm.sh/vhs-3hIrmMhWXj614OI9okDEHt.gif" width="600" />
+<img alt="Demo" src="assets/envio-passphrase-final.gif" width="600" />
 
+To see the GPG encryption demo go [here](assets/envio-gpg-final.gif)
 ## About
 
 `envio` is an open source CLI tool that helps make managing environment variables a breeze. With `envio`, users can create encrypted profiles that contain a collection of environment variables associated with a specific project or use case. `envio` ensures security and simplifies the development process by allowing users to easily switch between profiles as needed and load them in their current terminal session for immediate use.
 
 Some key features of `envio` include:
 
-- `Encrypted` profiles which can only be decrypted using a `key`
+- `Encrypted` profiles through `passphrase` or `GPG` encryption
 - Load profiles into your `terminal sessions`
 - `Persistent` environment variables that are available in `future sessions`
 - `Run` programs with your profiles
@@ -79,33 +80,40 @@ Please note that the envio library is not stable right now and can be subjected 
 
 ```rust
 [dependencies]
-envio = "0.1.0"
+envio = "0.5.0"
 ```
 
 Then, in your Rust code, you can use the `envio` crate to read and write environment variables
 Here's a simple example:
 
 ```rust
-// In this example we get the profile passed as an argument to the program
-// and then print the environment variables in that profile
+// In this example we get the profile passed as an argument to the program and then print the environment variables in that profile
 
-use envio;
+fn main() {
+    let args: Vec<String> = std::env::args().collect();
 
-let args: Vec<String> = std::env::args().collect();
+    if args.len() != 3 {
+        println!("Usage: <profile_name> <key>");
+        return;
+    }
 
-if args.len() != 2 {
-  println!("Usage: <profile_name> <key>");
-  return;
+    let profile_name = args[1].to_string();
+    let key = args[2].to_string(); // All profiles have a key that is used to encrypt the environment variables, this ensures that the environment variables are secure
+
+    // We use the age encryption type here
+    // If the profile was encrypted with a different encryption type you can use the encryption type that was used to encrypt the profile
+    // For example if the profile was encrypted with the GPG encryption type you would use the following line instead:
+    // let encryption_type = envio::crypto::create_encryption_type(key, "gpg"); -- Over here key would be the fingerprint of the GPG key used to encrypt the profile
+    let encryption_type = envio::crypto::create_encryption_type(key, "age");
+
+    // print the environment variables in that profile
+    for (env_var, value) in &envio::get_profile(profile_name, encryption_type)
+        .unwrap()
+        .envs
+    {
+        println!("{}: {}", env_var, value);
+    }
 }
-
-let profile_name = &args[1];
-let key = &args[2]; // All profiles have a key that is used to encrypt the environment variables, this ensures that the environment variables are secure
-
-
-for (env_var, value) in &envio::get_profile(profile_name.to_string(), key.to_string()).unwrap().envs {
-  println!("{}: {}", env_var, value);
-}
-
 ```
 
 For more examples check out the [examples](./examples/) directory
