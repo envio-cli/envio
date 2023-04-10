@@ -1,4 +1,16 @@
 # Change Log
+# v0.5.0
+## Features
+* Add GPG encryption for user profiles, See [Usage](./docs/usage.md)
+* Add flags for using the CLI, See [Usage](./docs/usage.md)
+
+## Bug Fixes
+* Fix issue #17 where envio assumed shell config file was in home directory and would panic if it was not found; envio now prompts users to pass in their shell config if it cannot find it
+
+* Fix bug where envio would exit without doing its first time setup routine if it could not find the shell config; envio now checks for the config directory to determine if it is a fresh install or not
+
+## Other
+* Switched to `age` from `magic_crypt` for passphrase encryption method #13
 
 This document records all notable changes to [envio](https://github.com/humblepenguinn/envio).
 # v0.4.1
