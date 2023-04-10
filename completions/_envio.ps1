@@ -38,11 +38,19 @@ Register-ArgumentCompleter -Native -CommandName 'envio' -ScriptBlock {
             break
         }
         'envio;create' {
+            [CompletionResult]::new('-f', 'f', [CompletionResultType]::ParameterName, 'f')
+            [CompletionResult]::new('--file-to-import-envs-from', 'file-to-import-envs-from', [CompletionResultType]::ParameterName, 'file-to-import-envs-from')
+            [CompletionResult]::new('-e', 'e', [CompletionResultType]::ParameterName, 'e')
+            [CompletionResult]::new('--envs', 'envs', [CompletionResultType]::ParameterName, 'envs')
+            [CompletionResult]::new('-g', 'g', [CompletionResultType]::ParameterName, 'g')
+            [CompletionResult]::new('--gpg-key-fingerprint', 'gpg-key-fingerprint', [CompletionResultType]::ParameterName, 'gpg-key-fingerprint')
             [CompletionResult]::new('-h', 'h', [CompletionResultType]::ParameterName, 'Print help')
             [CompletionResult]::new('--help', 'help', [CompletionResultType]::ParameterName, 'Print help')
             break
         }
         'envio;add' {
+            [CompletionResult]::new('-e', 'e', [CompletionResultType]::ParameterName, 'e')
+            [CompletionResult]::new('--envs', 'envs', [CompletionResultType]::ParameterName, 'envs')
             [CompletionResult]::new('-h', 'h', [CompletionResultType]::ParameterName, 'Print help')
             [CompletionResult]::new('--help', 'help', [CompletionResultType]::ParameterName, 'Print help')
             break
@@ -58,31 +66,49 @@ Register-ArgumentCompleter -Native -CommandName 'envio' -ScriptBlock {
             break
         }
         'envio;launch' {
+            [CompletionResult]::new('-p', 'p', [CompletionResultType]::ParameterName, 'p')
+            [CompletionResult]::new('--program', 'program', [CompletionResultType]::ParameterName, 'program')
             [CompletionResult]::new('-h', 'h', [CompletionResultType]::ParameterName, 'Print help')
             [CompletionResult]::new('--help', 'help', [CompletionResultType]::ParameterName, 'Print help')
             break
         }
         'envio;remove' {
+            [CompletionResult]::new('-e', 'e', [CompletionResultType]::ParameterName, 'e')
+            [CompletionResult]::new('--envs-to-remove', 'envs-to-remove', [CompletionResultType]::ParameterName, 'envs-to-remove')
             [CompletionResult]::new('-h', 'h', [CompletionResultType]::ParameterName, 'Print help')
             [CompletionResult]::new('--help', 'help', [CompletionResultType]::ParameterName, 'Print help')
             break
         }
         'envio;list' {
+            [CompletionResult]::new('-n', 'n', [CompletionResultType]::ParameterName, 'n')
+            [CompletionResult]::new('--profile-name', 'profile-name', [CompletionResultType]::ParameterName, 'profile-name')
+            [CompletionResult]::new('-p', 'p', [CompletionResultType]::ParameterName, 'p')
+            [CompletionResult]::new('--profiles', 'profiles', [CompletionResultType]::ParameterName, 'profiles')
+            [CompletionResult]::new('-v', 'v', [CompletionResultType]::ParameterName, 'v')
+            [CompletionResult]::new('--no-pretty-print', 'no-pretty-print', [CompletionResultType]::ParameterName, 'no-pretty-print')
             [CompletionResult]::new('-h', 'h', [CompletionResultType]::ParameterName, 'Print help')
             [CompletionResult]::new('--help', 'help', [CompletionResultType]::ParameterName, 'Print help')
             break
         }
         'envio;update' {
+            [CompletionResult]::new('-e', 'e', [CompletionResultType]::ParameterName, 'e')
+            [CompletionResult]::new('--envs', 'envs', [CompletionResultType]::ParameterName, 'envs')
             [CompletionResult]::new('-h', 'h', [CompletionResultType]::ParameterName, 'Print help')
             [CompletionResult]::new('--help', 'help', [CompletionResultType]::ParameterName, 'Print help')
             break
         }
         'envio;export' {
+            [CompletionResult]::new('-f', 'f', [CompletionResultType]::ParameterName, 'f')
+            [CompletionResult]::new('--file-to-export-to', 'file-to-export-to', [CompletionResultType]::ParameterName, 'file-to-export-to')
             [CompletionResult]::new('-h', 'h', [CompletionResultType]::ParameterName, 'Print help')
             [CompletionResult]::new('--help', 'help', [CompletionResultType]::ParameterName, 'Print help')
             break
         }
         'envio;import' {
+            [CompletionResult]::new('-f', 'f', [CompletionResultType]::ParameterName, 'f')
+            [CompletionResult]::new('--file-to-import-from', 'file-to-import-from', [CompletionResultType]::ParameterName, 'file-to-import-from')
+            [CompletionResult]::new('-u', 'u', [CompletionResultType]::ParameterName, 'u')
+            [CompletionResult]::new('--url', 'url', [CompletionResultType]::ParameterName, 'url')
             [CompletionResult]::new('-h', 'h', [CompletionResultType]::ParameterName, 'Print help')
             [CompletionResult]::new('--help', 'help', [CompletionResultType]::ParameterName, 'Print help')
             break

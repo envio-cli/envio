@@ -1,6 +1,20 @@
 # Change Log
 
 This document records all notable changes to [envio](https://github.com/humblepenguinn/envio).
+
+# v0.5.0
+## Features
+* Add GPG encryption for user profiles, See [Usage](./docs/usage.md)
+* Add flags for using the CLI, See [Usage](./docs/usage.md)
+
+## Bug Fixes
+* Fix issue #17 where envio assumed shell config file was in home directory and would panic if it was not found; envio now prompts users to pass in their shell config if it cannot find it
+
+* Fix bug where envio would exit without doing its first time setup routine if it could not find the shell config; envio now checks for the config directory to determine if it is a fresh install or not
+
+## Other
+* Switched to `age` from `magic_crypt` for passphrase encryption method #13
+
 # v0.4.1
 ## Bug Fixes
 * Fix slow startup times due to slow update fetching
@@ -8,8 +22,8 @@ This document records all notable changes to [envio](https://github.com/humblepe
 # v0.4.0
 ## Features
 * Add new argument `--no-pretty-print` to `envio list` command, See [Usage](./docs/usage.md)
-* Add support for `fish` shell #9 
-* 
+* Add support for `fish` shell #9
+*
 ## Bug Fixes
 * Fix Security Vulnerability, See [Here](./docs/envio-profile-loading-update.md)
 
@@ -20,11 +34,11 @@ This document records all notable changes to [envio](https://github.com/humblepe
 
 # v0.3.0
 # Features
-* Users can now create new profiles using files and also pass in environment variables #8 
-* Added support for the `fish` shell #9 
+* Users can now create new profiles using files and also pass in environment variables #8
+* Added support for the `fish` shell #9
 
 # Bug Fixes
-* Both the config and profiles directory are created at startup, if they do not exist #8 
+* Both the config and profiles directory are created at startup, if they do not exist #8
 
 # Other
 * docs: add Vojtch159 as a contributor for doc by @allcontributors in https://github.com/humblepenguinn/envio/pull/7

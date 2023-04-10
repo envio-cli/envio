@@ -11,15 +11,28 @@ complete -c envio -n "__fish_use_subcommand" -f -a "export" -d 'Export a profile
 complete -c envio -n "__fish_use_subcommand" -f -a "import" -d 'Import a profile from a file'
 complete -c envio -n "__fish_use_subcommand" -f -a "version" -d 'Print the version'
 complete -c envio -n "__fish_use_subcommand" -f -a "help" -d 'Print this message or the help of the given subcommand(s)'
+complete -c envio -n "__fish_seen_subcommand_from create" -s f -l file-to-import-envs-from -r
+complete -c envio -n "__fish_seen_subcommand_from create" -s e -l envs -r
+complete -c envio -n "__fish_seen_subcommand_from create" -s g -l gpg-key-fingerprint -r
 complete -c envio -n "__fish_seen_subcommand_from create" -s h -l help -d 'Print help'
+complete -c envio -n "__fish_seen_subcommand_from add" -s e -l envs -r
 complete -c envio -n "__fish_seen_subcommand_from add" -s h -l help -d 'Print help'
 complete -c envio -n "__fish_seen_subcommand_from load" -s h -l help -d 'Print help'
 complete -c envio -n "__fish_seen_subcommand_from unload" -s h -l help -d 'Print help'
+complete -c envio -n "__fish_seen_subcommand_from launch" -s p -l program -r
 complete -c envio -n "__fish_seen_subcommand_from launch" -s h -l help -d 'Print help'
+complete -c envio -n "__fish_seen_subcommand_from remove" -s e -l envs-to-remove -r
 complete -c envio -n "__fish_seen_subcommand_from remove" -s h -l help -d 'Print help'
+complete -c envio -n "__fish_seen_subcommand_from list" -s n -l profile-name -r
+complete -c envio -n "__fish_seen_subcommand_from list" -s p -l profiles
+complete -c envio -n "__fish_seen_subcommand_from list" -s v -l no-pretty-print
 complete -c envio -n "__fish_seen_subcommand_from list" -s h -l help -d 'Print help'
+complete -c envio -n "__fish_seen_subcommand_from update" -s e -l envs -r
 complete -c envio -n "__fish_seen_subcommand_from update" -s h -l help -d 'Print help'
+complete -c envio -n "__fish_seen_subcommand_from export" -s f -l file-to-export-to -r
 complete -c envio -n "__fish_seen_subcommand_from export" -s h -l help -d 'Print help'
+complete -c envio -n "__fish_seen_subcommand_from import" -s f -l file-to-import-from -r
+complete -c envio -n "__fish_seen_subcommand_from import" -s u -l url -r
 complete -c envio -n "__fish_seen_subcommand_from import" -s h -l help -d 'Print help'
 complete -c envio -n "__fish_seen_subcommand_from version" -s h -l help -d 'Print help'
 complete -c envio -n "__fish_seen_subcommand_from help; and not __fish_seen_subcommand_from create; and not __fish_seen_subcommand_from add; and not __fish_seen_subcommand_from load; and not __fish_seen_subcommand_from unload; and not __fish_seen_subcommand_from launch; and not __fish_seen_subcommand_from remove; and not __fish_seen_subcommand_from list; and not __fish_seen_subcommand_from update; and not __fish_seen_subcommand_from export; and not __fish_seen_subcommand_from import; and not __fish_seen_subcommand_from version; and not __fish_seen_subcommand_from help" -f -a "create" -d 'Create a new profile'

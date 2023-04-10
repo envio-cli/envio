@@ -43,6 +43,8 @@ jobs:
           components: clippy, rustfmt
       - name: Run cargo fmt
         run: cargo fmt -- --check
+      - name: Install libgpgme-dev and libgpg-error-dev
+        run: sudo apt-get -y update && sudo apt-get install -y libgpgme-dev && sudo apt-get install -y libgpg-error-dev
       - name: Run clippy (on minimum supported rust version to prevent warnings we can't fix)
         run: cargo clippy --locked --all-targets ${{ env.MSRV_FEATURES }}
       - name: Run tests
@@ -57,8 +59,6 @@ jobs:
         job:
           - { target: x86_64-unknown-linux-gnu,     os: ubuntu-20.04,   use-cross: true }
           - { target: aarch64-unknown-linux-gnu,    os: ubuntu-20.04,   use-cross: true }
-          - { target: arm-unknown-linux-gnueabihf , os: ubuntu-20.04,   use-cross: true }
-          - { target: arm-unknown-linux-musleabihf, os: ubuntu-20.04,   use-cross: true }
           - { target: i686-unknown-linux-gnu,       os: ubuntu-20.04,   use-cross: true }
           - { target: x86_64-apple-darwin,          os: macos-12,                       }
           - { target: x86_64-pc-windows-gnu,        os: windows-2019,   arch: x86_64    }
@@ -67,6 +67,11 @@ jobs:
     env:
       BUILD_CMD: cargo
     steps:
+      - name: Set PKG_CONFIG
+        if: matrix.job.use-cross
+        shell: bash
+        run: echo "PKG_CONFIG=/usr/bin/pkg-config" >> $GITHUB_ENV
+
       - name: Checkout source code
         uses: actions/checkout@v3
 
@@ -103,9 +108,26 @@ jobs:
 
       - name: Install cross
         if: matrix.job.use-cross
-        uses: taiki-e/install-action@v2
-        with:
-          tool: cross
+        shell: bash
+        run: |
+          cargo install cross --git https://github.com/cross-rs/cross
+
+      - name: Install brew (MacOS)
+        shell: bash
+        if: startsWith(matrix.job.os, 'mac')
+        run: |
+          /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+
+      - name: Install gnupg gpgme pkg-config (MacOS)
+        shell: bash
+        if: startsWith(matrix.job.os, 'mac')
+        run: |
+          brew install gnupg
+          brew install gpgme
+          brew install pkg-config
+          pkg-config --version
+          pkg-config --variable pc_path pkg-config
+          echo $PKG_CONFIG_PATH
 
       - name: Overwrite build command env variable
         if: matrix.job.use-cross
