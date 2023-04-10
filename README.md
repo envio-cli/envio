@@ -1,5 +1,3 @@
-<link rel="stylesheet" href="https://unpkg.com/swiper/swiper-bundle.min.css" />
-<script src="https://unpkg.com/swiper/swiper-bundle.min.js"></script>
 <h1 align="center">
 <img src="assets/logo/cover.png" alt="envio Logo" width="600">
 </h1>
@@ -22,24 +20,11 @@
 </p>
 
 ---
+<img alt="passphrase-demo" src="assets/envio-passphrase-final.gif" width="600" /><p>Demo with passphrase encryption</p>
 
-<div class="swiper-container" align="center">
-  <div class="swiper-wrapper">
-    <div class="swiper-slide"><img alt="passphrase-demo" src="assets/envio-passphrase-final.gif" width="600" /><p>Demo with passphrase encryption</p></div>
-    <div class="swiper-slide"><img alt="gpg-demo" src="assets/envio-gpg-final.gif" width="600" /><p>Demo with gpg encryption</p></div>
-  </div>
-  <div class="swiper-pagination"></div>
-</div>
+Go to the [here](assets/envio-gpg-final.gif) to see the demo with GPG encryption!
 
-<script>
-  var mySwiper = new Swiper('.swiper-container', {
-  pagination: {
-    el: '.swiper-pagination',
-    clickable: true
-  }
-});
 
-</script>
 
 ## About
 
