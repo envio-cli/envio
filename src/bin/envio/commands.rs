@@ -290,7 +290,7 @@ impl Command {
                     } else {
                         return;
                     };
-
+                
                 let output = std::process::Command::new(&program[0])
                     .envs(profile.envs)
                     .args(&program[1..])
@@ -350,20 +350,18 @@ impl Command {
                         return;
                     }
 
-                    let mut encryption_type =
-                        get_encryption_type(profile_name.as_ref().unwrap().to_string());
+                    let mut encryption_type = get_encryption_type(profile_name.as_ref().unwrap().to_string());
 
                     if encryption_type.as_string() == "age" {
                         encryption_type.set_key(get_userkey());
                     }
 
-                    let profile = if let Some(p) =
-                        get_profile(profile_name.as_ref().unwrap().to_string(), encryption_type)
-                    {
-                        p
-                    } else {
-                        return;
-                    };
+                    let profile =
+                        if let Some(p) = get_profile(profile_name.as_ref().unwrap().to_string(), encryption_type) {
+                            p
+                        } else {
+                            return;
+                        };
 
                     if *no_pretty_print {
                         for (key, value) in profile.envs.iter() {
