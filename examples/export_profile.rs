@@ -10,15 +10,9 @@ fn main() {
 
     let profile_name = args[1].to_string(); // The first argument is the name of the profile to export
     let file_to_save = args[2].to_string(); // The second argument is the path to the file to export the profile to
-    let key = args[3].to_string(); // The third argument is the key to decrypt the profile
-
-    // We use the age encryption type here
-    // If the profile was encrypted with a different encryption type you can use the encryption type that was used to encrypt the profile
-    // For example if the profile was encrypted with the GPG encryption type you would use the following line instead:
-    // let encryption_type = envio::crypto::create_encryption_type(key, "gpg"); -- Over here key would be the fingerprint of the GPG key used to encrypt the profile
-    let encryption_type = envio::crypto::create_encryption_type(key, "age");
+    let key = &args[3]; // The third argument is the key to decrypt the profile
 
     // exporting the environment variables in the profile
-    let profile = envio::get_profile(profile_name, encryption_type);
+    let profile = envio::get_profile(profile_name, key);
     profile.unwrap().export_envs(file_to_save);
 }

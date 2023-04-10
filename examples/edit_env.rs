@@ -9,15 +9,9 @@ fn main() {
     }
 
     let profile_name = args[1].to_string(); // The first argument is the name of the profile
-    let key = args[2].to_string(); // The second argument is the key to decrypt the profile
+    let key = &args[2]; // The second argument is the key to decrypt the profile
 
-    // We use the age encryption type here
-    // If the profile was encrypted with a different encryption type you can use the encryption type that was used to encrypt the profile
-    // For example if the profile was encrypted with the GPG encryption type you would use the following line instead:
-    // let encryption_type = envio::crypto::create_encryption_type(key, "gpg"); -- Over here key would be the fingerprint of the GPG key used to encrypt the profile
-    let encryption_type = envio::crypto::create_encryption_type(key, "age");
-
-    let mut profile = envio::get_profile(profile_name, encryption_type).unwrap();
+    let mut profile = envio::get_profile(profile_name, key).unwrap();
 
     // print the environment variables in that profile before editing
     for (env_var, value) in &profile.envs {

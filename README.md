@@ -20,18 +20,16 @@
 </p>
 
 ---
-<img alt="passphrase-demo" src="assets/envio-passphrase-final.gif" width="600" /><p>Demo with passphrase encryption</p>
 
-Go to the [here](assets/envio-gpg-final.gif) to see the demo with GPG encryption!
-
-
+<img alt="Demo" src="https://vhs.charm.sh/vhs-3hIrmMhWXj614OI9okDEHt.gif" width="600" />
 
 ## About
 
 `envio` is an open source CLI tool that helps make managing environment variables a breeze. With `envio`, users can create encrypted profiles that contain a collection of environment variables associated with a specific project or use case. `envio` ensures security and simplifies the development process by allowing users to easily switch between profiles as needed and load them in their current terminal session for immediate use.
 
 Some key features of `envio` include:
-- `Encrypted` profiles through `GPG` or normal `passphrase` encryption
+
+- `Encrypted` profiles which can only be decrypted using a `key`
 - Load profiles into your `terminal sessions`
 - `Persistent` environment variables that are available in `future sessions`
 - `Run` programs with your profiles

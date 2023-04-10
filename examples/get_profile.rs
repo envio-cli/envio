@@ -9,19 +9,10 @@ fn main() {
     }
 
     let profile_name = args[1].to_string();
-    let key = args[2].to_string(); // All profiles have a key that is used to encrypt the environment variables, this ensures that the environment variables are secure
-
-    // We use the age encryption type here
-    // If the profile was encrypted with a different encryption type you can use the encryption type that was used to encrypt the profile
-    // For example if the profile was encrypted with the GPG encryption type you would use the following line instead:
-    // let encryption_type = envio::crypto::create_encryption_type(key, "gpg"); -- Over here key would be the fingerprint of the GPG key used to encrypt the profile
-    let encryption_type = envio::crypto::create_encryption_type(key, "age");
+    let key = &args[2]; // All profiles have a key that is used to encrypt the environment variables, this ensures that the environment variables are secure
 
     // print the environment variables in that profile
-    for (env_var, value) in &envio::get_profile(profile_name, encryption_type)
-        .unwrap()
-        .envs
-    {
+    for (env_var, value) in &envio::get_profile(profile_name, key).unwrap().envs {
         println!("{}: {}", env_var, value);
     }
 }

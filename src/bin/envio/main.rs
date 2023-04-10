@@ -4,12 +4,10 @@ mod version;
 
 #[cfg(target_family = "unix")]
 use std::io::Write;
-use std::path::{Path, PathBuf};
+use std::path::Path;
 
 use clap::Parser;
 use colored::Colorize;
-#[cfg(target_family = "unix")]
-use inquire::Text;
 use semver::Version;
 
 use envio::utils;
@@ -36,73 +34,35 @@ fn main() {
         );
     }
 
-    #[cfg(target_family = "unix")]
-    {
-        if !Path::new(&utils::get_configdir()).exists() {
-            println!("{}", "Creating config directory".bold());
-            if let Err(e) = std::fs::create_dir(utils::get_configdir()) {
-                println!("{}: {}", "Error".red(), e);
-                std::process::exit(1);
-            }
-
-            if let Err(e) = std::fs::create_dir(utils::get_configdir().join("profiles")) {
-                println!("{}: {}", "Error".red(), e);
-                std::process::exit(1);
-            }
+    if !Path::new(&utils::get_configdir()).exists() {
+        println!("{}", "Creating config directory".bold());
+        if let Err(e) = std::fs::create_dir(utils::get_configdir()) {
+            println!("{}: {}", "Error".red(), e);
+            std::process::exit(1);
         }
 
+        if let Err(e) = std::fs::create_dir(utils::get_configdir().join("profiles")) {
+            println!("{}: {}", "Error".red(), e);
+            std::process::exit(1);
+        }
+    }
+
+    #[cfg(target_family = "unix")]
+    {
         if !Path::new(&utils::get_configdir().join("setenv.sh")).exists() {
             println!("{}", "Creating shellscript".bold());
             if let Err(e) = std::fs::write(utils::get_configdir().join("setenv.sh"), "") {
                 println!("{}: {}", "Error".red(), e);
-                if let Err(e) = std::fs::remove_dir_all(utils::get_configdir()) {
-                    println!("{}: {}", "Error".red(), e);
-                    std::process::exit(1);
-                }
-
                 std::process::exit(1);
-            }
-
-            let mut file_path = PathBuf::from(
-                &(utils::get_homedir().to_str().unwrap().to_owned()
-                    + &format!("/{}", envio::get_shell_config())),
-            );
-            if !file_path.exists() {
-                let input = Text::new(
-                    "Shell config file not found, please enter the path to your shell config file:",
-                )
-                .prompt();
-
-                file_path = if let Ok(val) = input {
-                    PathBuf::from(val)
-                } else {
-                    println!("{}: {}", "Error".red(), input.err().unwrap());
-                    if let Err(e) = std::fs::remove_dir_all(utils::get_configdir()) {
-                        println!("{}: {}", "Error".red(), e);
-                        std::process::exit(1);
-                    }
-                    std::process::exit(1);
-                };
-
-                if !file_path.exists() {
-                    println!(
-                        "{}: Specified shell config file does not exist either!?",
-                        "Error".red()
-                    );
-
-                    if let Err(e) = std::fs::remove_dir_all(utils::get_configdir()) {
-                        println!("{}: {}", "Error".red(), e);
-                        std::process::exit(1);
-                    }
-
-                    std::process::exit(1);
-                }
             }
 
             let mut file = std::fs::OpenOptions::new()
                 .write(true)
                 .append(true)
-                .open(file_path)
+                .open(
+                    utils::get_homedir().to_str().unwrap().to_owned()
+                        + &format!("/{}", envio::get_shell_config()),
+                )
                 .unwrap();
 
             let buffer = if envio::get_shell_config().contains("fish") {

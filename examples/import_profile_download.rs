@@ -15,18 +15,9 @@ fn main() {
 
     // Check that the profile was downloaded correctly
     // Make sure you have the key that was used to encrypt the profile file or else you won't be able to decrypt it
-    let key = args[3].to_string();
+    let key = &args[3];
 
-    // We use the age encryption type here
-    // If the profile was encrypted with a different encryption type you can use the encryption type that was used to encrypt the profile
-    // For example if the profile was encrypted with the GPG encryption type you would use the following line instead:
-    // let encryption_type = envio::crypto::create_encryption_type(key, "gpg"); -- Over here key would be the fingerprint of the GPG key used to encrypt the profile
-    let encryption_type = envio::crypto::create_encryption_type(key, "age");
-
-    for (env_var, value) in &envio::get_profile(profile_name, encryption_type)
-        .unwrap()
-        .envs
-    {
+    for (env_var, value) in &envio::get_profile(profile_name, key).unwrap().envs {
         println!("{}: {}", env_var, value);
     }
 }

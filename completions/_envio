@@ -28,31 +28,23 @@ _envio() {
         case $line[1] in
             (create)
 _arguments "${_arguments_options[@]}" \
-'-f+[]:ENVS_FILE: ' \
-'--file-to-import-envs-from=[]:ENVS_FILE: ' \
-'*-e+[]:ENVS: ' \
-'*--envs=[]:ENVS: ' \
-'-g+[]:GPG: ' \
-'--gpg-key-fingerprint=[]:GPG: ' \
 '-h[Print help]' \
 '--help[Print help]' \
-':profile_name:' \
+'*::args:' \
 && ret=0
 ;;
 (add)
 _arguments "${_arguments_options[@]}" \
-'*-e+[]:ENVS: ' \
-'*--envs=[]:ENVS: ' \
 '-h[Print help]' \
 '--help[Print help]' \
-':profile_name:' \
+'*::args:' \
 && ret=0
 ;;
 (load)
 _arguments "${_arguments_options[@]}" \
 '-h[Print help]' \
 '--help[Print help]' \
-':profile_name:' \
+'*::args:' \
 && ret=0
 ;;
 (unload)
@@ -63,68 +55,51 @@ _arguments "${_arguments_options[@]}" \
 ;;
 (launch)
 _arguments "${_arguments_options[@]}" \
-'*-p+[]:PROGRAM: ' \
-'*--program=[]:PROGRAM: ' \
 '-h[Print help]' \
 '--help[Print help]' \
-':profile_name:' \
+'*::args:' \
 && ret=0
 ;;
 (remove)
 _arguments "${_arguments_options[@]}" \
-'*-e+[]:ENVS: ' \
-'*--envs-to-remove=[]:ENVS: ' \
 '-h[Print help]' \
 '--help[Print help]' \
-':profile_name:' \
+'*::args:' \
 && ret=0
 ;;
 (list)
 _arguments "${_arguments_options[@]}" \
-'-n+[]:PROFILE_NAME: ' \
-'--profile-name=[]:PROFILE_NAME: ' \
-'-p[]' \
-'--profiles[]' \
-'-v[]' \
-'--no-pretty-print[]' \
 '-h[Print help]' \
 '--help[Print help]' \
+'*::args:' \
 && ret=0
 ;;
 (update)
 _arguments "${_arguments_options[@]}" \
-'*-e+[]:ENVS: ' \
-'*--envs=[]:ENVS: ' \
 '-h[Print help]' \
 '--help[Print help]' \
-':profile_name:' \
+'*::args:' \
 && ret=0
 ;;
 (export)
 _arguments "${_arguments_options[@]}" \
-'-f+[]:FILE: ' \
-'--file-to-export-to=[]:FILE: ' \
 '-h[Print help]' \
 '--help[Print help]' \
-':profile_name:' \
+'*::args:' \
 && ret=0
 ;;
 (import)
 _arguments "${_arguments_options[@]}" \
-'-f+[]:FILE: ' \
-'--file-to-import-from=[]:FILE: ' \
-'-u+[]:URL: ' \
-'--url=[]:URL: ' \
 '-h[Print help]' \
 '--help[Print help]' \
-':profile_name:' \
+'*::args:' \
 && ret=0
 ;;
 (version)
 _arguments "${_arguments_options[@]}" \
 '-h[Print help]' \
 '--help[Print help]' \
-'::verbose:(true false)' \
+'*::args:' \
 && ret=0
 ;;
 (help)
