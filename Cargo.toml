@@ -23,7 +23,7 @@ colored = "2.0.0"
 comfy-table = "6.1.4"
 dirs = "5.0.0"
 indicatif = "0.17.3"
-inquire = "0.6.0"
+inquire = "0.6.1"
 semver = "1.0.17"
 serde = { version = "1.0.159", features = ["derive"] }
 regex = "1.7"
