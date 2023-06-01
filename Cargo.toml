@@ -17,7 +17,7 @@ path = "src/lib.rs"
 [dependencies]
 age = "0.9.1"
 bincode = "1.3.3"
-chrono = { version = "0.4.20", features = ["serde"] }
+chrono = { version = "0.4.26", features = ["serde"] }
 clap = { version = "4.1.8", features = ["derive"] }
 colored = "2.0.0"
 comfy-table = "6.1.4"
@@ -39,7 +39,7 @@ default-features = false
 features = ["rustls-tls-native-roots"]
 
 [build-dependencies]
-chrono = "0.4.20"
+chrono = "0.4.26"
 clap = { version = "4.1.8", features = ["derive"] }
 clap_mangen = "0.2.9"
 clap_complete = "4.2.1"
