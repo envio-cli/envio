@@ -42,7 +42,7 @@ features = ["rustls-tls-native-roots"]
 chrono = "0.4.20"
 clap = { version = "4.1.8", features = ["derive"] }
 clap_mangen = "0.2.9"
-clap_complete = "4.2.1"
+clap_complete = "4.3.2"
 
 
 
