@@ -32,7 +32,7 @@ jobs:
     runs-on: ubuntu-20.04
     steps:
       - name: Checkout source code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
       - name: Get the MSRV from the package metadata
         id: msrv
         run: cargo metadata --no-deps --format-version 1 | jq -r '"version=" + (.packages[] | select(.name = "hyperfine").rust_version)' >> $GITHUB_OUTPUT
@@ -73,7 +73,7 @@ jobs:
         run: echo "PKG_CONFIG=/usr/bin/pkg-config" >> $GITHUB_ENV
 
       - name: Checkout source code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Install prerequisites
         shell: bash
