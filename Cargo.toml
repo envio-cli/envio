@@ -2,9 +2,9 @@
 name = "envio"
 version = "0.5.0"
 rust-version = "1.64.0"
-description = "Envio is a command-line tool that simplifies the management of environment variables across multiple profiles. It allows users to easily switch between different configurations and apply them to their current environment. Envio also encrypts sensitive environment variable values to ensure secure storage and transmission"
+description = "A Modern And Secure CLI Tool For Managing Environment Variables"
 edition = "2021"
-authors = ["Humble Penguin <humblepenguinoffical@gmail.com>"]
+authors = ["Humble Penguin <humblepenguinn@gmail.com>"]
 repository = "https://github.com/humblepenguinn/envio/"
 license = "MIT/Apache-2.0"
 readme = "README.md"
