@@ -97,7 +97,10 @@ pub enum Command {
         #[clap(required = false, long = "file-to-export-to", short = 'f')]
         file: Option<String>,
     },
-    #[clap(name = "import", about = "Download a profile over the internet and import it into the system or import a locally stored profile into your current envio installation")]
+    #[clap(
+        name = "import",
+        about = "Download a profile over the internet and import it into the system or import a locally stored profile into your current envio installation"
+    )]
     Import {
         #[clap(required = true)]
         profile_name: String,
