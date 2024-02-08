@@ -12,14 +12,19 @@ fn main() {
     let app_name = cmd.get_name().to_string();
 
     let completions_dir = "completions";
-    create_dir(completions_dir);
+
+    if let Err(e) = create_dir(completions_dir) {
+        panic!("Error: {}", e);
+    }
 
     if let Err(e) = generate_completions(&mut cmd, &app_name, completions_dir) {
         panic!("Error: {}", e);
     }
 
     let manpage_dir = "man";
-    create_dir(manpage_dir);
+    if let Err(e) = create_dir(manpage_dir) {
+        panic!("Error: {}", e);
+    }
 
     if let Err(e) = generate_manpages(cmd, manpage_dir) {
         panic!("Error: {}", e);
@@ -120,8 +125,10 @@ fn get_buildtimestamp() -> String {
 
  @param dir_name &str
 */
-fn create_dir(dir_name: &str) {
+fn create_dir(dir_name: &str) -> Result<(), std::io::Error> {
     if let Err(e) = fs::create_dir_all(dir_name) {
-        panic!("Error: {}", e);
+       return Err(e);
     }
+
+    Ok(())
 }
