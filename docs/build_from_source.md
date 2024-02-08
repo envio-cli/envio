@@ -26,4 +26,3 @@ Now, Check to see if it worked:
 $ cargo run -- version
 ```
 
-

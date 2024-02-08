@@ -1,124 +1,49 @@
-<h1 align="center">
+<!-- <h1 align="center">
 <img src="assets/logo/cover.png" alt="envio Logo" width="600">
-</h1>
+</h1> -->
+
+<div align="center">
+        <img
+          src="assets/icon-color.svg"
+          width="200px"
+        />
+        <h1
+        >
+          envio
+        </h1>
+      </div>
 
 <div align="center">
 <h2 align="center">A Modern And Secure CLI Tool For Managing Environment Variables</h2>
 
 [![CICD](https://github.com/humblepenguinn/envio/actions/workflows/CICD.yml/badge.svg)](https://github.com/humblepenguinn/envio/workflows/CICD.yml)
 [![Version info](https://img.shields.io/crates/v/envio.svg)](https://crates.io/crates/envio)
+[![Visit Official Site](https://img.shields.io/badge/Visit-Official%20Site-blue)](https://envio-cli.github.io/home)
+
 
 </div>
 
-<p align="center">
-  <a href="#about">About</a> •
-  <a href="#profiles">Profiles</a> •
-  <a href="#installation">Installation</a> •
-  <a href="#usage">Usage</a> •
-  <a href="#contributing">Contributing</a> •
-  <a href="#license">License</a>
-</p>
+<div align='center'><img alt="Demo" src="assets/envio-passphrase-final.gif" width="600" />
+</div>
 
----
+<div align='center'>To see the GPG encryption demo go <a href="https://github.com/envio-cli/envio/blob/main/assets/envio-gpg-final.gif">here</a></div>
 
-<img alt="Demo" src="assets/envio-passphrase-final.gif" width="600" />
-
-To see the GPG encryption demo go [here](assets/envio-gpg-final.gif)
 ## About
 
 `envio` is an open source CLI tool that helps make managing environment variables a breeze. With `envio`, users can create encrypted profiles that contain a collection of environment variables associated with a specific project or use case. `envio` ensures security and simplifies the development process by allowing users to easily switch between profiles as needed and load them in their current terminal session for immediate use.
 
 Some key features of `envio` include:
 
-- `Encrypted` profiles through `passphrase` or `GPG` encryption
-- Load profiles into your `terminal sessions`
-- `Persistent` environment variables that are available in `future sessions`
-- `Run` programs with your profiles
-- `Importing` profiles from a file
-- `Downloading` profiles and then importing them
-- `Exporting` profiles to a file
+- **Encrypted** profiles through `passphrase` or `GPG` encryption
+- **Load** profiles into your `terminal sessions`
+- **Persistent** environment variables that are available in `future sessions`
+- **Run** programs with your profiles
+- **Importing** profiles stored on the internet into your local installation
+- **Exporting** profiles to a file
 
-## Profiles
+Sound interesting? Check out the [official website](https://envio-cli.github.io/home) for more information such as how to **install** and **use** the tool on your machine.
 
-In `envio`, a profile is a collection of environment variables that are associated with a specific project, application, or use case. Users can create multiple profiles, each with their own set of environment variables, and easily switch between them as needed.
-
-For example, a developer might create a profile for a web development project that includes environment variables for the database connection, API keys, and other project-specific settings. They could then switch to a different profile for a mobile app project that requires a different set of environment variables.
-
-The benefit of using profiles is that users can easily manage and switch between different sets of environment variables without having to manually set and unset them every time they switch tasks. Additionally, in `envio`, profiles are encrypted, so users can rest assured that their sensitive environment variables are secure and require a key to access them.
-
-## Installation
-
-You can install `envio` through a few methods
-
-### Releases
-
-You can head over to the [releases page](https://github.com/humblepenguinn/envio/releases/latest) and download the official `envio` binaries from there for your target operating system. `Windows MSI installers` are also available
-
-### Cargo Repository
-
-You can install `envio` through the Cargo repository using the following command:
-
-```sh
-$ cargo install envio
-```
-
-### Source
-
-Go [here](./docs/build_from_source.md) to see how
-
-More methods of installation will be added in the future!
-
-## Usage
-
-Go [here](./docs/usage.md) to see how to use the tool
-
-## Development
-
-In addition to the command-line tool, `envio` can also be used as a library in Rust programs to manage environment variables. To use `envio` in your program, add it as a dependency in your Cargo.toml file:
-
-Please note that the envio library is not stable right now and can be subjected to many changes!
-
-```rust
-[dependencies]
-envio = "0.5.0"
-```
-
-Then, in your Rust code, you can use the `envio` crate to read and write environment variables
-Here's a simple example:
-
-```rust
-// In this example we get the profile passed as an argument to the program and then print the environment variables in that profile
-
-fn main() {
-    let args: Vec<String> = std::env::args().collect();
-
-    if args.len() != 3 {
-        println!("Usage: <profile_name> <key>");
-        return;
-    }
-
-    let profile_name = args[1].to_string();
-    let key = args[2].to_string(); // All profiles have a key that is used to encrypt the environment variables, this ensures that the environment variables are secure
-
-    // We use the age encryption type here
-    // If the profile was encrypted with a different encryption type you can use the encryption type that was used to encrypt the profile
-    // For example if the profile was encrypted with the GPG encryption type you would use the following line instead:
-    // let encryption_type = envio::crypto::create_encryption_type(key, "gpg"); -- Over here key would be the fingerprint of the GPG key used to encrypt the profile
-    let encryption_type = envio::crypto::create_encryption_type(key, "age");
-
-    // print the environment variables in that profile
-    for (env_var, value) in &envio::get_profile(profile_name, encryption_type)
-        .unwrap()
-        .envs
-    {
-        println!("{}: {}", env_var, value);
-    }
-}
-```
-
-For more examples check out the [examples](./examples/) directory
-
-Currently, `envio` is only available as a Rust library
+`envio` currently supports **Linux**, **MacOS** and **Windows**
 
 ## Contributors
 
