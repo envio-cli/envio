@@ -127,7 +127,7 @@ fn get_buildtimestamp() -> String {
 */
 fn create_dir(dir_name: &str) -> Result<(), std::io::Error> {
     if let Err(e) = fs::create_dir_all(dir_name) {
-       return Err(e);
+        return Err(e);
     }
 
     Ok(())
