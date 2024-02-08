@@ -1,6 +1,9 @@
 /target
 /build
 
+# API is subject to change, so for now ignore the examples until we have a stable API
+/examples
+
 /TODO
 
 /.env
