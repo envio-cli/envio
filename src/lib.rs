@@ -575,7 +575,7 @@ pub fn create_shellscript(profile: &str) {
 TMP_FILE=$(mktemp)
 
 set +e
-ENV_VARS=$(envio list -n {} -v)
+ENV_VARS=$(envio list -n {} -v | awk -F "=" '/^[^=]+=.+/{{print}}')
 EXIT_CODE=$?
 SHELL_NAME=$(basename "$SHELL")
 

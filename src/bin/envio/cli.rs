@@ -70,7 +70,7 @@ pub enum Command {
     },
     #[clap(
         name = "list",
-        about = "List all the environment variables in a profile or all the profiles"
+        about = "List all the environment variables in a profile or all the profiles currenty stored"
     )]
     List {
         #[clap(required = false, long = "profiles", short = 'p')]
@@ -97,7 +97,7 @@ pub enum Command {
         #[clap(required = false, long = "file-to-export-to", short = 'f')]
         file: Option<String>,
     },
-    #[clap(name = "import", about = "Import a profile from a file")]
+    #[clap(name = "import", about = "Download a profile over the internet and import it into the system or import a locally stored profile into your current envio installation")]
     Import {
         #[clap(required = true)]
         profile_name: String,
