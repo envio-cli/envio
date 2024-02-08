@@ -2,18 +2,18 @@
 
 Thanks for your interest in contributing to envio!
 
-Any form of contribution is accepted, be it bug fixes, implementing a new feature or even just fixing a small typo. The goal is to get the community involved as much as possible
+Any form of contribution is accepted, be it bug fixes, implementing a new feature or even just fixing a small typo. 
 
 pull requests for bug fixes and features will only be accepted if the approach has been discussed in an issue and a community memeber has been given the go-ahead to work on it
 
 Please keep the following in mind at all times:
 
-* Check existing issues to verify that the [`bug`](https://github.com/humblepenguinn/envio/labels/bug) or [`feature request`](https://github.com/humblepenguinn/envio/labels/feature%20request) has not already been submitted.
+* Check existing issues to verify that the [`bug`](https://github.com/envio-cli/envio/labels/bug) or [`feature request`](https://github.com/envio-cli/envio/labels/feature%20request) has not already been submitted.
 * Open an issue if things aren't working as expected.
 * Open an issue to propose a significant change.
 * Open a pull request to fix a bug.
 
-* Open a pull request for any issue labelled [`help wanted`](https://github.com/humblepenguinn/envio/labels/help%20wanted), [`good first issue`](https://github.com/humblepenguinn/envio/labels/good%20first%20issue) or [`community`](https://github.com/humblepenguinn/envio/labels/community).
+* Open a pull request for any issue labelled [`help wanted`](https://github.com/envio-cli/envio/labels/help%20wanted), [`good first issue`](https://github.com/envio-cli/envio/labels/good%20first%20issue) or [`community`](https://github.com/envio-cli/envio/labels/community).
 
 Please avoid:
 
@@ -22,7 +22,7 @@ Please avoid:
   the maintainers/code owners and any external pull requests will not be accepted.
 
 ## Building the project
-See how to [build the editor from source here](./docs/build_from_source.md)
+See how to [build the CLI from source here](./docs/build_from_source.md)
 
 See [project layout documentation](./docs/project_layout.md) for information on where to find specific source files.
 
