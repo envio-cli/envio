@@ -81,30 +81,22 @@ fn generate_completions(
  @return String
 */
 fn get_version() -> String {
-    let mut version_env: String = "".to_string();
     let mut cmd = process::Command::new("git");
 
     cmd.arg("describe");
     cmd.arg("--abbrev=0");
     cmd.arg("--tags=0");
 
-    match cmd.status() {
-        Ok(status) => {
-            if status.success() {
-                if let Ok(output) = cmd.output() {
-                    return format!("{:?}", output);
-                }
-            } else {
-                println!("Error: Cannot get build version using `git` using CARGO_PKG_VERSION");
-                version_env = env!("CARGO_PKG_VERSION").to_string();
+    if let Ok(status) = cmd.status() {
+        if status.success() {
+            if let Ok(output) = cmd.output() {
+                return format!("{:?}", output);
             }
-        }
-        Err(e) => {
-            panic!("Error: Failed getting build version with git: {}", e);
         }
     }
 
-    version_env
+    println!("Error: Cannot get build version using `git` using CARGO_PKG_VERSION");
+    return env!("CARGO_PKG_VERSION").to_string();
 }
 
 /*
