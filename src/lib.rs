@@ -371,8 +371,18 @@ pub fn list_profiles(raw: bool) {
     for entry in std::fs::read_dir(profile_dir).unwrap() {
         let entry = entry.unwrap();
         let path = entry.path();
-        let file_name = path.file_name().unwrap().to_str().unwrap().to_owned();
-        let profile_name = file_name.replace(".env", "");
+        match path.extension() {
+            None => continue,
+            Some(ext) => {
+                if ext != "env" {
+                    continue;
+                }
+            }
+        }
+        let profile_name = path.file_stem().unwrap().to_str().unwrap().to_owned();
+        if profile_name.starts_with(".") {
+            continue;
+        }
         profiles.push(profile_name);
     }
 
