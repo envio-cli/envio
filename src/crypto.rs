@@ -3,7 +3,7 @@
  * Crypto uses gpgme to interact with GPG on unix systems however gpgme isn't that well supported on Windows
  * So on Windows we use the gpg command line tool (gpg4win) to interact with GPG
 */
-use std::boxed::Box;
+use std::{boxed::Box, io::Error};
 
 #[cfg(target_family = "windows")]
 use std::collections::VecDeque;
@@ -53,7 +53,7 @@ pub trait EncryptionType {
     /*
      * Decrypt data
      */
-    fn decrypt(&self, encrypted_data: &[u8]) -> String;
+    fn decrypt(&self, encrypted_data: &[u8]) -> Result<String, Error>;
     /*
      * Return the name of the encryption type
      */
@@ -156,39 +156,30 @@ impl EncryptionType for GPG {
         }
     }
 
-    fn decrypt(&self, encrypted_data: &[u8]) -> String {
+    fn decrypt(&self, encrypted_data: &[u8]) -> Result<String, Error> {
         // Unix specific code
         #[cfg(target_family = "unix")]
         {
             let mut ctx = match Context::from_protocol(Protocol::OpenPgp) {
                 Ok(ctx) => ctx,
                 Err(e) => {
-                    println!("{}: {}", "Error".red(), e);
-                    std::process::exit(1);
+                    return Err(Error::new(std::io::ErrorKind::Other, e));
                 }
             };
 
             let mut cipher = match Data::from_bytes(encrypted_data) {
                 Ok(cipher) => cipher,
                 Err(e) => {
-                    println!("{}: {}", "Error".red(), e);
-                    std::process::exit(1);
+                    return Err(Error::new(std::io::ErrorKind::Other, e));
                 }
             };
 
             let mut plain = Vec::new();
             if let Err(e) = ctx.decrypt_and_verify(&mut cipher, &mut plain) {
-                println!("{}: {}", "Error".red(), e);
-                std::process::exit(1);
+                return Err(Error::new(std::io::ErrorKind::Other, e));
             };
 
-            match String::from_utf8(plain) {
-                Ok(plain) => plain,
-                Err(e) => {
-                    println!("{}: {}", "Error".red(), e);
-                    std::process::exit(1);
-                }
-            }
+            Ok(String::from_utf8_lossy(&plain).to_string())
         }
 
         // Windows specific code
@@ -204,33 +195,32 @@ impl EncryptionType for GPG {
             {
                 Ok(gpg) => gpg,
                 Err(e) => {
-                    println!("{}: {}", "Error".red(), e);
-                    std::process::exit(1);
+                    return Err(Error::new(std::io::ErrorKind::Other, e));
                 }
             };
 
             let stdin = match gpg_process.stdin.as_mut() {
                 Some(stdin) => stdin,
                 None => {
-                    println!("{}: Failed to open stdin", "Error".red());
-                    std::process::exit(1);
+                    return Err(Error::new(
+                        std::io::ErrorKind::Other,
+                        "Failed to open stdin",
+                    ));
                 }
             };
 
             if let Err(e) = stdin.write_all(encrypted_data) {
-                println!("{}: {}", "Error".red(), e);
-                std::process::exit(1);
+                return Err(Error::new(std::io::ErrorKind::Other, e));
             }
 
             let output = match gpg_process.wait_with_output() {
                 Ok(output) => output,
                 Err(e) => {
-                    println!("{}: {}", "Error".red(), e);
-                    std::process::exit(1);
+                    return Err(Error::new(std::io::ErrorKind::Other, e));
                 }
             };
 
-            String::from_utf8_lossy(&output.stdout).to_string()
+            Ok(String::from_utf8_lossy(&output.stdout).to_string())
         }
     }
 }
@@ -415,7 +405,7 @@ impl EncryptionType for AGE {
         encrypted
     }
 
-    fn decrypt(&self, encrypted_data: &[u8]) -> String {
+    fn decrypt(&self, encrypted_data: &[u8]) -> Result<String, Error> {
         let decryptor = match age::Decryptor::new(encrypted_data).unwrap() {
             age::Decryptor::Passphrase(d) => d,
             _ => unreachable!(),
@@ -425,23 +415,15 @@ impl EncryptionType for AGE {
         let mut reader = match decryptor.decrypt(&Secret::new(self.key.to_owned()), None) {
             Ok(reader) => reader,
             Err(e) => {
-                println!("{}: {}", "Error".red(), e);
-                std::process::exit(1);
+                return Err(Error::new(std::io::ErrorKind::Other, e));
             }
         };
 
         if let Err(e) = reader.read_to_end(&mut decrypted) {
-            println!("{}: {}", "Error".red(), e);
-            std::process::exit(1);
+            return Err(Error::new(std::io::ErrorKind::Other, e));
         }
 
-        match String::from_utf8(decrypted) {
-            Ok(s) => s,
-            Err(e) => {
-                println!("{}: {}", "Error".red(), e);
-                std::process::exit(1);
-            }
-        }
+        String::from_utf8(decrypted).map_err(|e| Error::new(std::io::ErrorKind::Other, e))
     }
 }
 
@@ -479,7 +461,7 @@ pub fn get_encryption_type(profile_name: String) -> Box<dyn EncryptionType> {
 
     let profile_file_path = profile_dir.join(profile_name + ".env");
 
-    let mut file = match std::fs::File::open(profile_file_path) {
+    let mut file = match std::fs::File::open(&profile_file_path) {
         Ok(file) => file,
         Err(e) => {
             println!("{}: {}", "Error".red(), e);
@@ -487,16 +469,16 @@ pub fn get_encryption_type(profile_name: String) -> Box<dyn EncryptionType> {
         }
     };
 
-    let mut header = [0; 2];
-    if let Err(e) = file.read_exact(&mut header) {
-        println!("{}: {}", "Error".red(), e);
-        std::process::exit(1);
-    }
+    let mut file_contents = Vec::new();
+    file.read_to_end(&mut file_contents).unwrap();
 
-    if header == [0x85, 0x01] {
-        Box::new(GPG {
-            key_fingerprint: "".to_string(),
-        })
+    let gpg_instance = GPG {
+        key_fingerprint: "".to_string(),
+    };
+
+    // If the file can be decrypted with GPG, then we use GPG, otherwise we use AGE
+    if gpg_instance.decrypt(&file_contents).is_ok() {
+        Box::new(gpg_instance)
     } else {
         Box::new(AGE {
             key: "".to_string(),

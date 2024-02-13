@@ -49,7 +49,10 @@ pub enum Command {
         )]
         envs: Vec<String>,
     },
-    #[clap(name = "load", about = "Load all environment variables in a profile for use in your terminal sessions")]
+    #[clap(
+        name = "load",
+        about = "Load all environment variables in a profile for use in your terminal sessions"
+    )]
     Load {
         #[clap(required = true)]
         profile_name: String,

@@ -529,7 +529,13 @@ pub fn get_profile(
     let mut encrypted_contents = Vec::new();
     file.read_to_end(&mut encrypted_contents).unwrap();
 
-    let content = encryption_type.decrypt(&encrypted_contents);
+    let content = match encryption_type.decrypt(&encrypted_contents) {
+        Ok(c) => c,
+        Err(e) => {
+            println!("{}: {}", "Error".red(), e);
+            return None;
+        }
+    };
 
     let mut envs = HashMap::new();
 

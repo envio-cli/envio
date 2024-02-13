@@ -222,7 +222,7 @@ impl Command {
                         if let Some(key) = parts.next() {
                             if profile.envs.contains_key(key) {
                                 println!(
-                                    "{}: The Environment variable `{}` already exists in profile",
+                                    "{}: The environment variable `{}` already exists in profile",
                                     "Error".red(),
                                     key
                                 );
@@ -251,7 +251,7 @@ impl Command {
 
                     if profile.envs.contains_key(env) {
                         println!(
-                            "{}: The Environment variable `{}` already exists in profile",
+                            "{}: The environment variable `{}` already exists in profile",
                             "Error".red(),
                             env
                         );
@@ -458,7 +458,7 @@ impl Command {
                         if let Some(key) = parts.next() {
                             if !profile.envs.contains_key(key) {
                                 println!(
-                                    "{}: The Environment variable `{}` does not exist in profile use the `add` command to add the variable",
+                                    "{}: The environment variable `{}` does not exist in profile use the `add` command to add the variable",
                                     "Error".red(),
                                     key
                                 );
@@ -487,7 +487,7 @@ impl Command {
 
                     if !profile.envs.contains_key(env) {
                         println!(
-                            "{}: The Environment variable `{}` does not exist in profile use the `add` command to add the variable",
+                            "{}: The environment variable `{}` does not exist in profile use the `add` command to add the variable",
                             "Error".red(),
                             env
                         );
