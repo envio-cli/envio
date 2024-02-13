@@ -30,7 +30,7 @@ Register-ArgumentCompleter -Native -CommandName 'envio' -ScriptBlock {
             [CompletionResult]::new('launch', 'launch', [CompletionResultType]::ParameterValue, 'Launch a program with a profile')
             [CompletionResult]::new('remove', 'remove', [CompletionResultType]::ParameterValue, 'Remove a environment variable from a profile')
             [CompletionResult]::new('list', 'list', [CompletionResultType]::ParameterValue, 'List all the environment variables in a profile or all the profiles currenty stored')
-            [CompletionResult]::new('update', 'update', [CompletionResultType]::ParameterValue, 'Update a environment variable in a profile')
+            [CompletionResult]::new('update', 'update', [CompletionResultType]::ParameterValue, 'Update environment variable in a profile')
             [CompletionResult]::new('export', 'export', [CompletionResultType]::ParameterValue, 'Export a profile to a file if no file is specified it will be exported to a file named .env')
             [CompletionResult]::new('import', 'import', [CompletionResultType]::ParameterValue, 'Download a profile over the internet and import it into the system or import a locally stored profile into your current envio installation')
             [CompletionResult]::new('version', 'version', [CompletionResultType]::ParameterValue, 'Print the version')
@@ -49,8 +49,8 @@ Register-ArgumentCompleter -Native -CommandName 'envio' -ScriptBlock {
             break
         }
         'envio;add' {
-            [CompletionResult]::new('-k', 'k', [CompletionResultType]::ParameterName, 'k')
-            [CompletionResult]::new('--keys', 'keys', [CompletionResultType]::ParameterName, 'keys')
+            [CompletionResult]::new('-e', 'e', [CompletionResultType]::ParameterName, 'e')
+            [CompletionResult]::new('--envs', 'envs', [CompletionResultType]::ParameterName, 'envs')
             [CompletionResult]::new('-h', 'h', [CompletionResultType]::ParameterName, 'Print help')
             [CompletionResult]::new('--help', 'help', [CompletionResultType]::ParameterName, 'Print help')
             break
@@ -126,7 +126,7 @@ Register-ArgumentCompleter -Native -CommandName 'envio' -ScriptBlock {
             [CompletionResult]::new('launch', 'launch', [CompletionResultType]::ParameterValue, 'Launch a program with a profile')
             [CompletionResult]::new('remove', 'remove', [CompletionResultType]::ParameterValue, 'Remove a environment variable from a profile')
             [CompletionResult]::new('list', 'list', [CompletionResultType]::ParameterValue, 'List all the environment variables in a profile or all the profiles currenty stored')
-            [CompletionResult]::new('update', 'update', [CompletionResultType]::ParameterValue, 'Update a environment variable in a profile')
+            [CompletionResult]::new('update', 'update', [CompletionResultType]::ParameterValue, 'Update environment variable in a profile')
             [CompletionResult]::new('export', 'export', [CompletionResultType]::ParameterValue, 'Export a profile to a file if no file is specified it will be exported to a file named .env')
             [CompletionResult]::new('import', 'import', [CompletionResultType]::ParameterValue, 'Download a profile over the internet and import it into the system or import a locally stored profile into your current envio installation')
             [CompletionResult]::new('version', 'version', [CompletionResultType]::ParameterValue, 'Print the version')

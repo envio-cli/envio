@@ -25,7 +25,13 @@ pub enum Command {
         profile_name: String,
         #[clap(required = false, long = "file-to-import-envs-from", short = 'f')]
         envs_file: Option<String>,
-        #[clap(required = false, long = "envs", short = 'e')]
+        #[clap(
+            required = false,
+            long = "envs",
+            short = 'e',
+            value_delimiter = ',',
+            use_value_delimiter = true
+        )]
         envs: Option<Vec<String>>,
         #[clap(required = false, long = "gpg-key-fingerprint", short = 'g')]
         gpg: Option<String>,
@@ -36,12 +42,12 @@ pub enum Command {
         profile_name: String,
         #[clap(
             required = true,
-            long = "keys",
-            short = 'k',
+            long = "envs",
+            short = 'e',
             value_delimiter = ',',
             use_value_delimiter = true
         )]
-        keys: Vec<String>,
+        envs: Vec<String>,
     },
     #[clap(name = "load", about = "Load a profile in the current session")]
     Load {
@@ -86,11 +92,17 @@ pub enum Command {
         #[clap(required = false, long = "no-pretty-print", short = 'v')]
         no_pretty_print: bool,
     },
-    #[clap(name = "update", about = "Update a environment variable in a profile")]
+    #[clap(name = "update", about = "Update environment variable in a profile")]
     Update {
         #[clap(required = true)]
         profile_name: String,
-        #[clap(required = true, long = "envs", short = 'e')]
+        #[clap(
+            required = true,
+            long = "envs",
+            short = 'e',
+            value_delimiter = ',',
+            use_value_delimiter = true
+        )]
         envs: Vec<String>,
     },
     #[clap(

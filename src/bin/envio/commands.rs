@@ -1,6 +1,7 @@
 use colored::Colorize;
 use inquire::{min_length, Password, PasswordDisplayMode, Select, Text};
 
+use std::collections::HashMap;
 use std::io::Read;
 use std::path::Path;
 use url::Url;
@@ -127,7 +128,7 @@ impl Command {
                     encryption_type = create_encryption_type(user_key, "age");
                 }
 
-                let envs_hashmap;
+                let mut envs_hashmap;
 
                 if envs_file.is_some() {
                     let file = envs_file.as_ref().unwrap();
@@ -144,7 +145,24 @@ impl Command {
 
                     envs_hashmap = Some(parse_envs_from_string(&buffer));
                 } else if envs.is_some() {
-                    envs_hashmap = Some(parse_envs_from_string(&envs.as_ref().unwrap().join(" ")));
+                    envs_hashmap = Some(HashMap::new());
+
+                    for env in envs.as_ref().unwrap() {
+                        let value;
+
+                        let prompt = Text::new(&format!("Enter the value for {}:", env)).prompt();
+
+                        if let Err(e) = prompt {
+                            println!("{}: {}", "Error".red(), e);
+                            std::process::exit(1);
+                        } else {
+                            value = prompt.unwrap();
+                            envs_hashmap
+                                .as_mut()
+                                .unwrap()
+                                .insert(env.to_string(), value);
+                        }
+                    }
                 } else {
                     envs_hashmap = None;
                 }
@@ -152,7 +170,7 @@ impl Command {
                 create_profile(profile_name.to_string(), envs_hashmap, encryption_type);
             }
 
-            Command::Add { profile_name, keys } => {
+            Command::Add { profile_name, envs } => {
                 if !check_profile(profile_name) {
                     println!("{}: Profile does not exist", "Error".red());
                     return;
@@ -170,26 +188,26 @@ impl Command {
                         return;
                     };
 
-                for key in keys {
-                    if profile.envs.contains_key(key) {
+                for env in envs {
+                    if profile.envs.contains_key(env) {
                         println!(
                             "{}: The Environment variable `{}` already exists in profile",
                             "Error".red(),
-                            key
+                            env
                         );
                         return;
                     }
 
                     let value;
 
-                    let prompt = Text::new(&format!("Enter the value for {}:", key)).prompt();
+                    let prompt = Text::new(&format!("Enter the value for {}:", env)).prompt();
 
                     if let Err(e) = prompt {
                         println!("{}: {}", "Error".red(), e);
                         std::process::exit(1);
                     } else {
                         value = prompt.unwrap();
-                        profile.add_env(key.to_string(), value)
+                        profile.add_env(env.to_string(), value)
                     }
                 }
                 println!("{}", "Applying Changes".green());
@@ -374,29 +392,25 @@ impl Command {
                     };
 
                 for env in envs {
-                    let mut split = env.split('=');
-
-                    let key = split.next();
-                    let value = split.next();
-
-                    if key.is_none() || value.is_none() {
-                        println!("{}: Can not parse Environment variable", "Error".red());
+                    if !profile.envs.contains_key(env) {
                         println!(
-                            "{}",
-                            "Environment variables should be in the format of key=value".bold()
+                            "{}: The Environment variable `{}` does not exist in profile use the `add` command to add the variable",
+                            "Error".red(),
+                            env
                         );
                         return;
                     }
 
-                    if profile.envs.contains_key(key.unwrap()) {
-                        profile.edit_env(key.unwrap().to_owned(), value.unwrap().to_owned())
+                    let new_value;
+
+                    let prompt = Text::new(&format!("Enter the new value for {}:", env)).prompt();
+
+                    if let Err(e) = prompt {
+                        println!("{}: {}", "Error".red(), e);
+                        std::process::exit(1);
                     } else {
-                        println!(
-                            "{}: The Environment variable `{}` does not exist in profile use the `add` command to add the variable",
-                            "Error".red(),
-                            key.unwrap()
-                        );
-                        return;
+                        new_value = prompt.unwrap();
+                        profile.edit_env(env.to_string(), new_value)
                     }
                 }
 

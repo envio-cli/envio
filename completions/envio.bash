@@ -105,17 +105,17 @@ _envio() {
             return 0
             ;;
         envio__add)
-            opts="-k -h --keys --help <PROFILE_NAME>"
+            opts="-e -h --envs --help <PROFILE_NAME>"
             if [[ ${cur} == -* || ${COMP_CWORD} -eq 2 ]] ; then
                 COMPREPLY=( $(compgen -W "${opts}" -- "${cur}") )
                 return 0
             fi
             case "${prev}" in
-                --keys)
+                --envs)
                     COMPREPLY=($(compgen -f "${cur}"))
                     return 0
                     ;;
-                -k)
+                -e)
                     COMPREPLY=($(compgen -f "${cur}"))
                     return 0
                     ;;
