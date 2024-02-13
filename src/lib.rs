@@ -118,11 +118,11 @@ impl Profile {
     * Remove an existing environment variable of the profile
     * If the environment variable does not exists, it will print an error message
 
-    @param env String
+    @param env &str
     */
-    pub fn remove_env(&mut self, env: String) {
-        if self.envs.contains_key(&env) {
-            self.envs.remove(&env);
+    pub fn remove_env(&mut self, env: &str) {
+        if self.envs.contains_key(env) {
+            self.envs.remove(env);
         } else {
             println!("{}: env `{}` does not exists", "Error".red(), env);
         }
@@ -153,9 +153,9 @@ impl Profile {
     * If the profile does not have any environment variables, it will print an error message
     * The file will be created in the current working directory
 
-    @param file_name String
+    @param file_name &str
     */
-    pub fn export_envs(&self, file_name: String) {
+    pub fn export_envs(&self, file_name: &str) {
         let mut file = std::fs::OpenOptions::new()
             .create(true)
             .write(true)
@@ -203,7 +203,7 @@ impl Profile {
 
         buffer = buffer + &self.encryption_type.get_key();
 
-        let encrypted_data = self.encryption_type.encrypt(buffer);
+        let encrypted_data = self.encryption_type.encrypt(&buffer);
         if let Err(e) = file.write_all(encrypted_data.as_slice()) {
             println!("{}: {}", "Error".red(), e);
         }
@@ -222,10 +222,10 @@ impl Profile {
 * Parse the environment variables from a string
 * The string should be in the format of KEY=VALUE
 
-* @param buffer String
+* @param buffer &str
 * @return HashMap<String, String>
 */
-pub fn parse_envs_from_string(buffer: String) -> HashMap<String, String> {
+pub fn parse_envs_from_string(buffer: &str) -> HashMap<String, String> {
     let mut envs_map = HashMap::new();
     for buf in buffer.lines() {
         let mut split = buf.split('=');
@@ -260,7 +260,7 @@ pub fn create_profile(
     envs: Option<HashMap<String, String>>,
     encryption_type: Box<dyn EncryptionType>,
 ) {
-    if check_profile(name.clone()) {
+    if check_profile(&name) {
         println!("{}: Profile already exists", "Error".red());
         return;
     }
@@ -302,7 +302,7 @@ pub fn create_profile(
         buffer = buffer + &encryption_type.get_key();
     }
 
-    if let Err(e) = file.write_all(encryption_type.encrypt(buffer).as_slice()) {
+    if let Err(e) = file.write_all(encryption_type.encrypt(&buffer).as_slice()) {
         println!("{}: {}", "Error".red(), e);
     }
 
@@ -320,13 +320,13 @@ pub fn create_profile(
 /*
 * Check if the profile exists
 
-@param name String
+@param name &str
 @return bool
 */
-pub fn check_profile(name: String) -> bool {
+pub fn check_profile(name: &str) -> bool {
     let configdir = get_configdir();
 
-    let profile_path = configdir.join("profiles").join(name + ".env");
+    let profile_path = configdir.join("profiles").join(&format!("{}.env", name));
 
     if profile_path.exists() {
         return true;
@@ -339,12 +339,12 @@ pub fn check_profile(name: String) -> bool {
 * Delete a profile
 * If the profile does not exist, it will print an error message
 
-@param name String
+@param name &str
 */
-pub fn delete_profile(name: String) {
-    if check_profile(name.clone()) {
+pub fn delete_profile(name: &str) {
+    if check_profile(name) {
         let configdir = get_configdir();
-        let profile_path = configdir.join("profiles").join(name + ".env");
+        let profile_path = configdir.join("profiles").join(&format!("{}.env", name));
 
         match std::fs::remove_file(profile_path) {
             Ok(_) => println!("{}: Deleted profile", "Success".green()),
@@ -512,7 +512,7 @@ pub fn get_profile(
     profile_name: String,
     mut encryption_type: Box<dyn EncryptionType>,
 ) -> Option<Profile> {
-    if !check_profile(profile_name.clone()) {
+    if !check_profile(&profile_name) {
         println!("{}: Profile does not exist", "Error".red());
         return None;
     }
@@ -652,7 +652,7 @@ fi
 // Returns the shell that is being used
 // @return String
 #[cfg(any(target_family = "unix"))]
-pub fn get_shell_config() -> String {
+pub fn get_shell_config() -> &'static str {
     // Gets your default shell
     // This is used to determine which shell config file to edit
     let shell_env_value = if let Ok(e) = std::env::var("SHELL") {
@@ -674,7 +674,7 @@ pub fn get_shell_config() -> String {
         shell_config = ".config/fish/config.fish"
     }
 
-    shell_config.to_string()
+    shell_config
 }
 
 /*
@@ -682,7 +682,7 @@ pub fn get_shell_config() -> String {
  */
 #[cfg(any(target_family = "unix"))]
 pub fn load_profile(profile_name: &str) {
-    if !check_profile(profile_name.to_string()) {
+    if !check_profile(&profile_name) {
         println!("{}: Profile does not exist", "Error".red());
         return;
     }

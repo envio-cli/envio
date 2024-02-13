@@ -54,7 +54,7 @@ impl Command {
                     return;
                 }
 
-                if check_profile(profile_name.to_string()) {
+                if check_profile(&profile_name) {
                     println!("{}: Profile already exists", "Error".red());
                     return;
                 }
@@ -142,9 +142,9 @@ impl Command {
                     let mut buffer = String::new();
                     file.read_to_string(&mut buffer).unwrap();
 
-                    envs_hashmap = Some(parse_envs_from_string(buffer));
+                    envs_hashmap = Some(parse_envs_from_string(&buffer));
                 } else if envs.is_some() {
-                    envs_hashmap = Some(parse_envs_from_string(envs.as_ref().unwrap().join(" ")));
+                    envs_hashmap = Some(parse_envs_from_string(&envs.as_ref().unwrap().join(" ")));
                 } else {
                     envs_hashmap = None;
                 }
@@ -153,7 +153,7 @@ impl Command {
             }
 
             Command::Add { profile_name, keys } => {
-                if !check_profile(profile_name.to_string()) {
+                if !check_profile(profile_name) {
                     println!("{}: Profile does not exist", "Error".red());
                     return;
                 }
@@ -251,7 +251,7 @@ impl Command {
                 profile_name,
                 program,
             } => {
-                if !check_profile(profile_name.to_string()) {
+                if !check_profile(profile_name) {
                     println!("{}: Profile does not exist", "Error".red());
                     return;
                 }
@@ -282,7 +282,7 @@ impl Command {
             }
 
             Command::Remove { profile_name, envs } => {
-                if !check_profile(profile_name.to_string()) {
+                if !check_profile(profile_name) {
                     println!("{}: Profile does not exist", "Error".red());
                     return;
                 }
@@ -300,13 +300,13 @@ impl Command {
                         };
 
                     for env in envs.as_ref().unwrap() {
-                        profile.remove_env(env.to_string());
+                        profile.remove_env(env);
                     }
 
                     println!("{}", "Applying Changes".green());
                     profile.push_changes();
                 } else {
-                    delete_profile(profile_name.to_string());
+                    delete_profile(profile_name);
                 }
             }
 
@@ -322,7 +322,7 @@ impl Command {
                         list_profiles(false)
                     }
                 } else if profile_name.is_some() && !profile_name.as_ref().unwrap().is_empty() {
-                    if !check_profile(profile_name.as_ref().unwrap().to_string()) {
+                    if !check_profile(&profile_name.as_ref().unwrap()) {
                         println!("{}: Profile does not exist", "Error".red());
                         return;
                     }
@@ -353,7 +353,7 @@ impl Command {
             }
 
             Command::Update { profile_name, envs } => {
-                if !check_profile(profile_name.to_string()) {
+                if !check_profile(profile_name) {
                     println!("{}: Profile does not exist", "Error".red());
                     return;
                 }
@@ -401,15 +401,15 @@ impl Command {
             }
 
             Command::Export { profile_name, file } => {
-                if !check_profile(profile_name.to_string()) {
+                if !check_profile(profile_name) {
                     println!("{}: Profile does not exist", "Error".red());
                     return;
                 }
 
-                let mut file_name = String::from(".env");
+                let mut file_name = ".env";
 
                 if file.is_some() {
-                    file_name = file.as_ref().unwrap().to_string();
+                    file_name = &file.as_ref().unwrap()
                 }
 
                 let mut encryption_type = get_encryption_type(profile_name.to_string());
@@ -424,7 +424,7 @@ impl Command {
                         return;
                     };
 
-                profile.export_envs(file_name);
+                profile.export_envs(&file_name);
             }
 
             Command::Import {
@@ -432,7 +432,7 @@ impl Command {
                 file,
                 url,
             } => {
-                if check_profile(profile_name.to_string()) {
+                if check_profile(profile_name) {
                     println!("{}: Profile already exists", "Error".red());
                     return;
                 }

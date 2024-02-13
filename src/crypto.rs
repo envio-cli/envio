@@ -49,7 +49,7 @@ pub trait EncryptionType {
     * @param data: data to encrypt
     * @return encrypted data
     */
-    fn encrypt(&self, data: String) -> Vec<u8>;
+    fn encrypt(&self, data: &str) -> Vec<u8>;
     /*
      * Decrypt data
      */
@@ -57,7 +57,7 @@ pub trait EncryptionType {
     /*
      * Return the name of the encryption type
      */
-    fn as_string(&self) -> String;
+    fn as_string(&self) -> &'static str;
 }
 
 /*
@@ -79,11 +79,11 @@ impl EncryptionType for GPG {
         self.key_fingerprint.clone()
     }
 
-    fn as_string(&self) -> String {
-        "gpg".to_string()
+    fn as_string(&self) -> &'static str {
+        "gpg"
     }
 
-    fn encrypt(&self, data: String) -> Vec<u8> {
+    fn encrypt(&self, data: &str) -> Vec<u8> {
         // Unix specific code
         #[cfg(target_family = "unix")]
         {
@@ -386,11 +386,11 @@ impl EncryptionType for AGE {
         self.key.clone()
     }
 
-    fn as_string(&self) -> String {
-        "age".to_string()
+    fn as_string(&self) -> &'static str {
+        "age"
     }
 
-    fn encrypt(&self, data: String) -> Vec<u8> {
+    fn encrypt(&self, data: &str) -> Vec<u8> {
         let encryptor = age::Encryptor::with_user_passphrase(Secret::new(self.key.to_owned()));
 
         let mut encrypted = vec![];
