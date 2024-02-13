@@ -30,12 +30,18 @@ pub enum Command {
         #[clap(required = false, long = "gpg-key-fingerprint", short = 'g')]
         gpg: Option<String>,
     },
-    #[clap(name = "add", about = "Add a new environment variable to a profile")]
+    #[clap(name = "add", about = "Add envionment variables to a profile")]
     Add {
         #[clap(required = true)]
         profile_name: String,
-        #[clap(required = true, long = "envs", short = 'e', value_delimiter = ' ')]
-        envs: Vec<String>,
+        #[clap(
+            required = true,
+            long = "keys",
+            short = 'k',
+            value_delimiter = ',',
+            use_value_delimiter = true
+        )]
+        keys: Vec<String>,
     },
     #[clap(name = "load", about = "Load a profile in the current session")]
     Load {

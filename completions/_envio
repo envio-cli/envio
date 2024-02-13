@@ -41,8 +41,8 @@ _arguments "${_arguments_options[@]}" \
 ;;
 (add)
 _arguments "${_arguments_options[@]}" \
-'*-e+[]:ENVS: ' \
-'*--envs=[]:ENVS: ' \
+'*-k+[]:KEYS: ' \
+'*--keys=[]:KEYS: ' \
 '-h[Print help]' \
 '--help[Print help]' \
 ':profile_name:' \
@@ -200,7 +200,7 @@ esac
 _envio_commands() {
     local commands; commands=(
 'create:Create a new profile' \
-'add:Add a new environment variable to a profile' \
+'add:Add envionment variables to a profile' \
 'load:Load a profile in the current session' \
 'unload:Unload a profile from the current session' \
 'launch:Launch a program with a profile' \
@@ -248,7 +248,7 @@ _envio__help__export_commands() {
 _envio__help_commands() {
     local commands; commands=(
 'create:Create a new profile' \
-'add:Add a new environment variable to a profile' \
+'add:Add envionment variables to a profile' \
 'load:Load a profile in the current session' \
 'unload:Unload a profile from the current session' \
 'launch:Launch a program with a profile' \

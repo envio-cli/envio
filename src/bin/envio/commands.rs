@@ -1,5 +1,5 @@
 use colored::Colorize;
-use inquire::{min_length, Password, PasswordDisplayMode, Select};
+use inquire::{min_length, Password, PasswordDisplayMode, Select, Text};
 
 use std::io::Read;
 use std::path::Path;
@@ -152,7 +152,7 @@ impl Command {
                 create_profile(profile_name.to_string(), envs_hashmap, encryption_type);
             }
 
-            Command::Add { profile_name, envs } => {
+            Command::Add { profile_name, keys } => {
                 if !check_profile(profile_name.to_string()) {
                     println!("{}: Profile does not exist", "Error".red());
                     return;
@@ -170,29 +170,24 @@ impl Command {
                         return;
                     };
 
-                for env in envs {
-                    let mut split = env.split('=');
+                println!(
+                    "{}",
+                    "Pass in the value for the key(s) you want to add".green()
+                );
 
-                    let key = split.next();
-                    let value = split.next();
+                for key in keys {
+                    let value;
 
-                    if key.is_none() || value.is_none() {
-                        println!("{}: Can not parse Environment variable", "Error".red());
-                        println!(
-                            "{}",
-                            "Environment variables should be in the format of KEY=VALUE".bold()
-                        );
-                        return;
+                    let prompt = Text::new(&format!("Enter the value for {}:", key)).prompt();
+
+                    if let Err(e) = prompt {
+                        println!("{}: {}", "Error".red(), e);
+                        std::process::exit(1);
+                    } else {
+                        value = prompt.unwrap();
+                        profile.add_env(key.to_string(), value)
                     }
-
-                    if profile.envs.contains_key(key.unwrap()) {
-                        println!("{}: The Environment variable `{}` already exists in profile use the update command to update the value", "Error".red(), key.unwrap());
-                        return;
-                    }
-
-                    profile.add_env(key.unwrap().to_owned(), value.unwrap().to_owned());
                 }
-
                 println!("{}", "Applying Changes".green());
                 profile.push_changes();
             }

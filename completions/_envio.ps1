@@ -24,7 +24,7 @@ Register-ArgumentCompleter -Native -CommandName 'envio' -ScriptBlock {
             [CompletionResult]::new('-h', 'h', [CompletionResultType]::ParameterName, 'Print help')
             [CompletionResult]::new('--help', 'help', [CompletionResultType]::ParameterName, 'Print help')
             [CompletionResult]::new('create', 'create', [CompletionResultType]::ParameterValue, 'Create a new profile')
-            [CompletionResult]::new('add', 'add', [CompletionResultType]::ParameterValue, 'Add a new environment variable to a profile')
+            [CompletionResult]::new('add', 'add', [CompletionResultType]::ParameterValue, 'Add envionment variables to a profile')
             [CompletionResult]::new('load', 'load', [CompletionResultType]::ParameterValue, 'Load a profile in the current session')
             [CompletionResult]::new('unload', 'unload', [CompletionResultType]::ParameterValue, 'Unload a profile from the current session')
             [CompletionResult]::new('launch', 'launch', [CompletionResultType]::ParameterValue, 'Launch a program with a profile')
@@ -49,8 +49,8 @@ Register-ArgumentCompleter -Native -CommandName 'envio' -ScriptBlock {
             break
         }
         'envio;add' {
-            [CompletionResult]::new('-e', 'e', [CompletionResultType]::ParameterName, 'e')
-            [CompletionResult]::new('--envs', 'envs', [CompletionResultType]::ParameterName, 'envs')
+            [CompletionResult]::new('-k', 'k', [CompletionResultType]::ParameterName, 'k')
+            [CompletionResult]::new('--keys', 'keys', [CompletionResultType]::ParameterName, 'keys')
             [CompletionResult]::new('-h', 'h', [CompletionResultType]::ParameterName, 'Print help')
             [CompletionResult]::new('--help', 'help', [CompletionResultType]::ParameterName, 'Print help')
             break
@@ -120,7 +120,7 @@ Register-ArgumentCompleter -Native -CommandName 'envio' -ScriptBlock {
         }
         'envio;help' {
             [CompletionResult]::new('create', 'create', [CompletionResultType]::ParameterValue, 'Create a new profile')
-            [CompletionResult]::new('add', 'add', [CompletionResultType]::ParameterValue, 'Add a new environment variable to a profile')
+            [CompletionResult]::new('add', 'add', [CompletionResultType]::ParameterValue, 'Add envionment variables to a profile')
             [CompletionResult]::new('load', 'load', [CompletionResultType]::ParameterValue, 'Load a profile in the current session')
             [CompletionResult]::new('unload', 'unload', [CompletionResultType]::ParameterValue, 'Unload a profile from the current session')
             [CompletionResult]::new('launch', 'launch', [CompletionResultType]::ParameterValue, 'Launch a program with a profile')
