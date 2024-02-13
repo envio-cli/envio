@@ -49,16 +49,16 @@ pub enum Command {
         )]
         envs: Vec<String>,
     },
-    #[clap(name = "load", about = "Load a profile in the current session")]
+    #[clap(name = "load", about = "Load all environment variables in a profile for use in your terminal sessions")]
     Load {
         #[clap(required = true)]
         profile_name: String,
     },
     #[cfg(target_family = "unix")]
-    #[clap(name = "unload", about = "Unload a profile from the current session")]
+    #[clap(name = "unload", about = "Unload a profile")]
     Unload,
     #[cfg(target_family = "windows")]
-    #[clap(name = "unload", about = "Unload a profile from the current session")]
+    #[clap(name = "unload", about = "Unload a profile")]
     Unload {
         #[clap(required = true)]
         profile_name: String,

@@ -201,8 +201,8 @@ _envio_commands() {
     local commands; commands=(
 'create:Create a new profile' \
 'add:Add envionment variables to a profile' \
-'load:Load a profile in the current session' \
-'unload:Unload a profile from the current session' \
+'load:Load all environment variables in a profile for use in your terminal sessions' \
+'unload:Unload a profile' \
 'launch:Launch a program with a profile' \
 'remove:Remove a environment variable from a profile' \
 'list:List all the environment variables in a profile or all the profiles currenty stored' \
@@ -249,8 +249,8 @@ _envio__help_commands() {
     local commands; commands=(
 'create:Create a new profile' \
 'add:Add envionment variables to a profile' \
-'load:Load a profile in the current session' \
-'unload:Unload a profile from the current session' \
+'load:Load all environment variables in a profile for use in your terminal sessions' \
+'unload:Unload a profile' \
 'launch:Launch a program with a profile' \
 'remove:Remove a environment variable from a profile' \
 'list:List all the environment variables in a profile or all the profiles currenty stored' \
