@@ -543,12 +543,10 @@ pub fn get_profile(
             continue;
         }
 
-        let mut split = line.split('=');
-        let key = split.next().unwrap();
-
-        let value = split.next().unwrap();
-
-        envs.insert(key.to_string(), value.to_string());
+        let mut parts = line.splitn(2, '=');
+        if let (Some(key), Some(value)) = (parts.next(), parts.next()) {
+            envs.insert(key.to_string(), value.to_string());
+        }
     }
 
     Some(Profile::new(

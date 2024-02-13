@@ -148,6 +148,33 @@ impl Command {
                     envs_hashmap = Some(HashMap::new());
 
                     for env in envs.as_ref().unwrap() {
+                        if (*env).contains('=') {
+                            let mut parts = env.splitn(2, '=');
+
+                            if let Some(key) = parts.next() {
+                                if let Some(value) = parts.next() {
+                                    envs_hashmap
+                                        .as_mut()
+                                        .unwrap()
+                                        .insert(key.to_string(), value.to_string());
+                                } else {
+                                    println!(
+                                        "{}: Unable to parse value for key '{}'",
+                                        "Error".red(),
+                                        key
+                                    );
+                                }
+                            } else {
+                                println!(
+                                    "{}: Unable to parse key-value pair from '{}'",
+                                    "Error".red(),
+                                    env
+                                );
+                            }
+
+                            continue;
+                        }
+
                         let value;
 
                         let prompt = Text::new(&format!("Enter the value for {}:", env)).prompt();
@@ -189,6 +216,39 @@ impl Command {
                     };
 
                 for env in envs {
+                    if (*env).contains('=') {
+                        let mut parts = env.splitn(2, '=');
+
+                        if let Some(key) = parts.next() {
+                            if profile.envs.contains_key(key) {
+                                println!(
+                                    "{}: The Environment variable `{}` already exists in profile",
+                                    "Error".red(),
+                                    key
+                                );
+                                return;
+                            }
+
+                            if let Some(value) = parts.next() {
+                                profile.add_env(key.to_string(), value.to_string())
+                            } else {
+                                println!(
+                                    "{}: Unable to parse value for key '{}'",
+                                    "Error".red(),
+                                    key
+                                );
+                            }
+                        } else {
+                            println!(
+                                "{}: Unable to parse key-value pair from '{}'",
+                                "Error".red(),
+                                env
+                            );
+                        }
+
+                        continue;
+                    }
+
                     if profile.envs.contains_key(env) {
                         println!(
                             "{}: The Environment variable `{}` already exists in profile",
@@ -222,7 +282,7 @@ impl Command {
 
                 #[cfg(target_family = "windows")]
                 {
-                    if !check_profile(profile_name.to_string()) {
+                    if !check_profile(profile_name) {
                         println!("{}: Profile does not exist", "Error".red());
                         return;
                     }
@@ -250,7 +310,7 @@ impl Command {
 
             #[cfg(target_family = "windows")]
             Command::Unload { profile_name } => {
-                if !check_profile(profile_name.to_string()) {
+                if !check_profile(profile_name) {
                     println!("{}: Profile does not exist", "Error".red());
                     return;
                 }
@@ -392,6 +452,39 @@ impl Command {
                     };
 
                 for env in envs {
+                    if (*env).contains('=') {
+                        let mut parts = env.splitn(2, '=');
+
+                        if let Some(key) = parts.next() {
+                            if !profile.envs.contains_key(key) {
+                                println!(
+                                    "{}: The Environment variable `{}` does not exist in profile use the `add` command to add the variable",
+                                    "Error".red(),
+                                    key
+                                );
+                                return;
+                            }
+
+                            if let Some(value) = parts.next() {
+                                profile.edit_env(key.to_string(), value.to_string())
+                            } else {
+                                println!(
+                                    "{}: Unable to parse value for key '{}'",
+                                    "Error".red(),
+                                    key
+                                );
+                            }
+                        } else {
+                            println!(
+                                "{}: Unable to parse key-value pair from '{}'",
+                                "Error".red(),
+                                env
+                            );
+                        }
+
+                        continue;
+                    }
+
                     if !profile.envs.contains_key(env) {
                         println!(
                             "{}: The Environment variable `{}` does not exist in profile use the `add` command to add the variable",

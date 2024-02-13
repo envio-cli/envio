@@ -29,8 +29,8 @@ pub enum Command {
             required = false,
             long = "envs",
             short = 'e',
-            value_delimiter = ',',
-            use_value_delimiter = true
+            value_delimiter = ' ',
+            num_args = 1..,
         )]
         envs: Option<Vec<String>>,
         #[clap(required = false, long = "gpg-key-fingerprint", short = 'g')]
@@ -44,8 +44,8 @@ pub enum Command {
             required = true,
             long = "envs",
             short = 'e',
-            value_delimiter = ',',
-            use_value_delimiter = true
+            value_delimiter = ' ',
+            num_args = 1..,
         )]
         envs: Vec<String>,
     },
@@ -100,8 +100,8 @@ pub enum Command {
             required = true,
             long = "envs",
             short = 'e',
-            value_delimiter = ',',
-            use_value_delimiter = true
+            value_delimiter = ' ',
+            num_args = 1..,
         )]
         envs: Vec<String>,
     },
