@@ -170,12 +170,16 @@ impl Command {
                         return;
                     };
 
-                println!(
-                    "{}",
-                    "Pass in the value for the key(s) you want to add".green()
-                );
-
                 for key in keys {
+                    if profile.envs.contains_key(key) {
+                        println!(
+                            "{}: The Environment variable `{}` already exists in profile",
+                            "Error".red(),
+                            key
+                        );
+                        return;
+                    }
+
                     let value;
 
                     let prompt = Text::new(&format!("Enter the value for {}:", key)).prompt();
