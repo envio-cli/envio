@@ -95,7 +95,7 @@ pub enum Command {
         #[clap(required = false, long = "no-pretty-print", short = 'v')]
         no_pretty_print: bool,
     },
-    #[clap(name = "update", about = "Update environment variable in a profile")]
+    #[clap(name = "update", about = "Update environment variables in a profile")]
     Update {
         #[clap(required = true)]
         profile_name: String,
