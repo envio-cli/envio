@@ -19,13 +19,17 @@ pub struct Cli {
  * which is located in the command.rs file
 */
 pub enum Command {
-    #[clap(name = "create", about = "Create a new profile")]
+    #[command(
+        name = "create",
+        about = "Create a new profile",
+        override_usage = "envio create <PROFILE_NAME> [OPTIONS]"
+    )]
     Create {
-        #[clap(required = true)]
+        #[arg(required = true)]
         profile_name: String,
-        #[clap(required = false, long = "file-to-import-envs-from", short = 'f')]
+        #[arg(required = false, long = "file-to-import-envs-from", short = 'f')]
         envs_file: Option<String>,
-        #[clap(
+        #[arg(
             required = false,
             long = "envs",
             short = 'e',
@@ -33,14 +37,18 @@ pub enum Command {
             num_args = 1..,
         )]
         envs: Option<Vec<String>>,
-        #[clap(required = false, long = "gpg-key-fingerprint", short = 'g')]
+        #[arg(required = false, long = "gpg-key-fingerprint", short = 'g')]
         gpg: Option<String>,
     },
-    #[clap(name = "add", about = "Add envionment variables to a profile")]
+    #[command(
+        name = "add",
+        about = "Add envionment variables to a profile",
+        override_usage = "envio add <PROFILE_NAME> [OPTIONS]"
+    )]
     Add {
-        #[clap(required = true)]
+        #[arg(required = true)]
         profile_name: String,
-        #[clap(
+        #[arg(
             required = true,
             long = "envs",
             short = 'e',
@@ -49,57 +57,61 @@ pub enum Command {
         )]
         envs: Vec<String>,
     },
-    #[clap(
+    #[command(
         name = "load",
         about = "Load all environment variables in a profile for use in your terminal sessions"
     )]
     Load {
-        #[clap(required = true)]
+        #[arg(required = true)]
         profile_name: String,
     },
     #[cfg(target_family = "unix")]
-    #[clap(name = "unload", about = "Unload a profile")]
+    #[command(name = "unload", about = "Unload a profile")]
     Unload,
     #[cfg(target_family = "windows")]
-    #[clap(name = "unload", about = "Unload a profile")]
+    #[command(name = "unload", about = "Unload a profile")]
     Unload {
-        #[clap(required = true)]
+        #[arg(required = true)]
         profile_name: String,
     },
-    #[clap(name = "launch", about = "Launch a program with a profile")]
+    #[command(name = "launch", about = "Launch a program with a profile")]
     Launch {
-        #[clap(required = true)]
+        #[arg(required = true)]
         profile_name: String,
-        #[clap(required = true, long = "program", short = 'p', value_delimiter = ' ')]
+        #[arg(required = true, long = "program", short = 'p', value_delimiter = ' ')]
         program: Vec<String>,
     },
-    #[clap(
+    #[command(
         name = "remove",
         about = "Remove a environment variable from a profile"
     )]
     Remove {
-        #[clap(required = true)]
+        #[arg(required = true)]
         profile_name: String,
-        #[clap(required = false, long = "envs-to-remove", short = 'e')]
+        #[arg(required = false, long = "envs-to-remove", short = 'e')]
         envs: Option<Vec<String>>,
     },
-    #[clap(
+    #[command(
         name = "list",
         about = "List all the environment variables in a profile or all the profiles currenty stored"
     )]
     List {
-        #[clap(required = false, long = "profiles", short = 'p')]
+        #[arg(required = false, long = "profiles", short = 'p')]
         profiles: bool,
-        #[clap(required = false, long = "profile-name", short = 'n')]
+        #[arg(required = false, long = "profile-name", short = 'n')]
         profile_name: Option<String>,
-        #[clap(required = false, long = "no-pretty-print", short = 'v')]
+        #[arg(required = false, long = "no-pretty-print", short = 'v')]
         no_pretty_print: bool,
     },
-    #[clap(name = "update", about = "Update environment variables in a profile")]
+    #[command(
+        name = "update",
+        about = "Update environment variables in a profile",
+        override_usage = "envio update <PROFILE_NAME> [OPTIONS]"
+    )]
     Update {
-        #[clap(required = true)]
+        #[arg(required = true)]
         profile_name: String,
-        #[clap(
+        #[arg(
             required = true,
             long = "envs",
             short = 'e',
@@ -108,31 +120,31 @@ pub enum Command {
         )]
         envs: Vec<String>,
     },
-    #[clap(
+    #[command(
         name = "export",
         about = "Export a profile to a file if no file is specified it will be exported to a file named .env"
     )]
     Export {
-        #[clap(required = true)]
+        #[arg(required = true)]
         profile_name: String,
-        #[clap(required = false, long = "file-to-export-to", short = 'f')]
+        #[arg(required = false, long = "file-to-export-to", short = 'f')]
         file: Option<String>,
     },
-    #[clap(
+    #[command(
         name = "import",
         about = "Download a profile over the internet and import it into the system or import a locally stored profile into your current envio installation"
     )]
     Import {
-        #[clap(required = true)]
+        #[arg(required = true)]
         profile_name: String,
-        #[clap(required = false, long = "file-to-import-from", short = 'f')]
+        #[arg(required = false, long = "file-to-import-from", short = 'f')]
         file: Option<String>,
-        #[clap(required = false, long = "url", short = 'u')]
+        #[arg(required = false, long = "url", short = 'u')]
         url: Option<String>,
     },
-    #[clap(name = "version", about = "Print the version")]
+    #[command(name = "version", about = "Print the version")]
     Version {
-        #[clap(required = false)]
+        #[arg(required = false)]
         verbose: Option<bool>,
     },
 }
