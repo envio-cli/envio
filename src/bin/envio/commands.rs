@@ -331,8 +331,12 @@ impl Command {
             }
             Command::Launch {
                 profile_name,
-                program,
+                command,
             } => {
+                let split_command = command.split_whitespace().collect::<Vec<&str>>();
+                let program = split_command[0];
+                let args = &split_command[1..];
+
                 if !check_profile(profile_name) {
                     println!("{}: Profile does not exist", "Error".red());
                     return;
@@ -350,11 +354,11 @@ impl Command {
                         return;
                     };
 
-                let output = std::process::Command::new(&program[0])
+                let output = std::process::Command::new(&program)
                     .envs(profile.envs)
-                    .args(&program[1..])
+                    .args(args)
                     .output()
-                    .expect("Failed to execute process");
+                    .expect("Failed to execute command");
 
                 if output.stderr.is_empty() {
                     println!("{}", String::from_utf8(output.stdout).unwrap());

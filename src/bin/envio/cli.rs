@@ -74,21 +74,26 @@ pub enum Command {
         #[arg(required = true)]
         profile_name: String,
     },
-    #[command(name = "launch", about = "Launch a program with a profile")]
+    #[command(
+        name = "launch",
+        about = "Run a command with the environment variables from a profile",
+        override_usage = "envio launch <PROFILE_NAME> [OPTIONS]"
+    )]
     Launch {
         #[arg(required = true)]
         profile_name: String,
-        #[arg(required = true, long = "program", short = 'p', value_delimiter = ' ')]
-        program: Vec<String>,
+        #[arg(required = true, long = "command", short = 'c')]
+        command: String,
     },
     #[command(
         name = "remove",
-        about = "Remove a environment variable from a profile"
+        about = "Remove a environment variable from a profile",
+        override_usage = "envio remove <PROFILE_NAME> [OPTIONS]"
     )]
     Remove {
         #[arg(required = true)]
         profile_name: String,
-        #[arg(required = false, long = "envs-to-remove", short = 'e')]
+        #[arg(required = false, long = "envs-to-remove", short = 'e', value_delimiter = ' ', num_args = 1..)]
         envs: Option<Vec<String>>,
     },
     #[command(
@@ -122,7 +127,8 @@ pub enum Command {
     },
     #[command(
         name = "export",
-        about = "Export a profile to a file if no file is specified it will be exported to a file named .env"
+        about = "Export a profile to a file if no file is specified it will be exported to a file named .env",
+        override_usage = "envio export <PROFILE_NAME> [OPTIONS]"
     )]
     Export {
         #[arg(required = true)]
@@ -132,7 +138,8 @@ pub enum Command {
     },
     #[command(
         name = "import",
-        about = "Download a profile over the internet and import it into the system or import a locally stored profile into your current envio installation"
+        about = "Download a profile over the internet and import it into the system or import a locally stored profile into your current envio installation",
+        override_usage = "envio import <PROFILE_NAME> [OPTIONS]"
     )]
     Import {
         #[arg(required = true)]

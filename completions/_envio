@@ -63,8 +63,8 @@ _arguments "${_arguments_options[@]}" \
 ;;
 (launch)
 _arguments "${_arguments_options[@]}" \
-'*-p+[]:PROGRAM: ' \
-'*--program=[]:PROGRAM: ' \
+'-c+[]:COMMAND: ' \
+'--command=[]:COMMAND: ' \
 '-h[Print help]' \
 '--help[Print help]' \
 ':profile_name:' \
@@ -203,7 +203,7 @@ _envio_commands() {
 'add:Add envionment variables to a profile' \
 'load:Load all environment variables in a profile for use in your terminal sessions' \
 'unload:Unload a profile' \
-'launch:Launch a program with a profile' \
+'launch:Run a command with the environment variables from a profile' \
 'remove:Remove a environment variable from a profile' \
 'list:List all the environment variables in a profile or all the profiles currenty stored' \
 'update:Update environment variables in a profile' \
@@ -251,7 +251,7 @@ _envio__help_commands() {
 'add:Add envionment variables to a profile' \
 'load:Load all environment variables in a profile for use in your terminal sessions' \
 'unload:Unload a profile' \
-'launch:Launch a program with a profile' \
+'launch:Run a command with the environment variables from a profile' \
 'remove:Remove a environment variable from a profile' \
 'list:List all the environment variables in a profile or all the profiles currenty stored' \
 'update:Update environment variables in a profile' \

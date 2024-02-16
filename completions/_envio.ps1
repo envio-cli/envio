@@ -27,7 +27,7 @@ Register-ArgumentCompleter -Native -CommandName 'envio' -ScriptBlock {
             [CompletionResult]::new('add', 'add', [CompletionResultType]::ParameterValue, 'Add envionment variables to a profile')
             [CompletionResult]::new('load', 'load', [CompletionResultType]::ParameterValue, 'Load all environment variables in a profile for use in your terminal sessions')
             [CompletionResult]::new('unload', 'unload', [CompletionResultType]::ParameterValue, 'Unload a profile')
-            [CompletionResult]::new('launch', 'launch', [CompletionResultType]::ParameterValue, 'Launch a program with a profile')
+            [CompletionResult]::new('launch', 'launch', [CompletionResultType]::ParameterValue, 'Run a command with the environment variables from a profile')
             [CompletionResult]::new('remove', 'remove', [CompletionResultType]::ParameterValue, 'Remove a environment variable from a profile')
             [CompletionResult]::new('list', 'list', [CompletionResultType]::ParameterValue, 'List all the environment variables in a profile or all the profiles currenty stored')
             [CompletionResult]::new('update', 'update', [CompletionResultType]::ParameterValue, 'Update environment variables in a profile')
@@ -66,8 +66,8 @@ Register-ArgumentCompleter -Native -CommandName 'envio' -ScriptBlock {
             break
         }
         'envio;launch' {
-            [CompletionResult]::new('-p', 'p', [CompletionResultType]::ParameterName, 'p')
-            [CompletionResult]::new('--program', 'program', [CompletionResultType]::ParameterName, 'program')
+            [CompletionResult]::new('-c', 'c', [CompletionResultType]::ParameterName, 'c')
+            [CompletionResult]::new('--command', 'command', [CompletionResultType]::ParameterName, 'command')
             [CompletionResult]::new('-h', 'h', [CompletionResultType]::ParameterName, 'Print help')
             [CompletionResult]::new('--help', 'help', [CompletionResultType]::ParameterName, 'Print help')
             break
@@ -123,7 +123,7 @@ Register-ArgumentCompleter -Native -CommandName 'envio' -ScriptBlock {
             [CompletionResult]::new('add', 'add', [CompletionResultType]::ParameterValue, 'Add envionment variables to a profile')
             [CompletionResult]::new('load', 'load', [CompletionResultType]::ParameterValue, 'Load all environment variables in a profile for use in your terminal sessions')
             [CompletionResult]::new('unload', 'unload', [CompletionResultType]::ParameterValue, 'Unload a profile')
-            [CompletionResult]::new('launch', 'launch', [CompletionResultType]::ParameterValue, 'Launch a program with a profile')
+            [CompletionResult]::new('launch', 'launch', [CompletionResultType]::ParameterValue, 'Run a command with the environment variables from a profile')
             [CompletionResult]::new('remove', 'remove', [CompletionResultType]::ParameterValue, 'Remove a environment variable from a profile')
             [CompletionResult]::new('list', 'list', [CompletionResultType]::ParameterValue, 'List all the environment variables in a profile or all the profiles currenty stored')
             [CompletionResult]::new('update', 'update', [CompletionResultType]::ParameterValue, 'Update environment variables in a profile')

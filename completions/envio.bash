@@ -399,17 +399,17 @@ _envio() {
             return 0
             ;;
         envio__launch)
-            opts="-p -h --program --help <PROFILE_NAME>"
+            opts="-c -h --command --help <PROFILE_NAME>"
             if [[ ${cur} == -* || ${COMP_CWORD} -eq 2 ]] ; then
                 COMPREPLY=( $(compgen -W "${opts}" -- "${cur}") )
                 return 0
             fi
             case "${prev}" in
-                --program)
+                --command)
                     COMPREPLY=($(compgen -f "${cur}"))
                     return 0
                     ;;
-                -p)
+                -c)
                     COMPREPLY=($(compgen -f "${cur}"))
                     return 0
                     ;;
