@@ -1,6 +1,6 @@
 use clap::Parser;
 
-#[derive(Parser)]
+#[derive(Parser, Debug)]
 /*
  * Clap Application
 */
@@ -77,13 +77,13 @@ pub enum Command {
     #[command(
         name = "launch",
         about = "Run a command with the environment variables from a profile",
-        override_usage = "envio launch <PROFILE_NAME> [OPTIONS]"
+        override_usage = "envio launch <PROFILE_NAME> <--command STRING_COMMAND | -- COMMAND>"
     )]
     Launch {
         #[arg(required = true)]
         profile_name: String,
-        #[arg(required = true, long = "command", short = 'c')]
-        command: String,
+        #[command(flatten)]
+        command: LaunchCommandArg,
     },
     #[command(
         name = "remove",
@@ -154,4 +154,22 @@ pub enum Command {
         #[arg(required = false)]
         verbose: Option<bool>,
     },
+}
+
+#[derive(clap::Args, Debug)]
+#[group(required = true, multiple = false)]
+pub struct LaunchCommandArg {
+    #[arg(long = "command", short = 'c', name = "STRING_COMMAND")]
+    argument: Option<String>,
+    #[arg(last = true, name = "COMMAND")]
+    positional: Vec<String>,
+}
+
+impl LaunchCommandArg {
+    pub fn value(&self) -> Vec<&str> {
+        if let Some(command) = self.argument.as_ref() {
+            return command.split_whitespace().collect();
+        }
+        self.positional.iter().map(|s| s.as_str()).collect()
+    }
 }

@@ -63,11 +63,12 @@ _arguments "${_arguments_options[@]}" \
 ;;
 (launch)
 _arguments "${_arguments_options[@]}" \
-'-c+[]:COMMAND: ' \
-'--command=[]:COMMAND: ' \
+'-c+[]:STRING_COMMAND: ' \
+'--command=[]:STRING_COMMAND: ' \
 '-h[Print help]' \
 '--help[Print help]' \
 ':profile_name:' \
+'*::COMMAND:' \
 && ret=0
 ;;
 (remove)

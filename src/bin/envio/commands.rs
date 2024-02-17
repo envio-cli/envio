@@ -333,7 +333,7 @@ impl Command {
                 profile_name,
                 command,
             } => {
-                let split_command = command.split_whitespace().collect::<Vec<&str>>();
+                let split_command = command.value();
                 let program = split_command[0];
                 let args = &split_command[1..];
 
@@ -354,15 +354,30 @@ impl Command {
                         return;
                     };
 
-                let mut cmd = std::process::Command::new(&program)
+
+                let output = std::process::Command::new(program)
                     .envs(profile.envs)
                     .args(args)
                     .stdout(std::process::Stdio::inherit())
                     .stderr(std::process::Stdio::inherit())
                     .spawn()
                     .expect("Failed to execute command");
-                let status = cmd.wait().unwrap();
-                std::process::exit(status.code().unwrap());
+                           
+                let status = match cmd.wait() {
+                    Ok(s) => s,
+                    Err(e) => {
+                        println!("{}: {}", "Error".red(), e); 
+                        exit(1);
+                    }
+                };
+    
+                match status.code() {
+                    Some(code) => std::process::exit(code),
+                    None => {
+                        println!("{}: Child process terminated by signal", "Error".red());
+                        std::process::exit(1);
+                    }
+                }
             }
 
             Command::Remove { profile_name, envs } => {

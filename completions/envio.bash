@@ -399,7 +399,7 @@ _envio() {
             return 0
             ;;
         envio__launch)
-            opts="-c -h --command --help <PROFILE_NAME>"
+            opts="-c -h --command --help <PROFILE_NAME> [COMMAND]..."
             if [[ ${cur} == -* || ${COMP_CWORD} -eq 2 ]] ; then
                 COMPREPLY=( $(compgen -W "${opts}" -- "${cur}") )
                 return 0
