@@ -333,7 +333,7 @@ impl Command {
                 profile_name,
                 command,
             } => {
-                let split_command = command.split_whitespace().collect::<Vec<&str>>();
+                let split_command = command.value();
                 let program = split_command[0];
                 let args = &split_command[1..];
 
@@ -354,7 +354,7 @@ impl Command {
                         return;
                     };
 
-                let output = std::process::Command::new(&program)
+                let output = std::process::Command::new(program)
                     .envs(profile.envs)
                     .args(args)
                     .output()
