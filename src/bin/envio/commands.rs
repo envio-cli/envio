@@ -354,17 +354,15 @@ impl Command {
                         return;
                     };
 
-                let output = std::process::Command::new(&program)
+                let mut cmd = std::process::Command::new(&program)
                     .envs(profile.envs)
                     .args(args)
-                    .output()
+                    .stdout(std::process::Stdio::inherit())
+                    .stderr(std::process::Stdio::inherit())
+                    .spawn()
                     .expect("Failed to execute command");
-
-                if output.stderr.is_empty() {
-                    println!("{}", String::from_utf8(output.stdout).unwrap());
-                } else {
-                    println!("{}", String::from_utf8(output.stderr).unwrap());
-                }
+                let status = cmd.wait().unwrap();
+                std::process::exit(status.code().unwrap());
             }
 
             Command::Remove { profile_name, envs } => {
