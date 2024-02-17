@@ -354,16 +354,29 @@ impl Command {
                         return;
                     };
 
+
                 let output = std::process::Command::new(program)
                     .envs(profile.envs)
                     .args(args)
-                    .output()
+                    .stdout(std::process::Stdio::inherit())
+                    .stderr(std::process::Stdio::inherit())
+                    .spawn()
                     .expect("Failed to execute command");
-
-                if output.stderr.is_empty() {
-                    println!("{}", String::from_utf8(output.stdout).unwrap());
-                } else {
-                    println!("{}", String::from_utf8(output.stderr).unwrap());
+                           
+                let status = match cmd.wait() {
+                    Ok(s) => s,
+                    Err(e) => {
+                        println!("{}: {}", "Error".red(), e); 
+                        exit(1);
+                    }
+                };
+    
+                match status.code() {
+                    Some(code) => std::process::exit(code),
+                    None => {
+                        println!("{}: Child process terminated by signal", "Error".red());
+                        std::process::exit(1);
+                    }
                 }
             }
 
