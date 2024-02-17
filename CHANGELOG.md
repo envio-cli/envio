@@ -1,4 +1,18 @@
 # Change Log
+# v0.5.1
+## Improvements
+* Improve `add`, `launch`, `update` and `remove` commands usage
+* Allow environment variable value to have an equal sign #33 
+
+## Bug Fixes
+* Fix encryption identification issue #36 
+* Use `CARGO_PKG_VERSION` when git is not installed by @afh in https://github.com/envio-cli/envio/pull/31
+* Only list profiles ending with `.env` by @afh in https://github.com/envio-cli/envio/pull/32
+* Prevent setenv.sh script from including entire stdout #27
+
+## Other
+* Bump chrono from 0.4.24 to 0.4.33 by @dependabot in https://github.com/envio-cli/envio/pull/30
+* Bump actions/checkout from 3 to 4 by @dependabot in https://github.com/envio-cli/envio/pull/28
 # v0.5.0
 ## Features
 * Add GPG encryption for user profiles, See [Usage](./docs/usage.md)
