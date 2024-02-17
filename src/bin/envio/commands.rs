@@ -354,23 +354,22 @@ impl Command {
                         return;
                     };
 
-
-                let output = std::process::Command::new(program)
+                let mut cmd = std::process::Command::new(program)
                     .envs(profile.envs)
                     .args(args)
                     .stdout(std::process::Stdio::inherit())
                     .stderr(std::process::Stdio::inherit())
                     .spawn()
                     .expect("Failed to execute command");
-                           
+
                 let status = match cmd.wait() {
                     Ok(s) => s,
                     Err(e) => {
-                        println!("{}: {}", "Error".red(), e); 
-                        exit(1);
+                        println!("{}: {}", "Error".red(), e);
+                        std::process::exit(1);
                     }
                 };
-    
+
                 match status.code() {
                     Some(code) => std::process::exit(code),
                     None => {
