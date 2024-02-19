@@ -228,18 +228,26 @@ impl Profile {
 pub fn parse_envs_from_string(buffer: &str) -> HashMap<String, String> {
     let mut envs_map = HashMap::new();
     for buf in buffer.lines() {
+        if buf.is_empty() || !buf.contains('=') {
+            continue;
+        }
+
         let mut split = buf.split('=');
 
         let key = split.next();
-        let value = split.next();
+        let mut value = split.next();
 
-        if key.is_none() || value.is_none() {
-            println!("{}: Can not parse arguments", "Error".red());
+        if key.is_none() {
             println!(
-                "{}",
-                "Arguments should be in the format of key=value".bold()
+                "{}: Can not parse key from buffer: `{}`",
+                "Error".red(),
+                buf
             );
             std::process::exit(1);
+        }
+
+        if value.is_none() {
+            value = Some("");
         }
 
         envs_map.insert(key.unwrap().to_owned(), value.unwrap().to_owned());
@@ -326,7 +334,7 @@ pub fn create_profile(
 pub fn check_profile(name: &str) -> bool {
     let configdir = get_configdir();
 
-    let profile_path = configdir.join("profiles").join(&format!("{}.env", name));
+    let profile_path = configdir.join("profiles").join(format!("{}.env", name));
 
     if profile_path.exists() {
         return true;
@@ -344,7 +352,7 @@ pub fn check_profile(name: &str) -> bool {
 pub fn delete_profile(name: &str) {
     if check_profile(name) {
         let configdir = get_configdir();
-        let profile_path = configdir.join("profiles").join(&format!("{}.env", name));
+        let profile_path = configdir.join("profiles").join(format!("{}.env", name));
 
         match std::fs::remove_file(profile_path) {
             Ok(_) => println!("{}: Deleted profile", "Success".green()),
@@ -380,7 +388,7 @@ pub fn list_profiles(raw: bool) {
             }
         }
         let profile_name = path.file_stem().unwrap().to_str().unwrap().to_owned();
-        if profile_name.starts_with(".") {
+        if profile_name.starts_with('.') {
             continue;
         }
         profiles.push(profile_name);
@@ -686,7 +694,7 @@ pub fn get_shell_config() -> &'static str {
  */
 #[cfg(any(target_family = "unix"))]
 pub fn load_profile(profile_name: &str) {
-    if !check_profile(&profile_name) {
+    if !check_profile(profile_name) {
         println!("{}: Profile does not exist", "Error".red());
         return;
     }

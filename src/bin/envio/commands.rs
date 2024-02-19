@@ -1,5 +1,5 @@
 use colored::Colorize;
-use inquire::{min_length, Password, PasswordDisplayMode, Select, Text};
+use inquire::{min_length, Confirm, MultiSelect, Password, PasswordDisplayMode, Select, Text};
 
 use std::collections::HashMap;
 use std::io::Read;
@@ -55,7 +55,7 @@ impl Command {
                     return;
                 }
 
-                if check_profile(&profile_name) {
+                if check_profile(profile_name) {
                     println!("{}: Profile already exists", "Error".red());
                     return;
                 }
@@ -144,6 +144,70 @@ impl Command {
                     file.read_to_string(&mut buffer).unwrap();
 
                     envs_hashmap = Some(parse_envs_from_string(&buffer));
+
+                    if envs_hashmap.is_none() {
+                        println!("{}: Unable to parse the file", "Error".red());
+                        return;
+                    }
+
+                    let mut options = vec![];
+
+                    for (key, value) in envs_hashmap.as_ref().unwrap().clone() {
+                        if value.is_empty() {
+                            let prompt = Confirm::new(&format!(
+                                "Would you like to assign a value to key: {} ?",
+                                key
+                            ))
+                            .with_default(false)
+                            .with_help_message(
+                                "If you do not want to assign a value to this key, press enter",
+                            )
+                            .prompt();
+
+                            if let Err(e) = prompt {
+                                println!("{}: {}", "Error".red(), e);
+                                std::process::exit(1);
+                            } else if prompt.unwrap() {
+                                let prompt =
+                                    Text::new(&format!("Enter the value for {}:", key)).prompt();
+
+                                if let Err(e) = prompt {
+                                    println!("{}: {}", "Error".red(), e);
+                                    std::process::exit(1);
+                                } else {
+                                    envs_hashmap
+                                        .as_mut()
+                                        .unwrap()
+                                        .insert(key.to_string(), prompt.unwrap());
+                                }
+                            }
+                        }
+
+                        // we add the keys to the options list so that we can use them in the multi select prompt.
+                        // The reason we do not have this in a separate loop is for efficiency reasons
+                        options.push(key);
+                    }
+
+                    let default_options = (0..options.len()).collect::<Vec<usize>>();
+
+                    let prompt = MultiSelect::new("Select the environment variables you want to keep in your new profile:", options.clone())
+                        .with_default(&default_options)
+                        .with_help_message("↑↓ to move, space to select one, → to all, ← to none, type to filter, enter to confirm")
+                        .prompt();
+
+                    if let Err(e) = prompt {
+                        println!("{}: {}", "Error".red(), e);
+                        std::process::exit(1);
+                    } else {
+                        // remove the keys that were not selected
+                        let selected_keys = prompt.unwrap();
+
+                        for key in options {
+                            if !selected_keys.contains(&key) {
+                                envs_hashmap.as_mut().unwrap().remove(&key);
+                            }
+                        }
+                    }
                 } else if envs.is_some() {
                     envs_hashmap = Some(HashMap::new());
 
@@ -420,7 +484,7 @@ impl Command {
                         list_profiles(false)
                     }
                 } else if profile_name.is_some() && !profile_name.as_ref().unwrap().is_empty() {
-                    if !check_profile(&profile_name.as_ref().unwrap()) {
+                    if !check_profile(profile_name.as_ref().unwrap()) {
                         println!("{}: Profile does not exist", "Error".red());
                         return;
                     }
@@ -551,7 +615,7 @@ impl Command {
                         return;
                     };
 
-                profile.export_envs(&file_name);
+                profile.export_envs(file_name);
             }
 
             Command::Import {

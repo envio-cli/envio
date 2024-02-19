@@ -102,7 +102,6 @@ fn main() {
             }
 
             let mut file = std::fs::OpenOptions::new()
-                .write(true)
                 .append(true)
                 .open(file_path)
                 .unwrap();

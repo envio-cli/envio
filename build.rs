@@ -96,7 +96,7 @@ fn get_version() -> String {
     }
 
     println!("Error: Cannot get build version using `git` using CARGO_PKG_VERSION");
-    return env!("CARGO_PKG_VERSION").to_string();
+    env!("CARGO_PKG_VERSION").to_string()
 }
 
 /*
@@ -118,9 +118,7 @@ fn get_buildtimestamp() -> String {
  @param dir_name &str
 */
 fn create_dir(dir_name: &str) -> Result<(), std::io::Error> {
-    if let Err(e) = fs::create_dir_all(dir_name) {
-        return Err(e);
-    }
+    fs::create_dir_all(dir_name)?;
 
     Ok(())
 }

@@ -461,7 +461,7 @@ pub fn get_encryption_type(profile_name: String) -> Box<dyn EncryptionType> {
 
     let profile_file_path = profile_dir.join(profile_name + ".env");
 
-    let mut file = match std::fs::File::open(&profile_file_path) {
+    let mut file = match std::fs::File::open(profile_file_path) {
         Ok(file) => file,
         Err(e) => {
             println!("{}: {}", "Error".red(), e);
