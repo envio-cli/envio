@@ -30,6 +30,7 @@ complete -c envio -n "__fish_seen_subcommand_from list" -s h -l help -d 'Print h
 complete -c envio -n "__fish_seen_subcommand_from update" -s e -l envs -r
 complete -c envio -n "__fish_seen_subcommand_from update" -s h -l help -d 'Print help'
 complete -c envio -n "__fish_seen_subcommand_from export" -s f -l file-to-export-to -r
+complete -c envio -n "__fish_seen_subcommand_from export" -s e -l envs -r
 complete -c envio -n "__fish_seen_subcommand_from export" -s h -l help -d 'Print help'
 complete -c envio -n "__fish_seen_subcommand_from import" -s f -l file-to-import-from -r
 complete -c envio -n "__fish_seen_subcommand_from import" -s u -l url -r

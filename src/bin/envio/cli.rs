@@ -135,6 +135,14 @@ pub enum Command {
         profile_name: String,
         #[arg(required = false, long = "file-to-export-to", short = 'f')]
         file: Option<String>,
+        #[arg(
+            required = false,
+            long = "envs",
+            short = 'e',
+            value_delimiter = ' ',
+            num_args = 1..,
+        )]
+        envs: Option<Vec<String>>,
     },
     #[command(
         name = "import",

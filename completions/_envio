@@ -105,6 +105,8 @@ _arguments "${_arguments_options[@]}" \
 _arguments "${_arguments_options[@]}" \
 '-f+[]:FILE: ' \
 '--file-to-export-to=[]:FILE: ' \
+'*-e+[]:ENVS: ' \
+'*--envs=[]:ENVS: ' \
 '-h[Print help]' \
 '--help[Print help]' \
 ':profile_name:' \

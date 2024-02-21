@@ -591,7 +591,11 @@ impl Command {
                 profile.push_changes();
             }
 
-            Command::Export { profile_name, file } => {
+            Command::Export {
+                profile_name,
+                file,
+                envs,
+            } => {
                 if !check_profile(profile_name) {
                     println!("{}: Profile does not exist", "Error".red());
                     return;
@@ -615,7 +619,7 @@ impl Command {
                         return;
                     };
 
-                profile.export_envs(file_name);
+                profile.export_envs(file_name, envs);
             }
 
             Command::Import {

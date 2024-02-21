@@ -155,7 +155,7 @@ impl Profile {
 
     @param file_name &str
     */
-    pub fn export_envs(&self, file_name: &str) {
+    pub fn export_envs(&self, file_name: &str, envs: &Option<Vec<String>>) {
         let mut file = std::fs::OpenOptions::new()
             .create(true)
             .write(true)
@@ -170,8 +170,21 @@ impl Profile {
             return;
         }
 
-        for key in self.envs.keys() {
-            buffer = buffer + key + "=" + self.envs.get(key).unwrap() + "\n";
+        let mut keys: Vec<_> = self.envs.keys().cloned().collect::<Vec<String>>();
+        if let Some(envs) = envs {
+            if !envs.is_empty() {
+                keys = self
+                    .envs
+                    .keys()
+                    .into_iter()
+                    .filter(|item| !envs.contains(item))
+                    .cloned()
+                    .collect::<Vec<String>>();
+            }
+        }
+
+        for key in keys {
+            buffer = buffer + key.as_str() + "=" + self.envs.get(key.as_str()).unwrap() + "\n";
         }
 
         if let Err(e) = writeln!(file, "{}", buffer) {
