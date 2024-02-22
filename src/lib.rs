@@ -177,9 +177,14 @@ impl Profile {
                     .envs
                     .keys()
                     .into_iter()
-                    .filter(|item| !envs.contains(item))
+                    .filter(|item| envs.contains(item))
                     .cloned()
                     .collect::<Vec<String>>();
+            }
+
+            if keys.is_empty() {
+                println!("{}: No envs to export", "Error".red());
+                return;
             }
         }
 
