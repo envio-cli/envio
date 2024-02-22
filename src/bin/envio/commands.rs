@@ -192,7 +192,7 @@ impl Command {
 
                     let prompt = MultiSelect::new("Select the environment variables you want to keep in your new profile:", options.clone())
                         .with_default(&default_options)
-                        .with_help_message("↑↓ to move, space to select one, → to all, ← to none, type to filter, enter to confirm")
+                        .with_help_message("↑↓ to move, space to select/unselect one, → to all, ← to none, type to filter, enter to confirm")
                         .prompt();
 
                     if let Err(e) = prompt {
@@ -619,6 +619,32 @@ impl Command {
                         return;
                     };
 
+                if envs.is_none() {
+                    let prompt = MultiSelect::new("Select the environment variables you want to export:", profile.envs.keys().collect())
+                        .with_default(&(0..profile.envs.len()).collect::<Vec<usize>>())
+                        .with_help_message("↑↓ to move, space to select/unselect one, → to all, ← to none, type to filter, enter to confirm")
+                        .prompt();
+
+                    if let Err(e) = prompt {
+                        println!("{}: {}", "Error".red(), e);
+                        std::process::exit(1);
+                    }
+
+                    profile.export_envs(
+                        file_name,
+                        &Some(
+                            prompt
+                                .unwrap()
+                                .iter()
+                                .cloned()
+                                .map(|s| s.to_owned())
+                                .collect(),
+                        ),
+                    );
+
+                    return;
+                }
+                
                 profile.export_envs(file_name, envs);
             }
 
