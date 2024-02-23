@@ -3,6 +3,12 @@
 </h1> -->
 
 <div align="center">
+
+[![ReadMeSupportPalestine](https://raw.githubusercontent.com/Safouene1/support-palestine-banner/master/banner-support.svg)](https://github.com/Safouene1/support-palestine-banner)
+
+</div>
+
+<div align="center">
         <img
           src="assets/icon-color.svg"
           width="200px"
@@ -11,7 +17,7 @@
         >
           envio
         </h1>
-      </div>
+</div>
 
 <div align="center">
 <h2 align="center">A Modern And Secure CLI Tool For Managing Environment Variables</h2>
