@@ -1,34 +1,24 @@
-<!-- <h1 align="center">
-<img src="assets/logo/cover.png" alt="envio Logo" width="600">
-</h1> -->
-
 <div align="center">
-
-[![ReadMeSupportPalestine](https://raw.githubusercontent.com/Safouene1/support-palestine-banner/master/banner-support.svg)](https://irusa.org/middle-east/palestine/)
-
+  <a href="https://irusa.org/middle-east/palestine/">
+    <img src="assets/palestine-banner.png" width="800px">
+  </a>
 </div>
 
 <div align="center">
-        <img
-          src="assets/icon-color.svg"
-          width="200px"
-        />
-        <h1
-        >
-          envio
-        </h1>
+  <img src="assets/icon-color.svg" width="200px">
+  <h1>envio</h1>
 </div>
 
 <div align="center">
-<h2 align="center">A Modern And Secure CLI Tool For Managing Environment Variables</h2>
+  <h2 align="center">A Modern And Secure CLI Tool For Managing Environment Variables</h2>
 
-[![CICD](https://github.com/humblepenguinn/envio/actions/workflows/CICD.yml/badge.svg)](https://github.com/humblepenguinn/envio/workflows/CICD.yml)
-[![Version info](https://img.shields.io/crates/v/envio.svg)](https://crates.io/crates/envio)
-[![Visit Official Site](https://img.shields.io/badge/Visit-Official%20Site-blue)](https://envio-cli.github.io/home)
-
+  [![CICD](https://github.com/humblepenguinn/envio/actions/workflows/CICD.yml/badge.svg)](https://github.com/humblepenguinn/envio/workflows/CICD.yml)
+  [![Version info](https://img.shields.io/crates/v/envio.svg)](https://crates.io/crates/envio)
+  [![Visit Official Site](https://img.shields.io/badge/Visit-Official%20Site-blue)](https://envio-cli.github.io/home)
 </div>
 
-<div align='center'><img alt="Demo" src="assets/envio-passphrase-final.gif" width="600" />
+<div align='center'>
+  <img alt="Demo" src="assets/envio-passphrase-final.gif" width="600">
 </div>
 
 <div align='center'>To see the GPG encryption demo go <a href="https://github.com/envio-cli/envio/blob/main/assets/envio-gpg-final.gif">here</a></div>
@@ -52,9 +42,6 @@ Sound interesting? Check out the [official website](https://envio-cli.github.io/
 
 ## Contributors
 
-<!-- ALL-CONTRIBUTORS-LIST:START - Do not remove or modify this section -->
-<!-- prettier-ignore-start -->
-<!-- markdownlint-disable -->
 <table>
   <tbody>
     <tr>
@@ -64,18 +51,6 @@ Sound interesting? Check out the [official website](https://envio-cli.github.io/
     </tr>
   </tbody>
 </table>
-
-<!-- markdownlint-restore -->
-<!-- prettier-ignore-end -->
-
-<!-- ALL-CONTRIBUTORS-LIST:END -->
-<!-- prettier-ignore-start -->
-<!-- markdownlint-disable -->
-
-<!-- markdownlint-restore -->
-<!-- prettier-ignore-end -->
-
-<!-- ALL-CONTRIBUTORS-LIST:END -->
 
 ## Contributing
 
