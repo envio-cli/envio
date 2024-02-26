@@ -644,7 +644,7 @@ impl Command {
 
                     return;
                 }
-                
+
                 profile.export_envs(file_name, envs);
             }
 
