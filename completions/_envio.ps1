@@ -100,6 +100,8 @@ Register-ArgumentCompleter -Native -CommandName 'envio' -ScriptBlock {
         'envio;export' {
             [CompletionResult]::new('-f', 'f', [CompletionResultType]::ParameterName, 'f')
             [CompletionResult]::new('--file-to-export-to', 'file-to-export-to', [CompletionResultType]::ParameterName, 'file-to-export-to')
+            [CompletionResult]::new('-e', 'e', [CompletionResultType]::ParameterName, 'e')
+            [CompletionResult]::new('--envs', 'envs', [CompletionResultType]::ParameterName, 'envs')
             [CompletionResult]::new('-h', 'h', [CompletionResultType]::ParameterName, 'Print help')
             [CompletionResult]::new('--help', 'help', [CompletionResultType]::ParameterName, 'Print help')
             break

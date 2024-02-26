@@ -165,7 +165,7 @@ _envio() {
             return 0
             ;;
         envio__export)
-            opts="-f -h --file-to-export-to --help <PROFILE_NAME>"
+            opts="-f -e -h --file-to-export-to --envs --help <PROFILE_NAME>"
             if [[ ${cur} == -* || ${COMP_CWORD} -eq 2 ]] ; then
                 COMPREPLY=( $(compgen -W "${opts}" -- "${cur}") )
                 return 0
@@ -176,6 +176,14 @@ _envio() {
                     return 0
                     ;;
                 -f)
+                    COMPREPLY=($(compgen -f "${cur}"))
+                    return 0
+                    ;;
+                --envs)
+                    COMPREPLY=($(compgen -f "${cur}"))
+                    return 0
+                    ;;
+                -e)
                     COMPREPLY=($(compgen -f "${cur}"))
                     return 0
                     ;;
