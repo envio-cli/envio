@@ -44,11 +44,16 @@ impl Command {
      * Run the subcommand that was passed to the program
      */
     pub fn run(&self) {
-        let vim_mode = if let Ok(_) = env::var("VISUAL") {
-            true
+        let vim_mode = if let Ok(value) = env::var("VISUAL") {
+            if let Ok(boolean_value) = value.parse::<bool>() {
+                boolean_value
+            } else {
+                false
+            }
         } else {
             false
         };
+
         match self {
             Command::Create {
                 profile_name,
