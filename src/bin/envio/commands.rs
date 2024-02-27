@@ -2,6 +2,7 @@ use colored::Colorize;
 use inquire::{min_length, Confirm, MultiSelect, Password, PasswordDisplayMode, Select, Text};
 
 use std::collections::HashMap;
+use std::env;
 use std::io::Read;
 use std::path::Path;
 use url::Url;
@@ -43,6 +44,11 @@ impl Command {
      * Run the subcommand that was passed to the program
      */
     pub fn run(&self) {
+        let vim_mode = if let Ok(_) = env::var("VISUAL") {
+            true
+        } else {
+            false
+        };
         match self {
             Command::Create {
                 profile_name,
@@ -85,6 +91,7 @@ impl Command {
                             "Select the GPG key you want to use for encryption:",
                             available_keys.iter().map(|(s, _)| s.clone()).collect(),
                         )
+                        .with_vim_mode(vim_mode)
                         .prompt();
 
                         if let Err(e) = ans {
@@ -192,6 +199,7 @@ impl Command {
 
                     let prompt = MultiSelect::new("Select the environment variables you want to keep in your new profile:", options.clone())
                         .with_default(&default_options)
+                        .with_vim_mode(vim_mode)
                         .with_help_message("↑↓ to move, space to select/unselect one, → to all, ← to none, type to filter, enter to confirm")
                         .prompt();
 
@@ -622,6 +630,7 @@ impl Command {
                 if envs.is_none() {
                     let prompt = MultiSelect::new("Select the environment variables you want to export:", profile.envs.keys().collect())
                         .with_default(&(0..profile.envs.len()).collect::<Vec<usize>>())
+                        .with_vim_mode(vim_mode)
                         .with_help_message("↑↓ to move, space to select/unselect one, → to all, ← to none, type to filter, enter to confirm")
                         .prompt();
 
