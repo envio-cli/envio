@@ -627,7 +627,7 @@ impl Command {
                         return;
                     };
 
-                if envs.is_none() {
+                if envs.is_some() && envs.as_ref().unwrap().contains(&"select".to_string()) {
                     let prompt = MultiSelect::new("Select the environment variables you want to export:", profile.envs.keys().collect())
                         .with_default(&(0..profile.envs.len()).collect::<Vec<usize>>())
                         .with_vim_mode(vim_mode)
