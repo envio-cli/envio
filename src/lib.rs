@@ -598,6 +598,7 @@ pub fn create_shellscript(profile: &str) {
 
     let mut file = if let Ok(e) = std::fs::OpenOptions::new()
         .write(true)
+        .truncate(true)
         .append(false)
         .open(shellscript_path)
     {
