@@ -1,6 +1,7 @@
 use colored::Colorize;
 use inquire::{min_length, Confirm, MultiSelect, Password, PasswordDisplayMode, Select, Text};
 
+use regex::Regex;
 use std::collections::HashMap;
 use std::env;
 use std::io::Read;
@@ -45,11 +46,9 @@ impl Command {
      */
     pub fn run(&self) {
         let vim_mode = if let Ok(value) = env::var("VISUAL") {
-            if let Ok(boolean_value) = value.parse::<bool>() {
-                boolean_value
-            } else {
-                false
-            }
+            let path = value.split(' ').next().unwrap();
+            let program = Path::new(path).file_stem().unwrap().to_str().unwrap();
+            Regex::new(r"n?vim?").unwrap().is_match(program)
         } else {
             false
         };
