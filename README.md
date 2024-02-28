@@ -58,4 +58,4 @@ Contributions to `envio` are always welcome! Please see the [Contributing Guidel
 
 ## License
 
-This project is licensed under the [MIT](LICENSE-MIT) License and the [Apache](LICENSE-APACHE) License
+This project is licensed under the [MIT](LICENSE-MIT) and the [Apache](LICENSE-APACHE) License
