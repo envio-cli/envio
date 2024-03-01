@@ -1,5 +1,6 @@
 use colored::Colorize;
 use inquire::{min_length, Confirm, MultiSelect, Password, PasswordDisplayMode, Select, Text};
+use regex::Regex;
 
 use std::collections::HashMap;
 use std::env;
@@ -39,21 +40,31 @@ fn get_userkey() -> String {
     }
 }
 
+/**
+ * Check to see if the user is using a vi based editor so that we can use the vim mode in the inquire crate
+
+ @return Result<bool, String>
+*/
+fn get_vim_mode() -> Result<bool, String> {
+    let env = env::var("VISUAL").unwrap_or_else(|_| env::var("EDITOR").unwrap_or_default());
+
+    let program = env.split_whitespace().next().ok_or("")?; // Throw an error if the program is empty, we don't really care about the error message
+
+    let program_stem = Path::new(program)
+        .file_stem()
+        .and_then(|stem| stem.to_str())
+        .ok_or("")?; // Same here
+
+    Ok(Regex::new(r"n?vim?").unwrap().is_match(program_stem)) // unwrap is safe here because we know that the regex will always compile
+}
+
 impl Command {
     /**
      * Run the subcommand that was passed to the program
      */
     pub fn run(&self) {
-        let vim_mode = if let Ok(value) = env::var("VISUAL") {
-            if let Ok(boolean_value) = value.parse::<bool>() {
-                boolean_value
-            } else {
-                false
-            }
-        } else {
-            false
-        };
-
+        let vim_mode = get_vim_mode().unwrap_or(false);
+        
         match self {
             Command::Create {
                 profile_name,
