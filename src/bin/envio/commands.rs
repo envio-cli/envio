@@ -1,5 +1,6 @@
 use colored::Colorize;
 use inquire::{min_length, Confirm, MultiSelect, Password, PasswordDisplayMode, Select, Text};
+use regex::Regex;
 
 use std::collections::HashMap;
 use std::env;
@@ -54,9 +55,7 @@ fn get_vim_mode() -> Result<bool, String> {
         .and_then(|stem| stem.to_str())
         .ok_or("")?; // Same here
 
-    let is_vim = program_stem.contains("vim");
-
-    Ok(is_vim)
+    Ok(Regex::new(r"n?vim?").unwrap().is_match(program_stem)) // unwrap is safe here because we know that the regex will always compile
 }
 
 impl Command {
