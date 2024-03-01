@@ -1,7 +1,6 @@
 use colored::Colorize;
 use inquire::{min_length, Confirm, MultiSelect, Password, PasswordDisplayMode, Select, Text};
 
-use regex::Regex;
 use std::collections::HashMap;
 use std::env;
 use std::io::Read;
