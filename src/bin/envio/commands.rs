@@ -40,19 +40,33 @@ fn get_userkey() -> String {
     }
 }
 
+/**
+ * Check to see if the user is using a vi based editor so that we can use the vim mode in the inquire crate
+
+ @return Result<bool, String>
+*/
+fn get_vim_mode() -> Result<bool, String> {
+    let env = env::var("VISUAL").unwrap_or_else(|_| env::var("EDITOR").unwrap_or_default());
+
+    let program = env.split_whitespace().next().ok_or("")?; // Throw an error if the program is empty, we don't really care about the error message
+
+    let program_stem = Path::new(program)
+        .file_stem()
+        .and_then(|stem| stem.to_str())
+        .ok_or("")?; // Same here
+
+    let is_vim = program_stem.contains("vim");
+
+    Ok(is_vim)
+}
+
 impl Command {
     /**
      * Run the subcommand that was passed to the program
      */
     pub fn run(&self) {
-        let vim_mode = if let Ok(value) = env::var("VISUAL") {
-            let path = value.split(' ').next().unwrap();
-            let program = Path::new(path).file_stem().unwrap().to_str().unwrap();
-            Regex::new(r"n?vim?").unwrap().is_match(program)
-        } else {
-            false
-        };
-
+        let vim_mode = get_vim_mode().unwrap_or(false);
+        
         match self {
             Command::Create {
                 profile_name,
