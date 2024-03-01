@@ -64,7 +64,7 @@ impl Command {
      */
     pub fn run(&self) {
         let vim_mode = get_vim_mode().unwrap_or(false);
-        
+
         match self {
             Command::Create {
                 profile_name,
