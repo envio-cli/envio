@@ -112,12 +112,18 @@ fn main() {
                     "bass".bold()
                 );
                 format!(
-                    "# envio DO NOT MODIFY\n bass source {}",
+                    "
+# envio DO NOT MODIFY
+bass source {}
+",
                     &utils::get_configdir().join("setenv.sh").to_str().unwrap()
                 )
             } else {
                 format!(
-                    "#envio DO NOT MODIFY\n source {}",
+                    "
+#envio DO NOT MODIFY
+source {}
+",
                     &utils::get_configdir().join("setenv.sh").to_str().unwrap()
                 )
             };
