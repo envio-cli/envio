@@ -2,13 +2,13 @@ use clap::CommandFactory;
 use clap_complete::{generate_to, shells::*};
 use std::{env, fs, path::PathBuf, process};
 
-include!("src/bin/envio/cli.rs");
+include!("src/bin/envio/clap_app.rs");
 
 /*
  * Main function of the build script
 */
 fn main() {
-    let mut cmd = Cli::command();
+    let mut cmd = ClapApp::command();
     let app_name = cmd.get_name().to_string();
 
     let completions_dir = "completions";

@@ -3,71 +3,33 @@
  * Crypto uses gpgme to interact with GPG on unix systems however gpgme isn't that well supported on Windows
  * So on Windows we use the gpg command line tool (gpg4win) to interact with GPG
 */
-use std::{boxed::Box, io::Error};
+use std::io::Error;
 
-#[cfg(target_family = "windows")]
-use std::collections::VecDeque;
-
-use std::io::{Read, Write};
-
-#[cfg(target_family = "windows")]
-use std::process::{Command, Stdio};
-
-use age::secrecy::Secret;
 use colored::Colorize;
 
-#[cfg(target_family = "windows")]
-use regex::Regex;
-
-// Unix specific code
 #[cfg(target_family = "unix")]
 use gpgme::{Context, Data, Protocol};
 
-use crate::utils::get_configdir;
+#[cfg(target_family = "windows")]
+use regex::Regex;
+#[cfg(target_family = "windows")]
+use std::collections::VecDeque;
+#[cfg(target_family = "windows")]
+use std::io::Write;
+#[cfg(target_family = "windows")]
+use std::process::{Command, Stdio};
 
-/*
- * EncryptionType trait
- * This trait is used to implement different encryption methods
- * Note: AGE is not a real encryption method, but a wrapper around the age crate to use the same interface as the other encryption methods
-*/
-pub trait EncryptionType {
-    /*
-    * Set the key to use for encryption/decryption
+use crate::crypto::EncryptionType;
 
-    * @param key: key to use - for GPG it's the fingerprint of the key
-    */
-    fn set_key(&mut self, key: String);
-    /*
-    * Get the key used for encryption/decryption
-
-    * @return String
-    */
-    fn get_key(&self) -> String;
-    /*
-    * Encrypt data
-
-    * @param data: data to encrypt
-    * @return encrypted data
-    */
-    fn encrypt(&self, data: &str) -> Vec<u8>;
-    /*
-     * Decrypt data
-     */
-    fn decrypt(&self, encrypted_data: &[u8]) -> Result<String, Error>;
-    /*
-     * Return the name of the encryption type
-     */
-    fn as_string(&self) -> &'static str;
-}
-
-/*
- * GPG encryption
-*/
 pub struct GPG {
     key_fingerprint: String,
 }
 
 impl EncryptionType for GPG {
+    fn new(key_fingerprint: String) -> Self {
+        GPG { key_fingerprint }
+    }
+
     /*
      * For GPG key is the fingerprint of the GPG key to use
      */
@@ -278,17 +240,6 @@ pub fn get_gpg_keys() -> Vec<(String, String)> {
 }
 
 /*
- * It formats the fingerprint by removing the spaces and converting it to uppercase
- * Windows specific code
-
- * @return String: formatted fingerprint
-*/
-#[cfg(target_family = "windows")]
-fn format_fingerprint<S: AsRef<str>>(fingerprint: S) -> String {
-    fingerprint.as_ref().trim().to_uppercase()
-}
-
-/*
  * Get the GPG keys available on the system
  * Windows specific code
 
@@ -360,128 +311,12 @@ pub fn get_gpg_keys() -> Option<Vec<(String, String)>> {
 }
 
 /*
- * AGE encryption - its not a real encryption type, but a wrapper around the age crate to keep the
- * same interface as the other encryption types
+ * It formats the fingerprint by removing the spaces and converting it to uppercase
+ * Windows specific code
+
+ * @return String: formatted fingerprint
 */
-pub struct AGE {
-    key: String,
-}
-
-impl EncryptionType for AGE {
-    fn set_key(&mut self, key: String) {
-        self.key = key;
-    }
-
-    fn get_key(&self) -> String {
-        self.key.clone()
-    }
-
-    fn as_string(&self) -> &'static str {
-        "age"
-    }
-
-    fn encrypt(&self, data: &str) -> Vec<u8> {
-        let encryptor = age::Encryptor::with_user_passphrase(Secret::new(self.key.to_owned()));
-
-        let mut encrypted = vec![];
-        let mut writer = match encryptor.wrap_output(&mut encrypted) {
-            Ok(writer) => writer,
-            Err(e) => {
-                println!("{}: {}", "Error".red(), e);
-                std::process::exit(1);
-            }
-        };
-
-        if let Err(e) = writer.write_all(data.as_bytes()) {
-            println!("{}: {}", "Error".red(), e);
-            std::process::exit(1);
-        };
-
-        if let Err(e) = writer.finish() {
-            println!("{}: {}", "Error".red(), e);
-            std::process::exit(1);
-        };
-
-        encrypted
-    }
-
-    fn decrypt(&self, encrypted_data: &[u8]) -> Result<String, Error> {
-        let decryptor = match age::Decryptor::new(encrypted_data).unwrap() {
-            age::Decryptor::Passphrase(d) => d,
-            _ => unreachable!(),
-        };
-
-        let mut decrypted = vec![];
-        let mut reader = match decryptor.decrypt(&Secret::new(self.key.to_owned()), None) {
-            Ok(reader) => reader,
-            Err(e) => {
-                return Err(Error::new(std::io::ErrorKind::Other, e));
-            }
-        };
-
-        if let Err(e) = reader.read_to_end(&mut decrypted) {
-            return Err(Error::new(std::io::ErrorKind::Other, e));
-        }
-
-        String::from_utf8(decrypted).map_err(|e| Error::new(std::io::ErrorKind::Other, e))
-    }
-}
-
-/*
- * Create an encryption type based on the string passed
-
- * @param key: String - the key to use for encryption/decryption (for GPG this is the fingerprint)
- * @param encryption_type_str: &str - the string to match against
- * @return Box<dyn EncryptionType>: the encryption type
-*/
-pub fn create_encryption_type(key: String, encryption_type_str: &str) -> Box<dyn EncryptionType> {
-    match encryption_type_str {
-        "age" => Box::new(AGE { key }),
-        "gpg" => Box::new(GPG {
-            key_fingerprint: key,
-        }),
-        _ => {
-            println!("{}: Invalid encryption type", "Error".red());
-            std::process::exit(1);
-        }
-    }
-}
-
-/*
- * Get the encryption type for a profile
- * This is used to get the encryption type for a profile when decrypting a file, so we know which
- * encryption type to use
-
- * @param profile_name: String - the name of the profile
- * @return Box<dyn EncryptionType>: the encryption type
-*/
-pub fn get_encryption_type(profile_name: String) -> Box<dyn EncryptionType> {
-    let config_dir = get_configdir();
-    let profile_dir = config_dir.join("profiles");
-
-    let profile_file_path = profile_dir.join(profile_name + ".env");
-
-    let mut file = match std::fs::File::open(profile_file_path) {
-        Ok(file) => file,
-        Err(e) => {
-            println!("{}: {}", "Error".red(), e);
-            std::process::exit(1);
-        }
-    };
-
-    let mut file_contents = Vec::new();
-    file.read_to_end(&mut file_contents).unwrap();
-
-    let gpg_instance = GPG {
-        key_fingerprint: "".to_string(),
-    };
-
-    // If the file can be decrypted with GPG, then we use GPG, otherwise we use AGE
-    if gpg_instance.decrypt(&file_contents).is_ok() {
-        Box::new(gpg_instance)
-    } else {
-        Box::new(AGE {
-            key: "".to_string(),
-        })
-    }
+#[cfg(target_family = "windows")]
+fn format_fingerprint<S: AsRef<str>>(fingerprint: S) -> String {
+    fingerprint.as_ref().trim().to_uppercase()
 }

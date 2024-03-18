@@ -1,103 +1,15 @@
-use std::fs::File;
-use std::io::Write;
+/// A bunch of utility functions that are used in various places in the codebase.
+/// These functions are not meant to be used by the end user, but rather to be used by the library itself.
+///
+/// The CLI also has its own utility functions, but they are located in the `bin/envio` directory inside the `utils.rs` file.
+/// There might be a few functions that are used in both the CLI and the library, but they are kept separate since the library does not expose these utility functions to the end user. They are only used internally.
 use std::path::PathBuf;
 
-use colored::Colorize;
-use indicatif::{ProgressBar, ProgressStyle};
-use reqwest::Client;
-
-/*
-* Get the home directory of the user
-
-@return PathBuf
-*/
-pub fn get_homedir() -> PathBuf {
-    match dirs::home_dir() {
-        Some(home) => home,
-        None => {
-            println!("{}: Home directory not found", "Error".red());
-            std::process::exit(1);
-        }
-    }
+pub fn contains_path_separator(s: &str) -> bool {
+    s.contains('/') || s.contains('\\')
 }
 
-/*
-* Get the config directory which is located in the home directory
-* The directory is called .envio
-
-@return PathBuf
-*/
 pub fn get_configdir() -> PathBuf {
-    let homedir = get_homedir();
-
+    let homedir = dirs::home_dir().unwrap();
     homedir.join(".envio")
-}
-
-/*
-* Get the current working directory
-
-@return PathBuf
-*/
-pub fn get_cwd() -> PathBuf {
-    if let Err(e) = std::env::current_dir() {
-        println!(
-            "{}: Current directory not found\n {}: {}",
-            "Error".red(),
-            "Error info".yellow(),
-            e
-        );
-        std::process::exit(1);
-    } else {
-        std::env::current_dir().unwrap()
-    }
-}
-
-/*
-* Download a file from a url with a progress bar
-
-@param url &str
-@param file_name &str
-*/
-pub async fn download_file(url: &str, file_name: &str) {
-    let client = Client::new();
-    let mut resp = if let Err(e) = client.get(url).send().await {
-        println!("{}: {}", "Error".red(), e);
-        std::process::exit(1);
-    } else {
-        client.get(url).send().await.unwrap()
-    };
-
-    let mut file = if let Err(e) = File::create(file_name) {
-        println!("{}: {}", "Error".red(), e);
-        std::process::exit(1);
-    } else {
-        File::create(file_name).unwrap()
-    };
-
-    let mut content_length = if resp.content_length().is_none() {
-        println!("{}: Can not get content length of ", "Error".red());
-        std::process::exit(1);
-    } else {
-        resp.content_length().unwrap()
-    };
-
-    let pb = ProgressBar::new(content_length);
-
-    pb.set_style(ProgressStyle::default_bar()
-        .template("{spinner:.green} [{elapsed_precise}] [{bar:40.cyan/blue}] {bytes}/{total_bytes} ({eta})")
-        .unwrap()
-        .progress_chars("#>-"));
-
-    while let Some(chunk) = resp.chunk().await.unwrap() {
-        let chunk_size = chunk.len();
-        if let Err(e) = file.write_all(&chunk) {
-            println!("{}: {}", "Error".red(), e);
-            std::process::exit(1);
-        }
-
-        pb.inc(chunk_size as u64);
-        content_length -= chunk_size as u64;
-    }
-
-    pb.finish();
 }

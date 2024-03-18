@@ -1,3 +1,4 @@
+/// Implementation of all the subcommands that can be run by the CLI
 use colored::Colorize;
 use inquire::{min_length, Confirm, MultiSelect, Password, PasswordDisplayMode, Select, Text};
 use regex::Regex;
@@ -8,14 +9,14 @@ use std::io::Read;
 use std::path::Path;
 use url::Url;
 
-use envio::crypto::{create_encryption_type, get_encryption_type, get_gpg_keys};
+use envio::crypto::gpg::get_gpg_keys;
+use envio::crypto::{create_encryption_type, get_encryption_type};
 
-use envio::{
-    self, check_profile, create_profile, delete_profile, download_profile, get_profile,
-    import_profile, list_profiles, load_profile, parse_envs_from_string, unload_profile,
-};
+use envio::Profile;
 
-use crate::cli::Command;
+use crate::clap_app::Command;
+use crate::cli;
+use crate::utils::parse_envs_from_string;
 
 /**
  * Get the user key from the user using the inquire crate
@@ -77,7 +78,7 @@ impl Command {
                     return;
                 }
 
-                if check_profile(profile_name) {
+                if Profile::does_exist(profile_name) {
                     println!("{}: Profile already exists", "Error".red());
                     return;
                 }
@@ -282,26 +283,22 @@ impl Command {
                     envs_hashmap = None;
                 }
 
-                create_profile(profile_name.to_string(), envs_hashmap, encryption_type);
+                cli::create_profile(profile_name.to_string(), envs_hashmap, encryption_type);
             }
 
             Command::Add { profile_name, envs } => {
-                if !check_profile(profile_name) {
+                if !Profile::does_exist(profile_name) {
                     println!("{}: Profile does not exist", "Error".red());
                     return;
                 }
 
-                let mut encryption_type = get_encryption_type(profile_name.to_string());
-                if encryption_type.as_string() == "age" {
-                    encryption_type.set_key(get_userkey());
-                }
+                let encryption_type = get_encryption_type(profile_name, Some(get_userkey));
 
-                let mut profile =
-                    if let Some(p) = get_profile(profile_name.to_string(), encryption_type) {
-                        p
-                    } else {
-                        return;
-                    };
+                let mut profile = if let Some(p) = Profile::load(profile_name, encryption_type) {
+                    p
+                } else {
+                    return;
+                };
 
                 for env in envs {
                     if (*env).contains('=') {
@@ -318,7 +315,7 @@ impl Command {
                             }
 
                             if let Some(value) = parts.next() {
-                                profile.add_env(key.to_string(), value.to_string())
+                                profile.insert_env(key.to_string(), value.to_string())
                             } else {
                                 println!(
                                     "{}: Unable to parse value for key '{}'",
@@ -355,7 +352,7 @@ impl Command {
                         std::process::exit(1);
                     } else {
                         value = prompt.unwrap();
-                        profile.add_env(env.to_string(), value)
+                        profile.insert_env(env.to_string(), value)
                     }
                 }
                 println!("{}", "Applying Changes".green());
@@ -365,57 +362,49 @@ impl Command {
             Command::Load { profile_name } => {
                 #[cfg(target_family = "unix")]
                 {
-                    load_profile(profile_name);
+                    cli::load_profile(profile_name);
                 }
 
                 #[cfg(target_family = "windows")]
                 {
-                    if !check_profile(profile_name) {
+                    if !Profile::does_exist(profile_name) {
                         println!("{}: Profile does not exist", "Error".red());
                         return;
                     }
 
-                    let mut encryption_type = get_encryption_type(profile_name.to_string());
-                    if encryption_type.as_string() == "age" {
-                        encryption_type.set_key(get_userkey());
-                    }
+                    let encryption_type = get_encryption_type(profile_name, Some(get_userkey));
 
-                    let profile =
-                        if let Some(p) = get_profile(profile_name.to_string(), encryption_type) {
-                            p
-                        } else {
-                            return;
-                        };
-
-                    load_profile(profile);
-                }
-            }
-
-            #[cfg(target_family = "unix")]
-            Command::Unload => {
-                unload_profile();
-            }
-
-            #[cfg(target_family = "windows")]
-            Command::Unload { profile_name } => {
-                if !check_profile(profile_name) {
-                    println!("{}: Profile does not exist", "Error".red());
-                    return;
-                }
-
-                let mut encryption_type = get_encryption_type(profile_name.to_string());
-                if encryption_type.as_string() == "age" {
-                    encryption_type.set_key(get_userkey());
-                }
-
-                let profile =
-                    if let Some(p) = get_profile(profile_name.to_string(), encryption_type) {
+                    let profile = if let Some(p) = Profile::load(profile_name, encryption_type) {
                         p
                     } else {
                         return;
                     };
 
-                unload_profile(profile);
+                    cli::load_profile(profile);
+                }
+            }
+
+            #[cfg(target_family = "unix")]
+            Command::Unload => {
+                cli::unload_profile();
+            }
+
+            #[cfg(target_family = "windows")]
+            Command::Unload { profile_name } => {
+                if !Profile::does_exist(profile_name) {
+                    println!("{}: Profile does not exist", "Error".red());
+                    return;
+                }
+
+                let encryption_type = get_encryption_type(profile_name, Some(get_userkey));
+
+                let profile = if let Some(p) = Profile::load(profile_name, encryption_type) {
+                    p
+                } else {
+                    return;
+                };
+
+                cli::unload_profile(profile);
             }
             Command::Launch {
                 profile_name,
@@ -425,22 +414,18 @@ impl Command {
                 let program = split_command[0];
                 let args = &split_command[1..];
 
-                if !check_profile(profile_name) {
+                if !Profile::does_exist(profile_name) {
                     println!("{}: Profile does not exist", "Error".red());
                     return;
                 }
 
-                let mut encryption_type = get_encryption_type(profile_name.to_string());
-                if encryption_type.as_string() == "age" {
-                    encryption_type.set_key(get_userkey());
-                }
+                let encryption_type = get_encryption_type(profile_name, Some(get_userkey));
 
-                let profile =
-                    if let Some(p) = get_profile(profile_name.to_string(), encryption_type) {
-                        p
-                    } else {
-                        return;
-                    };
+                let profile = if let Some(p) = Profile::load(profile_name, encryption_type) {
+                    p
+                } else {
+                    return;
+                };
 
                 let mut cmd = std::process::Command::new(program)
                     .envs(profile.envs)
@@ -468,22 +453,20 @@ impl Command {
             }
 
             Command::Remove { profile_name, envs } => {
-                if !check_profile(profile_name) {
+                if !Profile::does_exist(profile_name) {
                     println!("{}: Profile does not exist", "Error".red());
                     return;
                 }
 
                 if envs.is_some() && !envs.as_ref().unwrap().is_empty() {
-                    let mut encryption_type = get_encryption_type(profile_name.to_string());
-                    if encryption_type.as_string() == "age" {
-                        encryption_type.set_key(get_userkey());
-                    }
-                    let mut profile =
-                        if let Some(p) = get_profile(profile_name.to_string(), encryption_type) {
-                            p
-                        } else {
-                            return;
-                        };
+                    let encryption_type = get_encryption_type(profile_name, Some(get_userkey));
+
+                    let mut profile = if let Some(p) = Profile::load(profile_name, encryption_type)
+                    {
+                        p
+                    } else {
+                        return;
+                    };
 
                     for env in envs.as_ref().unwrap() {
                         profile.remove_env(env);
@@ -492,7 +475,7 @@ impl Command {
                     println!("{}", "Applying Changes".green());
                     profile.push_changes();
                 } else {
-                    delete_profile(profile_name);
+                    cli::delete_profile(profile_name);
                 }
             }
 
@@ -502,26 +485,20 @@ impl Command {
                 no_pretty_print,
             } => {
                 if *profiles {
-                    if *no_pretty_print {
-                        list_profiles(true)
-                    } else {
-                        list_profiles(false)
-                    }
+                    cli::list_profiles(*no_pretty_print);
                 } else if profile_name.is_some() && !profile_name.as_ref().unwrap().is_empty() {
-                    if !check_profile(profile_name.as_ref().unwrap()) {
+                    if !Profile::does_exist(profile_name.as_ref().unwrap()) {
                         println!("{}: Profile does not exist", "Error".red());
                         return;
                     }
 
-                    let mut encryption_type =
-                        get_encryption_type(profile_name.as_ref().unwrap().to_string());
-
-                    if encryption_type.as_string() == "age" {
-                        encryption_type.set_key(get_userkey());
-                    }
+                    let encryption_type = get_encryption_type(
+                        profile_name.as_ref().unwrap().as_str(),
+                        Some(get_userkey),
+                    );
 
                     let profile = if let Some(p) =
-                        get_profile(profile_name.as_ref().unwrap().to_string(), encryption_type)
+                        Profile::load(profile_name.as_ref().unwrap(), encryption_type)
                     {
                         p
                     } else {
@@ -533,27 +510,24 @@ impl Command {
                             println!("{}={}", key, value);
                         }
                     } else {
-                        profile.list_envs();
+                        cli::list_envs(&profile);
                     }
                 }
             }
 
             Command::Update { profile_name, envs } => {
-                if !check_profile(profile_name) {
+                if !Profile::does_exist(profile_name) {
                     println!("{}: Profile does not exist", "Error".red());
                     return;
                 }
-                let mut encryption_type = get_encryption_type(profile_name.to_string());
-                if encryption_type.as_string() == "age" {
-                    encryption_type.set_key(get_userkey());
-                }
 
-                let mut profile =
-                    if let Some(p) = get_profile(profile_name.to_string(), encryption_type) {
-                        p
-                    } else {
-                        return;
-                    };
+                let encryption_type = get_encryption_type(profile_name, Some(get_userkey));
+
+                let mut profile = if let Some(p) = Profile::load(profile_name, encryption_type) {
+                    p
+                } else {
+                    return;
+                };
 
                 for env in envs {
                     if (*env).contains('=') {
@@ -620,7 +594,7 @@ impl Command {
                 file,
                 envs,
             } => {
-                if !check_profile(profile_name) {
+                if !Profile::does_exist(profile_name) {
                     println!("{}: Profile does not exist", "Error".red());
                     return;
                 }
@@ -631,17 +605,13 @@ impl Command {
                     file_name = &file.as_ref().unwrap()
                 }
 
-                let mut encryption_type = get_encryption_type(profile_name.to_string());
-                if encryption_type.as_string() == "age" {
-                    encryption_type.set_key(get_userkey());
-                }
+                let encryption_type = get_encryption_type(profile_name, Some(get_userkey));
 
-                let profile =
-                    if let Some(p) = get_profile(profile_name.to_string(), encryption_type) {
-                        p
-                    } else {
-                        return;
-                    };
+                let profile = if let Some(p) = Profile::load(profile_name, encryption_type) {
+                    p
+                } else {
+                    return;
+                };
 
                 if envs.is_some() && envs.as_ref().unwrap().contains(&"select".to_string()) {
                     let prompt = MultiSelect::new("Select the environment variables you want to export:", profile.envs.keys().collect())
@@ -655,7 +625,8 @@ impl Command {
                         std::process::exit(1);
                     }
 
-                    profile.export_envs(
+                    cli::export_envs(
+                        &profile,
                         file_name,
                         &Some(
                             prompt
@@ -670,7 +641,7 @@ impl Command {
                     return;
                 }
 
-                profile.export_envs(file_name, envs);
+                cli::export_envs(&profile, file_name, envs);
             }
 
             Command::Import {
@@ -678,18 +649,24 @@ impl Command {
                 file,
                 url,
             } => {
-                if check_profile(profile_name) {
+                if Profile::does_exist(profile_name) {
                     println!("{}: Profile already exists", "Error".red());
                     return;
                 }
 
                 if url.is_some() && Url::parse(url.as_ref().unwrap()).is_ok() {
-                    download_profile(url.as_ref().unwrap().to_string(), profile_name.to_string());
+                    cli::download_profile(
+                        url.as_ref().unwrap().to_string(),
+                        profile_name.to_string(),
+                    );
                     return;
                 }
 
                 if file.is_some() {
-                    import_profile(file.as_ref().unwrap().to_string(), profile_name.to_string());
+                    cli::import_profile(
+                        file.as_ref().unwrap().to_string(),
+                        profile_name.to_string(),
+                    );
                     return;
                 }
 

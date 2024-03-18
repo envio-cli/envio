@@ -1,5 +1,7 @@
+mod clap_app;
 mod cli;
 mod commands;
+mod utils;
 mod version;
 
 #[cfg(target_family = "unix")]
@@ -13,10 +15,7 @@ use colored::Colorize;
 use inquire::Text;
 use semver::Version;
 
-#[cfg(target_family = "unix")]
-use envio::utils;
-
-use cli::Cli;
+use clap_app::ClapApp;
 use version::get_latest_version;
 
 fn main() {
@@ -67,7 +66,7 @@ fn main() {
 
             let mut file_path = PathBuf::from(
                 &(utils::get_homedir().to_str().unwrap().to_owned()
-                    + &format!("/{}", envio::get_shell_config())),
+                    + &format!("/{}", cli::get_shell_config())),
             );
             if !file_path.exists() {
                 let input = Text::new(
@@ -106,7 +105,7 @@ fn main() {
                 .open(file_path)
                 .unwrap();
 
-            let buffer = if envio::get_shell_config().contains("fish") {
+            let buffer = if cli::get_shell_config().contains("fish") {
                 println!(
                     "To use the shellscript properly you need to install the {}(https://github.com/edc/bass) plugin for fish",
                     "bass".bold()
@@ -134,6 +133,6 @@ source {}
         }
     }
 
-    let args = Cli::parse();
+    let args = ClapApp::parse();
     args.command.run();
 }
