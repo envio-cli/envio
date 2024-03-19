@@ -11,7 +11,7 @@ use url::Url;
 
 use envio::crypto::gpg::get_gpg_keys;
 use envio::crypto::{create_encryption_type, get_encryption_type};
-
+use envio::error::{Error, Result};
 use envio::Profile;
 
 use crate::clap_app::Command;
@@ -46,7 +46,7 @@ fn get_userkey() -> String {
 
  @return Result<bool, String>
 */
-fn get_vim_mode() -> Result<bool, String> {
+fn get_vim_mode() -> Result<bool> {
     let env = env::var("VISUAL").unwrap_or_else(|_| env::var("EDITOR").unwrap_or_default());
 
     let program = env.split_whitespace().next().ok_or("")?; // Throw an error if the program is empty, we don't really care about the error message
@@ -63,7 +63,7 @@ impl Command {
     /**
      * Run the subcommand that was passed to the program
      */
-    pub fn run(&self) {
+    pub fn run(&self) -> Result<()> {
         let vim_mode = get_vim_mode().unwrap_or(false);
 
         match self {
@@ -74,13 +74,11 @@ impl Command {
                 gpg,
             } => {
                 if profile_name.is_empty() {
-                    println!("{}: Profile name can not be empty!", "Error".red());
-                    return;
+                    return Err(Error::ProfileNameEmpty(profile_name.to_string()));
                 }
 
                 if Profile::does_exist(profile_name) {
-                    println!("{}: Profile already exists", "Error".red());
-                    return;
+                    return Err(Error::ProfileExists(profile_name.to_string()));
                 }
 
                 let gpg_key;
@@ -92,15 +90,20 @@ impl Command {
 
                         #[cfg(target_family = "unix")]
                         {
-                            available_keys = get_gpg_keys();
+                            available_keys = get_gpg_keys()?;
                         }
 
                         #[cfg(target_family = "windows")]
                         {
-                            available_keys = get_gpg_keys().unwrap();
+                            available_keys = match get_gpg_keys() {
+                                Some(keys) => keys,
+                                None => {
+                                    return Err(Error::Crypto("No GPG keys found".to_string()));
+                                }
+                            };
+
                             if available_keys.len() == 0 {
-                                println!("{}: No GPG keys found", "Error".red());
-                                return;
+                                return Err(Error::Crypto("No GPG keys found".to_string()));
                             }
                         }
 
@@ -112,8 +115,7 @@ impl Command {
                         .prompt();
 
                         if let Err(e) = ans {
-                            println!("{}: {}", "Error".red(), e);
-                            return;
+                            return Err(Error::Msg(e.to_string()));
                         }
 
                         gpg_key = available_keys
@@ -129,7 +131,8 @@ impl Command {
                     } else {
                         gpg_key = gpg.as_ref().unwrap().to_string();
                     }
-                    encryption_type = create_encryption_type(gpg_key, "gpg");
+
+                    encryption_type = create_encryption_type(gpg_key, "gpg")?;
                 } else {
                     let prompt = Password::new("Enter your encryption key:")
                         .with_display_toggle_enabled()
@@ -143,13 +146,12 @@ impl Command {
                         .prompt();
 
                     let user_key = if let Err(e) = prompt {
-                        println!("{}: {}", "Error".red(), e);
-                        return;
+                        return Err(Error::Msg(e.to_string()));
                     } else {
                         prompt.unwrap()
                     };
 
-                    encryption_type = create_encryption_type(user_key, "age");
+                    encryption_type = create_encryption_type(user_key, "age")?;
                 }
 
                 let mut envs_hashmap;
@@ -158,8 +160,7 @@ impl Command {
                     let file = envs_file.as_ref().unwrap();
 
                     if !Path::new(file).exists() {
-                        println!("{}: File does not exist", "Error".red());
-                        return;
+                        return Err(Error::Msg(format!("File '{}' does not exist", file)));
                     }
 
                     let mut file = std::fs::OpenOptions::new().read(true).open(file).unwrap();
@@ -167,11 +168,10 @@ impl Command {
                     let mut buffer = String::new();
                     file.read_to_string(&mut buffer).unwrap();
 
-                    envs_hashmap = Some(parse_envs_from_string(&buffer));
+                    envs_hashmap = Some(parse_envs_from_string(&buffer)?);
 
                     if envs_hashmap.is_none() {
-                        println!("{}: Unable to parse the file", "Error".red());
-                        return;
+                        return Err(Error::Msg("Unable to parse envs from file".to_string()));
                     }
 
                     let mut options = vec![];
@@ -189,15 +189,13 @@ impl Command {
                             .prompt();
 
                             if let Err(e) = prompt {
-                                println!("{}: {}", "Error".red(), e);
-                                std::process::exit(1);
+                                return Err(Error::Msg(e.to_string()));
                             } else if prompt.unwrap() {
                                 let prompt =
                                     Text::new(&format!("Enter the value for {}:", key)).prompt();
 
                                 if let Err(e) = prompt {
-                                    println!("{}: {}", "Error".red(), e);
-                                    std::process::exit(1);
+                                    return Err(Error::Msg(e.to_string()));
                                 } else {
                                     envs_hashmap
                                         .as_mut()
@@ -221,8 +219,7 @@ impl Command {
                         .prompt();
 
                     if let Err(e) = prompt {
-                        println!("{}: {}", "Error".red(), e);
-                        std::process::exit(1);
+                        return Err(Error::Msg(e.to_string()));
                     } else {
                         // remove the keys that were not selected
                         let selected_keys = prompt.unwrap();
@@ -247,18 +244,16 @@ impl Command {
                                         .unwrap()
                                         .insert(key.to_string(), value.to_string());
                                 } else {
-                                    println!(
-                                        "{}: Unable to parse value for key '{}'",
-                                        "Error".red(),
+                                    return Err(Error::Msg(format!(
+                                        "Unable to parse value for key '{}'",
                                         key
-                                    );
+                                    )));
                                 }
                             } else {
-                                println!(
-                                    "{}: Unable to parse key-value pair from '{}'",
-                                    "Error".red(),
+                                return Err(Error::Msg(format!(
+                                    "Unable to parse key-value pair from '{}'",
                                     env
-                                );
+                                )));
                             }
 
                             continue;
@@ -269,8 +264,7 @@ impl Command {
                         let prompt = Text::new(&format!("Enter the value for {}:", env)).prompt();
 
                         if let Err(e) = prompt {
-                            println!("{}: {}", "Error".red(), e);
-                            std::process::exit(1);
+                            return Err(Error::Msg(e.to_string()));
                         } else {
                             value = prompt.unwrap();
                             envs_hashmap
@@ -283,22 +277,17 @@ impl Command {
                     envs_hashmap = None;
                 }
 
-                cli::create_profile(profile_name.to_string(), envs_hashmap, encryption_type);
+                cli::create_profile(profile_name.to_string(), envs_hashmap, encryption_type)?;
             }
 
             Command::Add { profile_name, envs } => {
                 if !Profile::does_exist(profile_name) {
-                    println!("{}: Profile does not exist", "Error".red());
-                    return;
+                    return Err(Error::ProfileDoesNotExist(profile_name.to_string()));
                 }
 
-                let encryption_type = get_encryption_type(profile_name, Some(get_userkey));
+                let encryption_type = get_encryption_type(profile_name, Some(get_userkey))?;
 
-                let mut profile = if let Some(p) = Profile::load(profile_name, encryption_type) {
-                    p
-                } else {
-                    return;
-                };
+                let mut profile = Profile::load(profile_name, encryption_type)?;
 
                 for env in envs {
                     if (*env).contains('=') {
@@ -306,41 +295,29 @@ impl Command {
 
                         if let Some(key) = parts.next() {
                             if profile.envs.contains_key(key) {
-                                println!(
-                                    "{}: The environment variable `{}` already exists in profile",
-                                    "Error".red(),
-                                    key
-                                );
-                                return;
+                                return Err(Error::EnvExists(key.to_string()));
                             }
 
                             if let Some(value) = parts.next() {
                                 profile.insert_env(key.to_string(), value.to_string())
                             } else {
-                                println!(
-                                    "{}: Unable to parse value for key '{}'",
-                                    "Error".red(),
+                                return Err(Error::Msg(format!(
+                                    "Unable to parse value for key '{}'",
                                     key
-                                );
+                                )));
                             }
                         } else {
-                            println!(
-                                "{}: Unable to parse key-value pair from '{}'",
-                                "Error".red(),
+                            return Err(Error::Msg(format!(
+                                "Unable to parse key-value pair from '{}'",
                                 env
-                            );
+                            )));
                         }
 
                         continue;
                     }
 
                     if profile.envs.contains_key(env) {
-                        println!(
-                            "{}: The environment variable `{}` already exists in profile",
-                            "Error".red(),
-                            env
-                        );
-                        return;
+                        return Err(Error::EnvExists(env.to_string()));
                     }
 
                     let value;
@@ -348,37 +325,31 @@ impl Command {
                     let prompt = Text::new(&format!("Enter the value for {}:", env)).prompt();
 
                     if let Err(e) = prompt {
-                        println!("{}: {}", "Error".red(), e);
-                        std::process::exit(1);
+                        return Err(Error::Msg(e.to_string()));
                     } else {
                         value = prompt.unwrap();
                         profile.insert_env(env.to_string(), value)
                     }
                 }
                 println!("{}", "Applying Changes".green());
-                profile.push_changes();
+                profile.push_changes()?;
             }
 
             Command::Load { profile_name } => {
                 #[cfg(target_family = "unix")]
                 {
-                    cli::load_profile(profile_name);
+                    cli::load_profile(profile_name)?;
                 }
 
                 #[cfg(target_family = "windows")]
                 {
                     if !Profile::does_exist(profile_name) {
-                        println!("{}: Profile does not exist", "Error".red());
-                        return;
+                        return Err(Error::ProfileDoesNotExist(profile_name.to_string()));
                     }
 
-                    let encryption_type = get_encryption_type(profile_name, Some(get_userkey));
+                    let encryption_type = get_encryption_type(profile_name, Some(get_userkey))?;
 
-                    let profile = if let Some(p) = Profile::load(profile_name, encryption_type) {
-                        p
-                    } else {
-                        return;
-                    };
+                    let profile = Profile::load(profile_name, encryption_type)?;
 
                     cli::load_profile(profile);
                 }
@@ -386,23 +357,18 @@ impl Command {
 
             #[cfg(target_family = "unix")]
             Command::Unload => {
-                cli::unload_profile();
+                cli::unload_profile()?;
             }
 
             #[cfg(target_family = "windows")]
             Command::Unload { profile_name } => {
                 if !Profile::does_exist(profile_name) {
-                    println!("{}: Profile does not exist", "Error".red());
-                    return;
+                    return Err(Error::ProfileDoesNotExist(profile_name.to_string()));
                 }
 
-                let encryption_type = get_encryption_type(profile_name, Some(get_userkey));
+                let encryption_type = get_encryption_type(profile_name, Some(get_userkey))?;
 
-                let profile = if let Some(p) = Profile::load(profile_name, encryption_type) {
-                    p
-                } else {
-                    return;
-                };
+                let profile = Profile::load(profile_name, encryption_type)?;
 
                 cli::unload_profile(profile);
             }
@@ -415,17 +381,12 @@ impl Command {
                 let args = &split_command[1..];
 
                 if !Profile::does_exist(profile_name) {
-                    println!("{}: Profile does not exist", "Error".red());
-                    return;
+                    return Err(Error::ProfileDoesNotExist(profile_name.to_string()));
                 }
 
-                let encryption_type = get_encryption_type(profile_name, Some(get_userkey));
+                let encryption_type = get_encryption_type(profile_name, Some(get_userkey))?;
 
-                let profile = if let Some(p) = Profile::load(profile_name, encryption_type) {
-                    p
-                } else {
-                    return;
-                };
+                let profile = Profile::load(profile_name, encryption_type)?;
 
                 let mut cmd = std::process::Command::new(program)
                     .envs(profile.envs)
@@ -438,44 +399,41 @@ impl Command {
                 let status = match cmd.wait() {
                     Ok(s) => s,
                     Err(e) => {
-                        println!("{}: {}", "Error".red(), e);
-                        std::process::exit(1);
+                        return Err(Error::Msg(format!(
+                            "Failed to execute command: {}",
+                            e.to_string()
+                        )))
                     }
                 };
 
                 match status.code() {
                     Some(code) => std::process::exit(code),
                     None => {
-                        println!("{}: Child process terminated by signal", "Error".red());
-                        std::process::exit(1);
+                        return Err(Error::Msg(
+                            "The child process was terminated by a signal".to_string(),
+                        ))
                     }
                 }
             }
 
             Command::Remove { profile_name, envs } => {
                 if !Profile::does_exist(profile_name) {
-                    println!("{}: Profile does not exist", "Error".red());
-                    return;
+                    return Err(Error::ProfileDoesNotExist(profile_name.to_string()));
                 }
 
                 if envs.is_some() && !envs.as_ref().unwrap().is_empty() {
-                    let encryption_type = get_encryption_type(profile_name, Some(get_userkey));
+                    let encryption_type = get_encryption_type(profile_name, Some(get_userkey))?;
 
-                    let mut profile = if let Some(p) = Profile::load(profile_name, encryption_type)
-                    {
-                        p
-                    } else {
-                        return;
-                    };
+                    let mut profile = Profile::load(profile_name, encryption_type)?;
 
                     for env in envs.as_ref().unwrap() {
-                        profile.remove_env(env);
+                        profile.remove_env(env)?;
                     }
 
                     println!("{}", "Applying Changes".green());
-                    profile.push_changes();
+                    profile.push_changes()?;
                 } else {
-                    cli::delete_profile(profile_name);
+                    cli::delete_profile(profile_name)?;
                 }
             }
 
@@ -485,25 +443,20 @@ impl Command {
                 no_pretty_print,
             } => {
                 if *profiles {
-                    cli::list_profiles(*no_pretty_print);
+                    cli::list_profiles(*no_pretty_print)?;
                 } else if profile_name.is_some() && !profile_name.as_ref().unwrap().is_empty() {
                     if !Profile::does_exist(profile_name.as_ref().unwrap()) {
-                        println!("{}: Profile does not exist", "Error".red());
-                        return;
+                        return Err(Error::ProfileDoesNotExist(
+                            profile_name.as_ref().unwrap().to_string(),
+                        ));
                     }
 
                     let encryption_type = get_encryption_type(
                         profile_name.as_ref().unwrap().as_str(),
                         Some(get_userkey),
-                    );
+                    )?;
 
-                    let profile = if let Some(p) =
-                        Profile::load(profile_name.as_ref().unwrap(), encryption_type)
-                    {
-                        p
-                    } else {
-                        return;
-                    };
+                    let profile = Profile::load(profile_name.as_ref().unwrap(), encryption_type)?;
 
                     if *no_pretty_print {
                         for (key, value) in profile.envs.iter() {
@@ -517,17 +470,12 @@ impl Command {
 
             Command::Update { profile_name, envs } => {
                 if !Profile::does_exist(profile_name) {
-                    println!("{}: Profile does not exist", "Error".red());
-                    return;
+                    return Err(Error::ProfileDoesNotExist(profile_name.to_string()));
                 }
 
-                let encryption_type = get_encryption_type(profile_name, Some(get_userkey));
+                let encryption_type = get_encryption_type(profile_name, Some(get_userkey))?;
 
-                let mut profile = if let Some(p) = Profile::load(profile_name, encryption_type) {
-                    p
-                } else {
-                    return;
-                };
+                let mut profile = Profile::load(profile_name, encryption_type)?;
 
                 for env in envs {
                     if (*env).contains('=') {
@@ -535,41 +483,29 @@ impl Command {
 
                         if let Some(key) = parts.next() {
                             if !profile.envs.contains_key(key) {
-                                println!(
-                                    "{}: The environment variable `{}` does not exist in profile use the `add` command to add the variable",
-                                    "Error".red(),
-                                    key
-                                );
-                                return;
+                                return Err(Error::EnvDoesNotExist(key.to_string()));
                             }
 
                             if let Some(value) = parts.next() {
-                                profile.edit_env(key.to_string(), value.to_string())
+                                profile.edit_env(key.to_string(), value.to_string())?
                             } else {
-                                println!(
-                                    "{}: Unable to parse value for key '{}'",
-                                    "Error".red(),
+                                return Err(Error::Msg(format!(
+                                    "Unable to parse value for key '{}'",
                                     key
-                                );
+                                )));
                             }
                         } else {
-                            println!(
-                                "{}: Unable to parse key-value pair from '{}'",
-                                "Error".red(),
+                            return Err(Error::Msg(format!(
+                                "Unable to parse key-value pair from '{}'",
                                 env
-                            );
+                            )));
                         }
 
                         continue;
                     }
 
                     if !profile.envs.contains_key(env) {
-                        println!(
-                            "{}: The environment variable `{}` does not exist in profile use the `add` command to add the variable",
-                            "Error".red(),
-                            env
-                        );
-                        return;
+                        return Err(Error::EnvDoesNotExist(env.to_string()));
                     }
 
                     let new_value;
@@ -577,16 +513,15 @@ impl Command {
                     let prompt = Text::new(&format!("Enter the new value for {}:", env)).prompt();
 
                     if let Err(e) = prompt {
-                        println!("{}: {}", "Error".red(), e);
-                        std::process::exit(1);
+                        return Err(Error::Msg(e.to_string()));
                     } else {
                         new_value = prompt.unwrap();
-                        profile.edit_env(env.to_string(), new_value)
+                        profile.edit_env(env.to_string(), new_value)?;
                     }
                 }
 
                 println!("{}", "Applying Changes".green());
-                profile.push_changes();
+                profile.push_changes()?;
             }
 
             Command::Export {
@@ -595,8 +530,7 @@ impl Command {
                 envs,
             } => {
                 if !Profile::does_exist(profile_name) {
-                    println!("{}: Profile does not exist", "Error".red());
-                    return;
+                    return Err(Error::ProfileDoesNotExist(profile_name.to_string()));
                 }
 
                 let mut file_name = ".env";
@@ -605,13 +539,9 @@ impl Command {
                     file_name = &file.as_ref().unwrap()
                 }
 
-                let encryption_type = get_encryption_type(profile_name, Some(get_userkey));
+                let encryption_type = get_encryption_type(profile_name, Some(get_userkey))?;
 
-                let profile = if let Some(p) = Profile::load(profile_name, encryption_type) {
-                    p
-                } else {
-                    return;
-                };
+                let profile = Profile::load(profile_name, encryption_type)?;
 
                 if envs.is_some() && envs.as_ref().unwrap().contains(&"select".to_string()) {
                     let prompt = MultiSelect::new("Select the environment variables you want to export:", profile.envs.keys().collect())
@@ -621,8 +551,7 @@ impl Command {
                         .prompt();
 
                     if let Err(e) = prompt {
-                        println!("{}: {}", "Error".red(), e);
-                        std::process::exit(1);
+                        return Err(Error::Msg(e.to_string()));
                     }
 
                     cli::export_envs(
@@ -636,12 +565,12 @@ impl Command {
                                 .map(|s| s.to_owned())
                                 .collect(),
                         ),
-                    );
+                    )?;
 
-                    return;
+                    return Ok(());
                 }
 
-                cli::export_envs(&profile, file_name, envs);
+                cli::export_envs(&profile, file_name, envs)?;
             }
 
             Command::Import {
@@ -650,27 +579,29 @@ impl Command {
                 url,
             } => {
                 if Profile::does_exist(profile_name) {
-                    println!("{}: Profile already exists", "Error".red());
-                    return;
+                    return Err(Error::ProfileExists(profile_name.to_string()));
                 }
 
                 if url.is_some() && Url::parse(url.as_ref().unwrap()).is_ok() {
                     cli::download_profile(
                         url.as_ref().unwrap().to_string(),
                         profile_name.to_string(),
-                    );
-                    return;
+                    )?;
+
+                    return Ok(());
                 }
 
                 if file.is_some() {
                     cli::import_profile(
                         file.as_ref().unwrap().to_string(),
                         profile_name.to_string(),
-                    );
-                    return;
+                    )?;
+                    return Ok(());
                 }
 
-                println!("{}: You must specify a file or url", "Error".red());
+                return Err(Error::Msg(
+                    "You must provide either a file or a url to import a profile".to_string(),
+                ));
             }
 
             Command::Version { verbose } => {
@@ -685,5 +616,7 @@ impl Command {
                 }
             }
         }
+
+        Ok(())
     }
 }

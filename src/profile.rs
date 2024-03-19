@@ -4,11 +4,10 @@ use std::{
     path::{Path, PathBuf},
 };
 
-use colored::Colorize;
-
 use crate::utils::get_configdir;
 
 use crate::crypto::EncryptionType;
+use crate::error::{Error, Result};
 
 pub struct Profile {
     pub name: String,
@@ -18,13 +17,12 @@ pub struct Profile {
 }
 
 impl Profile {
-    pub fn load(name: &str, mut encryption_type: Box<dyn EncryptionType>) -> Option<Profile> {
+    pub fn load(name: &str, mut encryption_type: Box<dyn EncryptionType>) -> Result<Profile> {
         let profile_file_path = match Path::new(name).exists() {
             true => PathBuf::from(name),
             false => {
                 if !Profile::does_exist(&name) {
-                    println!("{}: Profile does not exist", "Error".red());
-                    return None;
+                    return Err(Error::ProfileDoesNotExist(name.to_string()));
                 }
 
                 get_configdir()
@@ -35,8 +33,7 @@ impl Profile {
 
         let mut file = std::fs::OpenOptions::new()
             .read(true)
-            .open(&profile_file_path)
-            .unwrap();
+            .open(&profile_file_path)?;
 
         let mut encrypted_contents = Vec::new();
         file.read_to_end(&mut encrypted_contents).unwrap();
@@ -44,8 +41,7 @@ impl Profile {
         let content = match encryption_type.decrypt(&encrypted_contents) {
             Ok(c) => c,
             Err(e) => {
-                println!("{}: {}", "Error".red(), e);
-                return None;
+                return Err(e);
             }
         };
 
@@ -67,7 +63,7 @@ impl Profile {
             }
         }
 
-        Some(Profile {
+        Ok(Profile {
             name: name.to_string(),
             envs,
             profile_file_path,
@@ -104,11 +100,12 @@ impl Profile {
     @param env String
     @param new_value String
     */
-    pub fn edit_env(&mut self, env: String, new_value: String) {
+    pub fn edit_env(&mut self, env: String, new_value: String) -> Result<()> {
         if let std::collections::hash_map::Entry::Occupied(mut e) = self.envs.entry(env.clone()) {
             e.insert(new_value);
+            Ok(())
         } else {
-            println!("{}: env `{}` does not exists", "Error".red(), env);
+            Err(Error::EnvDoesNotExist(env.to_string()))
         }
     }
 
@@ -118,11 +115,12 @@ impl Profile {
 
     @param env &str
     */
-    pub fn remove_env(&mut self, env: &str) {
+    pub fn remove_env(&mut self, env: &str) -> Result<()> {
         if self.envs.contains_key(env) {
             self.envs.remove(env);
+            Ok(())
         } else {
-            println!("{}: env `{}` does not exists", "Error".red(), env);
+            return Err(Error::EnvDoesNotExist(env.to_string()));
         }
     }
 
@@ -139,16 +137,14 @@ impl Profile {
     /*
      * Push the changes to the profile file
      */
-    pub fn push_changes(&mut self) {
+    pub fn push_changes(&mut self) -> Result<()> {
         let mut file = std::fs::OpenOptions::new()
             .write(true)
             .append(false)
             .open(&self.profile_file_path)
             .unwrap();
 
-        if let Err(e) = file.set_len(0) {
-            println!("{}: {}", "Error".red(), e);
-        }
+        file.set_len(0)?;
 
         let mut buffer = String::from("");
 
@@ -158,17 +154,19 @@ impl Profile {
 
         buffer = buffer + &self.encryption_type.get_key();
 
-        let encrypted_data = self.encryption_type.encrypt(&buffer);
-        if let Err(e) = file.write_all(encrypted_data.as_slice()) {
-            println!("{}: {}", "Error".red(), e);
-        }
+        let encrypted_data = match self.encryption_type.encrypt(&buffer) {
+            Ok(data) => data,
+            Err(e) => {
+                return Err(e);
+            }
+        };
 
-        if let Err(e) = file.flush() {
-            println!("{}: {}", "Error".red(), e);
-        }
+        file.write_all(encrypted_data.as_slice())?;
 
-        if let Err(e) = file.sync_all() {
-            println!("{}: {}", "Error".red(), e);
-        }
+        file.flush()?;
+
+        file.sync_all()?;
+
+        Ok(())
     }
 }

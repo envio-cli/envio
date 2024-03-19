@@ -39,24 +39,40 @@ fn main() {
 
     #[cfg(target_family = "unix")]
     {
-        if !Path::new(&utils::get_configdir()).exists() {
+        let configdir = match utils::get_configdir() {
+            Ok(val) => val,
+            Err(e) => {
+                println!("{}: {}", "Error".red(), e);
+                std::process::exit(1);
+            }
+        };
+
+        let homedir = match utils::get_homedir() {
+            Ok(val) => val,
+            Err(e) => {
+                println!("{}: {}", "Error".red(), e);
+                std::process::exit(1);
+            }
+        };
+
+        if !Path::new(&configdir).exists() {
             println!("{}", "Creating config directory".bold());
-            if let Err(e) = std::fs::create_dir(utils::get_configdir()) {
+            if let Err(e) = std::fs::create_dir(&configdir) {
                 println!("{}: {}", "Error".red(), e);
                 std::process::exit(1);
             }
 
-            if let Err(e) = std::fs::create_dir(utils::get_configdir().join("profiles")) {
+            if let Err(e) = std::fs::create_dir(&configdir.join("profiles")) {
                 println!("{}: {}", "Error".red(), e);
                 std::process::exit(1);
             }
         }
 
-        if !Path::new(&utils::get_configdir().join("setenv.sh")).exists() {
+        if !Path::new(&configdir.join("setenv.sh")).exists() {
             println!("{}", "Creating shellscript".bold());
-            if let Err(e) = std::fs::write(utils::get_configdir().join("setenv.sh"), "") {
+            if let Err(e) = std::fs::write(&configdir.join("setenv.sh"), "") {
                 println!("{}: {}", "Error".red(), e);
-                if let Err(e) = std::fs::remove_dir_all(utils::get_configdir()) {
+                if let Err(e) = std::fs::remove_dir_all(&configdir) {
                     println!("{}: {}", "Error".red(), e);
                     std::process::exit(1);
                 }
@@ -64,9 +80,16 @@ fn main() {
                 std::process::exit(1);
             }
 
+            let shellconfig = match utils::get_shell_config() {
+                Ok(val) => val,
+                Err(e) => {
+                    println!("{}: {}", "Error".red(), e);
+                    std::process::exit(1);
+                }
+            };
+
             let mut file_path = PathBuf::from(
-                &(utils::get_homedir().to_str().unwrap().to_owned()
-                    + &format!("/{}", cli::get_shell_config())),
+                &(homedir.to_str().unwrap().to_owned() + &format!("/{}", shellconfig)),
             );
             if !file_path.exists() {
                 let input = Text::new(
@@ -78,7 +101,7 @@ fn main() {
                     PathBuf::from(val)
                 } else {
                     println!("{}: {}", "Error".red(), input.err().unwrap());
-                    if let Err(e) = std::fs::remove_dir_all(utils::get_configdir()) {
+                    if let Err(e) = std::fs::remove_dir_all(&configdir) {
                         println!("{}: {}", "Error".red(), e);
                         std::process::exit(1);
                     }
@@ -91,7 +114,7 @@ fn main() {
                         "Error".red()
                     );
 
-                    if let Err(e) = std::fs::remove_dir_all(utils::get_configdir()) {
+                    if let Err(e) = std::fs::remove_dir_all(&configdir) {
                         println!("{}: {}", "Error".red(), e);
                         std::process::exit(1);
                     }
@@ -105,7 +128,9 @@ fn main() {
                 .open(file_path)
                 .unwrap();
 
-            let buffer = if cli::get_shell_config().contains("fish") {
+            let shellscript_path = &configdir.join("setenv.sh");
+
+            let buffer = if shellconfig.contains("fish") {
                 println!(
                     "To use the shellscript properly you need to install the {}(https://github.com/edc/bass) plugin for fish",
                     "bass".bold()
@@ -115,7 +140,7 @@ fn main() {
 # envio DO NOT MODIFY
 bass source {}
 ",
-                    &utils::get_configdir().join("setenv.sh").to_str().unwrap()
+                    shellscript_path.to_str().unwrap()
                 )
             } else {
                 format!(
@@ -123,7 +148,7 @@ bass source {}
 #envio DO NOT MODIFY
 source {}
 ",
-                    &utils::get_configdir().join("setenv.sh").to_str().unwrap()
+                    shellscript_path.to_str().unwrap()
                 )
             };
 
@@ -134,5 +159,8 @@ source {}
     }
 
     let args = ClapApp::parse();
-    args.command.run();
+
+    if let Err(e) = args.command.run() {
+        println!("{}: {}", "Error".red(), e);
+    }
 }

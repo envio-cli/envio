@@ -11,9 +11,16 @@ use std::process::Command;
 
 use colored::Colorize;
 use comfy_table::{Attribute, Cell, Table};
-use envio::{crypto::EncryptionType, Profile};
+use envio::{
+    crypto::EncryptionType,
+    error::{Error, Result},
+    Profile,
+};
 
 use crate::utils::{contains_path_separator, download_file, get_configdir, get_cwd};
+
+#[cfg(target_family = "unix")]
+use crate::utils::get_shell_config;
 
 /*
 * Create a new profile
@@ -27,10 +34,9 @@ pub fn create_profile(
     name: String,
     envs: Option<HashMap<String, String>>,
     encryption_type: Box<dyn EncryptionType>,
-) {
+) -> Result<()> {
     if Profile::does_exist(&name) {
-        println!("{}: Profile already exists", "Error".red());
-        return;
+        return Err(Error::ProfileAlreadyExists(name));
     }
 
     let envs = match envs {
@@ -38,7 +44,7 @@ pub fn create_profile(
         None => HashMap::new(),
     };
 
-    let config_dir = get_configdir();
+    let config_dir = get_configdir()?;
     let profile_dir = config_dir.join("profiles");
 
     if !profile_dir.exists() {
@@ -51,12 +57,7 @@ pub fn create_profile(
 
     let profile_file = profile_dir.join(name + ".env");
 
-    let mut file = if let Err(e) = std::fs::File::create(&profile_file) {
-        println!("{}: {}", "Error".red(), e);
-        return;
-    } else {
-        std::fs::File::create(&profile_file).unwrap()
-    };
+    let mut file = std::fs::File::create(&profile_file)?;
 
     let mut buffer = String::from("");
 
@@ -70,19 +71,14 @@ pub fn create_profile(
         buffer = buffer + &encryption_type.get_key();
     }
 
-    if let Err(e) = file.write_all(encryption_type.encrypt(&buffer).as_slice()) {
-        println!("{}: {}", "Error".red(), e);
-    }
+    file.write_all(encryption_type.encrypt(&buffer).unwrap().as_slice())?;
 
-    if let Err(e) = file.flush() {
-        println!("{}: {}", "Error".red(), e);
-    }
+    file.flush()?;
 
-    if let Err(e) = file.sync_all() {
-        println!("{}: {}", "Error".red(), e);
-    }
+    file.sync_all()?;
 
     println!("{}: Profile created", "Success".green());
+    Ok(())
 }
 
 /*
@@ -97,7 +93,11 @@ pub fn create_profile(
 @param file_name &str
 @param envs_selected &Option<Vec<String>>
 */
-pub fn export_envs(profile: &Profile, file_name: &str, envs_selected: &Option<Vec<String>>) {
+pub fn export_envs(
+    profile: &Profile,
+    file_name: &str,
+    envs_selected: &Option<Vec<String>>,
+) -> Result<()> {
     let path = if contains_path_separator(file_name) {
         PathBuf::from(file_name)
     } else {
@@ -114,8 +114,7 @@ pub fn export_envs(profile: &Profile, file_name: &str, envs_selected: &Option<Ve
     let mut buffer = String::from("");
 
     if profile.envs.is_empty() {
-        println!("{}: No envs to export", "Error".red());
-        return;
+        return Err(Error::EmptyProfile(profile.name.to_string()));
     }
 
     let mut keys: Vec<_> = profile.envs.keys().cloned().collect::<Vec<String>>();
@@ -131,8 +130,7 @@ pub fn export_envs(profile: &Profile, file_name: &str, envs_selected: &Option<Ve
         }
 
         if keys.is_empty() {
-            println!("{}: No envs to export", "Error".red());
-            return;
+            return Err(Error::Msg("No envs to export".to_string()));
         }
     }
 
@@ -140,11 +138,10 @@ pub fn export_envs(profile: &Profile, file_name: &str, envs_selected: &Option<Ve
         buffer = buffer + key.as_str() + "=" + profile.envs.get(key.as_str()).unwrap() + "\n";
     }
 
-    if let Err(e) = write!(file, "{}", buffer) {
-        println!("{}: {}", "Error".red(), e);
-    }
+    write!(file, "{}", buffer)?;
 
     println!("{}", "Exported envs".bold());
+    Ok(())
 }
 
 /*
@@ -170,30 +167,31 @@ pub fn list_envs(profile: &Profile) {
 
 @param name &str
 */
-pub fn delete_profile(name: &str) {
+pub fn delete_profile(name: &str) -> Result<()> {
     if Profile::does_exist(name) {
-        let configdir = get_configdir();
+        let configdir = get_configdir()?;
         let profile_path = configdir.join("profiles").join(format!("{}.env", name));
 
         match std::fs::remove_file(profile_path) {
             Ok(_) => println!("{}: Deleted profile", "Success".green()),
-            Err(e) => println!("{}: {}", "Error".red(), e),
+            Err(e) => return Err(Error::Io(e)),
         }
     } else {
-        println!("{}: Profile does not exist", "Error".red());
+        return Err(Error::ProfileDoesNotExist(name.to_string()));
     }
+
+    Ok(())
 }
 
 /*
  * List all the profiles
  */
-pub fn list_profiles(raw: bool) {
-    let configdir = get_configdir();
+pub fn list_profiles(raw: bool) -> Result<()> {
+    let configdir = get_configdir()?;
     let profile_dir = configdir.join("profiles");
 
     if !profile_dir.exists() {
-        println!("{}: No profiles found", "Error".red());
-        return;
+        return Err(Error::Msg("profiles directory does not exist".to_string()));
     }
 
     let mut profiles = Vec::new();
@@ -218,12 +216,12 @@ pub fn list_profiles(raw: bool) {
     if raw {
         if profiles.is_empty() {
             println!("{}", "No profiles found".bold());
-            return;
+            return Ok(());
         }
         for profile in profiles {
             println!("{}", profile);
         }
-        return;
+        return Ok(());
     }
 
     let mut table = Table::new();
@@ -234,6 +232,7 @@ pub fn list_profiles(raw: bool) {
     }
 
     println!("{table}");
+    Ok(())
 }
 
 /*
@@ -243,36 +242,35 @@ pub fn list_profiles(raw: bool) {
 @param url String
 @param profile_name String
 */
-pub fn download_profile(url: String, profile_name: String) {
+pub fn download_profile(url: String, profile_name: String) -> Result<()> {
     println!("Downloading profile from {}", url);
+    let configdir = get_configdir()?;
 
-    let location = if get_configdir()
+    let location = match configdir
         .join("profiles")
         .join(profile_name.clone() + ".env")
         .to_str()
-        .is_none()
     {
-        println!("{}: Could not get convert path to string", "Error".red());
-        return;
-    } else {
-        get_configdir()
-            .join("profiles")
-            .join(profile_name.clone() + ".env")
-            .to_str()
-            .unwrap()
-            .to_owned()
+        Some(location) => location.to_owned(),
+        None => {
+            return Err(Error::Msg("Could not convert path to string".to_string()));
+        }
     };
 
-    tokio::runtime::Builder::new_current_thread()
+    let runtime = match tokio::runtime::Builder::new_current_thread()
         .enable_all()
         .build()
-        .unwrap_or_else(|e| {
-            println!("{}: {}", "Error".red(), e);
-            std::process::exit(1);
-        })
-        .block_on(download_file(url.as_str(), location.as_str()));
+    {
+        Ok(runtime) => runtime,
+        Err(e) => {
+            return Err(Error::Msg(format!("Failed to create tokio runtime: {}", e)));
+        }
+    };
+
+    runtime.block_on(download_file(url.as_str(), location.as_str()))?;
 
     println!("Downloaded profile: {}", profile_name);
+    Ok(())
 }
 
 /*
@@ -281,11 +279,12 @@ pub fn download_profile(url: String, profile_name: String) {
 @param file_path String
 @param profile_name String
 */
-pub fn import_profile(file_path: String, profile_name: String) {
+pub fn import_profile(file_path: String, profile_name: String) -> Result<()> {
     if !Path::new(&file_path).exists() {
-        println!("{}: File does not exist", "Error".red());
-        return;
+        return Err(Error::Msg(format!("File `{}` does not exist", file_path)));
     }
+
+    let configdir = get_configdir()?;
 
     let mut file = std::fs::OpenOptions::new()
         .read(true)
@@ -295,21 +294,15 @@ pub fn import_profile(file_path: String, profile_name: String) {
     let mut contents = String::new();
     file.read_to_string(&mut contents).unwrap();
 
-    let location = if get_configdir()
+    let location = match configdir
         .join("profiles")
         .join(profile_name.clone() + ".env")
         .to_str()
-        .is_none()
     {
-        println!("{}: Could not get convert path to string", "Error".red());
-        return;
-    } else {
-        get_configdir()
-            .join("profiles")
-            .join(profile_name + ".env")
-            .to_str()
-            .unwrap()
-            .to_owned()
+        Some(location) => location.to_owned(),
+        None => {
+            return Err(Error::Msg("Could not convert path to string".to_string()));
+        }
     };
 
     let mut file = std::fs::OpenOptions::new()
@@ -318,29 +311,23 @@ pub fn import_profile(file_path: String, profile_name: String) {
         .open(location)
         .unwrap();
 
-    if let Err(e) = file.write(contents.as_bytes()) {
-        println!("{}: {}", "Error".red(), e);
-    }
+    file.write(contents.as_bytes())?;
+
+    Ok(())
 }
 
 // Unix specific code
 // Creates a shell script that can be sourced to set the environment variables
 #[cfg(any(target_family = "unix"))]
-pub fn create_shellscript(profile: &str) {
-    let configdir = get_configdir();
+pub fn create_shellscript(profile: &str) -> Result<()> {
+    let configdir = get_configdir()?;
     let shellscript_path = configdir.join("setenv.sh");
 
-    let mut file = if let Ok(e) = std::fs::OpenOptions::new()
+    let mut file = std::fs::OpenOptions::new()
         .write(true)
         .truncate(true)
         .append(false)
-        .open(shellscript_path)
-    {
-        e
-    } else {
-        println!("{}: Could not open file", "Error".red());
-        return;
-    };
+        .open(shellscript_path)?;
 
     let shellscript = format!(
         r#"#!/bin/bash
@@ -389,61 +376,24 @@ fi
         profile, profile
     );
 
-    if let Err(e) = file.write_all(shellscript.as_bytes()) {
-        println!("{}: {}", "Error".red(), e);
-    }
-
-    if let Err(e) = file.flush() {
-        println!("{}: {}", "Error".red(), e);
-    }
-
-    if let Err(e) = file.sync_all() {
-        println!("{}: {}", "Error".red(), e);
-    }
-}
-
-// Unix specific code
-// Returns the shell that is being used
-// @return String
-#[cfg(any(target_family = "unix"))]
-pub fn get_shell_config() -> &'static str {
-    // Gets your default shell
-    // This is used to determine which shell config file to edit
-    let shell_env_value = if let Ok(e) = std::env::var("SHELL") {
-        e
-    } else {
-        println!("{}: Could not get shell", "Error".red());
-        std::process::exit(1);
-    };
-
-    let shell_as_vec = shell_env_value.split('/').collect::<Vec<&str>>();
-    let shell = shell_as_vec[shell_as_vec.len() - 1];
-
-    let mut shell_config = "";
-    if shell.contains("bash") {
-        shell_config = ".bashrc";
-    } else if shell.contains("zsh") {
-        shell_config = ".zshrc";
-    } else if shell.contains("fish") {
-        shell_config = ".config/fish/config.fish"
-    }
-
-    shell_config
+    file.write_all(shellscript.as_bytes())?;
+    file.flush()?;
+    file.sync_all()?;
+    Ok(())
 }
 
 /*
  * Load the environment variables of the profile into the current session
  */
 #[cfg(any(target_family = "unix"))]
-pub fn load_profile(profile_name: &str) {
+pub fn load_profile(profile_name: &str) -> Result<()> {
     if !Profile::does_exist(profile_name) {
-        println!("{}: Profile does not exist", "Error".red());
-        return;
+        return Err(Error::ProfileDoesNotExist(profile_name.to_string()));
     }
 
-    let shell_config = get_shell_config();
+    let shell_config = get_shell_config()?;
 
-    create_shellscript(profile_name);
+    create_shellscript(profile_name)?;
 
     if !shell_config.is_empty() {
         println!(
@@ -453,6 +403,8 @@ pub fn load_profile(profile_name: &str) {
     } else {
         println!("Reload your shell to apply changes");
     }
+
+    Ok(())
 }
 
 /*
@@ -476,18 +428,17 @@ pub fn load_profile(profile: Profile) {
  * Unload the environment variables of the profile from the current session
  */
 #[cfg(any(target_family = "unix"))]
-pub fn unload_profile() {
+pub fn unload_profile() -> Result<()> {
     let file = std::fs::OpenOptions::new()
         .write(true)
         .append(false)
-        .open(get_configdir().join("setenv.sh"))
+        .open(get_configdir()?.join("setenv.sh"))
         .unwrap();
 
-    if let Err(e) = file.set_len(0) {
-        println!("{}: {}", "Error".red(), e);
-    }
+    file.set_len(0)?;
 
     println!("Reload your shell to apply changes");
+    Ok(())
 }
 
 /*

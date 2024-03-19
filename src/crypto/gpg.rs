@@ -3,9 +3,6 @@
  * Crypto uses gpgme to interact with GPG on unix systems however gpgme isn't that well supported on Windows
  * So on Windows we use the gpg command line tool (gpg4win) to interact with GPG
 */
-use std::io::Error;
-
-use colored::Colorize;
 
 #[cfg(target_family = "unix")]
 use gpgme::{Context, Data, Protocol};
@@ -20,6 +17,7 @@ use std::io::Write;
 use std::process::{Command, Stdio};
 
 use crate::crypto::EncryptionType;
+use crate::error::{Error, Result};
 
 pub struct GPG {
     key_fingerprint: String,
@@ -45,100 +43,83 @@ impl EncryptionType for GPG {
         "gpg"
     }
 
-    fn encrypt(&self, data: &str) -> Vec<u8> {
+    fn encrypt(&self, data: &str) -> Result<Vec<u8>> {
         // Unix specific code
         #[cfg(target_family = "unix")]
         {
             let mut ctx = match Context::from_protocol(Protocol::OpenPgp) {
                 Ok(ctx) => ctx,
                 Err(e) => {
-                    println!("{}: {}", "Error".red(), e);
-                    std::process::exit(1);
+                    return Err(Error::Crypto(e.to_string()));
                 }
             };
 
             let key = match ctx.get_key(&self.key_fingerprint) {
                 Ok(key) => key,
                 Err(e) => {
-                    println!("{}: {}", "Error".red(), e);
-                    std::process::exit(1);
+                    return Err(Error::Crypto(e.to_string()));
                 }
             };
 
             let mut encrypted_data = Vec::new();
             if let Err(e) = ctx.encrypt(Some(&key), data, &mut encrypted_data) {
-                println!("{}: {}", "Error".red(), e);
-                std::process::exit(1);
+                return Err(Error::Crypto(e.to_string()));
             };
 
-            encrypted_data
+            Ok(encrypted_data)
         }
 
         // Windows specific code
         #[cfg(target_family = "windows")]
         {
-            let mut gpg_process = match Command::new("gpg")
+            let mut gpg_process = Command::new("gpg")
                 .arg("--recipient")
                 .arg(&self.key_fingerprint)
                 .arg("--encrypt")
                 .stdin(Stdio::piped())
                 .stdout(Stdio::piped())
-                .spawn()
-            {
-                Ok(gpg_process) => gpg_process,
-                Err(e) => {
-                    println!("{}: {}", "Error".red(), e);
-                    std::process::exit(1);
-                }
-            };
+                .spawn()?;
 
             let stdin = match gpg_process.stdin.as_mut() {
                 Some(stdin) => stdin,
                 None => {
-                    println!("{}: Failed to open stdin", "Error".red());
-                    std::process::exit(1);
+                    return Err(Error::Io(std::io::Error::new(
+                        std::io::ErrorKind::Other,
+                        "Failed to open stdin",
+                    )));
                 }
             };
 
-            if let Err(e) = stdin.write_all(data.as_bytes()) {
-                println!("{}: {}", "Error".red(), e);
-                std::process::exit(1);
-            }
+            stdin.write_all(data.as_bytes())?;
 
             // Wait for the GPG process to finish and capture its output
-            let output = match gpg_process.wait_with_output() {
-                Ok(output) => output,
-                Err(e) => {
-                    println!("{}: {}", "Error".red(), e);
-                    std::process::exit(1);
-                }
-            };
+            let output = gpg_process.wait_with_output()?;
 
-            output.stdout
+            Ok(output.stdout)
         }
     }
 
-    fn decrypt(&self, encrypted_data: &[u8]) -> Result<String, Error> {
+    fn decrypt(&self, encrypted_data: &[u8]) -> Result<String> {
         // Unix specific code
         #[cfg(target_family = "unix")]
         {
             let mut ctx = match Context::from_protocol(Protocol::OpenPgp) {
                 Ok(ctx) => ctx,
                 Err(e) => {
-                    return Err(Error::new(std::io::ErrorKind::Other, e));
+                    return Err(Error::Crypto(e.to_string()));
                 }
             };
 
             let mut cipher = match Data::from_bytes(encrypted_data) {
                 Ok(cipher) => cipher,
                 Err(e) => {
-                    return Err(Error::new(std::io::ErrorKind::Other, e));
+                    return Err(Error::Crypto(e.to_string()));
                 }
             };
 
             let mut plain = Vec::new();
             if let Err(e) = ctx.decrypt_and_verify(&mut cipher, &mut plain) {
-                return Err(Error::new(std::io::ErrorKind::Other, e));
+                return Err(Error::Crypto(e.to_string()));
             };
 
             Ok(String::from_utf8_lossy(&plain).to_string())
@@ -147,40 +128,24 @@ impl EncryptionType for GPG {
         // Windows specific code
         #[cfg(target_family = "windows")]
         {
-            let mut gpg_process = match Command::new("gpg")
+            let mut gpg_process = Command::new("gpg")
                 .arg("--yes")
                 .arg("--quiet")
                 .arg("--decrypt")
                 .stdin(Stdio::piped())
                 .stdout(Stdio::piped())
-                .spawn()
-            {
-                Ok(gpg) => gpg,
-                Err(e) => {
-                    return Err(Error::new(std::io::ErrorKind::Other, e));
-                }
-            };
+                .spawn()?;
 
             let stdin = match gpg_process.stdin.as_mut() {
                 Some(stdin) => stdin,
                 None => {
-                    return Err(Error::new(
-                        std::io::ErrorKind::Other,
-                        "Failed to open stdin",
-                    ));
+                    return Err(Error::Msg("Failed to open stdin".to_string()));
                 }
             };
 
-            if let Err(e) = stdin.write_all(encrypted_data) {
-                return Err(Error::new(std::io::ErrorKind::Other, e));
-            }
+            stdin.write_all(encrypted_data)?;
 
-            let output = match gpg_process.wait_with_output() {
-                Ok(output) => output,
-                Err(e) => {
-                    return Err(Error::new(std::io::ErrorKind::Other, e));
-                }
-            };
+            let output = gpg_process.wait_with_output()?;
 
             Ok(String::from_utf8_lossy(&output.stdout).to_string())
         }
@@ -194,15 +159,14 @@ impl EncryptionType for GPG {
  * @return Vec<(String, String)>: Vec of tuples containing the name and email of the key and the fingerprint
 */
 #[cfg(target_family = "unix")]
-pub fn get_gpg_keys() -> Vec<(String, String)> {
+pub fn get_gpg_keys() -> Result<Vec<(String, String)>> {
     let mut context = Context::from_protocol(Protocol::OpenPgp).unwrap();
     let mut available_keys: Vec<(String, String)> = Vec::new();
 
     let keys = match context.keys() {
         Ok(keys) => keys,
         Err(e) => {
-            println!("{}: {}", "Error".red(), e);
-            std::process::exit(1);
+            return Err(Error::Crypto(e.to_string()));
         }
     };
 
@@ -211,24 +175,25 @@ pub fn get_gpg_keys() -> Vec<(String, String)> {
             let name = match user_id.name() {
                 Ok(name) => name,
                 Err(e) => {
-                    println!("{}: {:?}", "Error".red(), e);
-                    std::process::exit(1);
+                    if e.is_none() {
+                        return Err(Error::Utf8Error(e.unwrap()));
+                    }
+
+                    return Err(Error::Utf8Error(e.unwrap()));
                 }
             };
 
             let email = match user_id.email() {
                 Ok(email) => email,
                 Err(e) => {
-                    println!("{}: {:?}", "Error".red(), e);
-                    std::process::exit(1);
+                    return Err(Error::Utf8Error(e.unwrap()));
                 }
             };
 
             let key_fingerprint = match key.fingerprint() {
                 Ok(fingerprint) => fingerprint.to_string(),
                 Err(e) => {
-                    println!("{}: {:?}", "Error".red(), e);
-                    std::process::exit(1);
+                    return Err(Error::Utf8Error(e.unwrap()));
                 }
             };
 
@@ -236,7 +201,7 @@ pub fn get_gpg_keys() -> Vec<(String, String)> {
         }
     }
 
-    available_keys
+    Ok(available_keys)
 }
 
 /*

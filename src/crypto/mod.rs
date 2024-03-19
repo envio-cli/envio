@@ -5,11 +5,10 @@ pub mod gpg;
 pub use age::AGE;
 pub use gpg::GPG;
 
-use std::io::{Error, Read};
+use std::io::Read;
 use std::path::Path;
 
-use colored::Colorize;
-
+use crate::error::{Error, Result};
 use crate::utils::{contains_path_separator, get_configdir};
 
 /*
@@ -39,11 +38,11 @@ pub trait EncryptionType {
     * @param data: data to encrypt
     * @return encrypted data
     */
-    fn encrypt(&self, data: &str) -> Vec<u8>;
+    fn encrypt(&self, data: &str) -> Result<Vec<u8>>;
     /*
      * Decrypt data
      */
-    fn decrypt(&self, encrypted_data: &[u8]) -> Result<String, Error>;
+    fn decrypt(&self, encrypted_data: &[u8]) -> Result<String>;
     /*
      * Return the name of the encryption type
      */
@@ -57,13 +56,17 @@ pub trait EncryptionType {
  * @param encryption_type_str: &str - the string to match against
  * @return Box<dyn EncryptionType>: the encryption type
 */
-pub fn create_encryption_type(key: String, encryption_type_str: &str) -> Box<dyn EncryptionType> {
+pub fn create_encryption_type(
+    key: String,
+    encryption_type_str: &str,
+) -> Result<Box<dyn EncryptionType>> {
     match encryption_type_str {
-        "age" => Box::new(AGE::new(key)),
-        "gpg" => Box::new(GPG::new(key)),
+        "age" => Ok(Box::new(AGE::new(key))),
+        "gpg" => Ok(Box::new(GPG::new(key))),
         _ => {
-            println!("{}: Invalid encryption type", "Error".red());
-            std::process::exit(1);
+            return Err(Error::InvalidEncryptionType(
+                encryption_type_str.to_string(),
+            ));
         }
     }
 }
@@ -80,7 +83,7 @@ pub fn create_encryption_type(key: String, encryption_type_str: &str) -> Box<dyn
 pub fn get_encryption_type(
     name: &str,
     get_key: Option<impl Fn() -> String>,
-) -> Box<dyn EncryptionType> {
+) -> Result<Box<dyn EncryptionType>> {
     let profile_file_path = if contains_path_separator(name) {
         Path::new(name).to_path_buf()
     } else {
@@ -89,26 +92,26 @@ pub fn get_encryption_type(
         profile_dir.join(name.to_owned() + ".env")
     };
 
-    let mut file = match std::fs::File::open(profile_file_path) {
-        Ok(file) => file,
-        Err(e) => {
-            println!("{}: {}", "Error".red(), e);
-            std::process::exit(1);
-        }
-    };
+    let mut file = std::fs::File::open(profile_file_path)?;
 
     let mut file_contents = Vec::new();
     file.read_to_end(&mut file_contents).unwrap();
 
-    let gpg_instance = create_encryption_type("".to_string(), "gpg");
+    let gpg_instance = match create_encryption_type("".to_string(), "gpg") {
+        Ok(instance) => instance,
+        Err(e) => {
+            return Err(e);
+        }
+    };
 
     // If the file can be decrypted with GPG, then we use GPG, otherwise we use AGE
     if gpg_instance.decrypt(&file_contents).is_ok() {
-        gpg_instance
+        Ok(gpg_instance)
     } else {
         if get_key.is_none() {
-            println!("{}: No key provided for AGE encryption", "Error".red());
-            std::process::exit(1);
+            return Err(Error::Crypto(
+                "No key provided for AGE encryption".to_string(),
+            ));
         }
 
         create_encryption_type(get_key.unwrap()(), "age")

@@ -29,6 +29,7 @@ serde = { version = "1.0.159", features = ["derive"] }
 regex = "1.7"
 tokio = "1.28.0"
 url = "2.3.1"
+thiserror = "1.0.58"
 
 [target.'cfg(unix)'.dependencies]
 gpgme = "0.11"

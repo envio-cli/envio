@@ -38,15 +38,20 @@ mod profile;
 mod utils;
 
 pub mod crypto;
-
+pub mod error;
 pub use profile::Profile; // Re-export Profile so that users don't have to use envio::profile::Profile
 
-pub fn load(name: &str, get_key: Option<impl Fn() -> String>) -> Result<Profile, String> {
-    let encryption_type = crypto::get_encryption_type(name, get_key);
+use error::Result;
+
+pub fn load(name: &str, get_key: Option<impl Fn() -> String>) -> Result<Profile> {
+    let encryption_type = match crypto::get_encryption_type(name, get_key) {
+        Ok(encryption_type) => encryption_type,
+        Err(e) => return Err(e),
+    };
 
     let profile = match Profile::load(name, encryption_type) {
-        Some(profile) => profile,
-        None => return Err("Failed to load profile".to_string()),
+        Ok(profile) => profile,
+        Err(e) => return Err(e),
     };
 
     for (env_var, value) in &profile.envs {
