@@ -50,7 +50,7 @@ use crate::error::{Error, Result};
 ///   let mut profile = Profile::from_content("my-profile", &encrypted_content, envio::crypto::get_encryption_type(&encrypted_content).unwrap()).unwrap();
 ///   
 ///   // Or use the load_profile macro
-///   let mut profile = load_profile!("my-profile").unwrap();
+///   let mut profile = envio::load_profile!("my-profile").unwrap();
 ///
 ///   for (key, value) in profile.envs.iter() {
 ///    println!("{}={}", key, value);
@@ -240,7 +240,7 @@ impl Profile {
     ///  
     /// let mut profile = load_profile!("my-profile").unwrap();
     ///
-    /// profile.remove_env("NEW_ENV".to_string());
+    /// profile.remove_env("NEW_ENV");
     ///
     /// profile.push_changes().unwrap();
     ///
@@ -362,7 +362,8 @@ impl Profile {
 ///    Ok(p) => p,
 ///    Err(e) => {
 ///     eprintln!("An error occurred: {}", e);
-///    return;
+///     return;
+///    }
 /// };
 ///
 /// for (key, value) in profile.envs.iter() {

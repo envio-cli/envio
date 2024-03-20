@@ -13,6 +13,7 @@ readme = "README.md"
 [lib]
 name = "envio"
 path = "src/lib.rs"
+doctest = false
 
 [dependencies]
 age = "0.9.1"

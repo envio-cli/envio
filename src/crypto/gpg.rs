@@ -156,27 +156,27 @@ impl EncryptionType for GPG {
 }
 
 /// Get the GPG keys available on the system
-/// 
-/// There are two different implementations for Unix and Windows. 
-/// 
+///
+/// There are two different implementations for Unix and Windows.
+///
 /// The Unix implementation uses the gpgme crate to access the GPG keys on the
 /// system. The Windows implementation uses the gpg command line tool to access
-/// 
+///
 /// # Returns
 /// - `Result<Vec<(String, String)>>`: Vec of tuples containing a formatted
 ///   string of the user id with the email and the key fingerprint
-/// 
+///
 /// # Example
-/// 
+///
 /// ```rust
-/// use envio::crypto::get_gpg_keys;
-/// 
+/// use envio::crypto::gpg::get_gpg_keys;
+///
 /// let keys = get_gpg_keys().unwrap();
-/// 
+///
 /// for key in keys {
 ///    println!("{}: {}", key.0, key.1);
 /// }
-/// 
+///
 /// ```
 #[cfg(target_family = "unix")]
 pub fn get_gpg_keys() -> Result<Vec<(String, String)>> {
@@ -290,7 +290,7 @@ pub fn get_gpg_keys() -> Option<Vec<(String, String)>> {
     Some(available_keys)
 }
 
-/// Utility function to format the fingerprint. 
+/// Utility function to format the fingerprint.
 /// Windows specific code
 #[cfg(target_family = "windows")]
 fn format_fingerprint<S: AsRef<str>>(fingerprint: S) -> String {

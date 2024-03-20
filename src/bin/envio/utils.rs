@@ -8,7 +8,7 @@ use indicatif::{ProgressBar, ProgressStyle};
 use reqwest::Client;
 
 /// Get the home directory
-/// 
+///
 /// # Returns
 /// - `PathBuf`: the home directory
 pub fn get_homedir() -> Result<PathBuf> {
@@ -22,7 +22,7 @@ pub fn get_homedir() -> Result<PathBuf> {
 }
 
 /// Get the config directory
-/// 
+///
 /// # Returns
 /// - `PathBuf`: the config directory
 pub fn get_configdir() -> Result<PathBuf> {
@@ -37,11 +37,11 @@ pub fn get_cwd() -> PathBuf {
     std::env::current_dir().unwrap()
 }
 
-/// Parse environment variables from a string 
-/// 
+/// Parse environment variables from a string
+///
 /// # Parameters
 /// - `buffer`: &str - the buffer to parse
-/// 
+///
 /// # Returns
 /// - `Result<HashMap<String, String>>`: the parsed environment variables
 pub fn parse_envs_from_string(buffer: &str) -> Result<HashMap<String, String>> {
@@ -71,11 +71,11 @@ pub fn parse_envs_from_string(buffer: &str) -> Result<HashMap<String, String>> {
 }
 
 /// Download a file from a url with a progress bar
-/// 
+///
 /// # Parameters
 /// - `url`: &str - the url to download the file from
 /// - `file_name`: &str - the name of the file to save the downloaded file to
-/// 
+///
 /// # Returns
 /// - `Result<()>`: an empty result
 pub async fn download_file(url: &str, file_name: &str) -> Result<()> {

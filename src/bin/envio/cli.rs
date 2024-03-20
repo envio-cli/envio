@@ -1,6 +1,5 @@
 /// Utility/helper functions specific to the CLI version of envio.
 /// These functions are designed for CLI usage and may not be something used by users interacting with the API directly
-
 use std::{
     collections::HashMap,
     io::{Read, Write},
@@ -29,7 +28,7 @@ use crate::utils::get_shell_config;
 /// - `name` - the name of the profile
 /// - `envs` - the environment variables of the profile
 /// - `encryption_type` - the encryption type of the profile
-/// 
+///
 /// # Returns
 /// - `Result<()>`: whether the operation was successful
 pub fn create_profile(
@@ -84,12 +83,12 @@ pub fn create_profile(
 }
 
 /// Export all the environment variables of the profile to a file in plain text
-/// 
+///
 /// # Parameters
 /// - `profile` - the profile to export ([Profile] object)
 /// - `file_name` - the name of the file to export to
 /// - `envs_selected` - the environment variables to export
-/// 
+///
 /// # Returns
 /// - `Result<()>`: whether the operation was successful
 pub fn export_envs(
@@ -144,7 +143,7 @@ pub fn export_envs(
 }
 
 /// List the environment variables stored in a profile
-/// 
+///
 /// # Parameters
 /// - `profile` - the profile to list the environment variables of ([Profile] object)
 pub fn list_envs(profile: &Profile) {
@@ -162,10 +161,10 @@ pub fn list_envs(profile: &Profile) {
 }
 
 /// Delete a profile from the profiles directory
-/// 
+///
 /// # Parameters
 /// - `name` - the name of the profile to delete
-/// 
+///
 /// # Returns
 /// - `Result<()>`: whether the operation was successful
 pub fn delete_profile(name: &str) -> Result<()> {
@@ -185,11 +184,11 @@ pub fn delete_profile(name: &str) -> Result<()> {
 }
 
 /// List all the stored profiles in the profiles directory
-/// 
+///
 /// # Parameters
 /// - `raw` - whether to list the profiles in raw format. If true, the profiles
 ///   will be listed without any decorations
-/// 
+///
 /// # Returns
 /// - `Result<()>`: whether the operation was successful
 pub fn list_profiles(raw: bool) -> Result<()> {
@@ -242,11 +241,11 @@ pub fn list_profiles(raw: bool) -> Result<()> {
 }
 
 /// Download a profile from a URL and store it in the profiles directory
-/// 
+///
 /// # Parameters
 /// - `url` - the URL to download the profile from
 /// - `profile_name` - the name of the profile to store the downloaded profile as
-/// 
+///
 /// # Returns
 /// - `Result<()>`: whether the operation was successful
 pub fn download_profile(url: String, profile_name: String) -> Result<()> {
@@ -281,11 +280,11 @@ pub fn download_profile(url: String, profile_name: String) -> Result<()> {
 }
 
 /// Import a profile stored somewhere on the system but not in the profiles directory
-/// 
+///
 /// # Parameters
 /// - `file_path` - the path to the profile file
 /// - `profile_name` - the name of the profile to store the imported profile as
-/// 
+///
 /// # Returns
 /// - `Result<()>`: whether the operation was successful
 pub fn import_profile(file_path: String, profile_name: String) -> Result<()> {
@@ -392,10 +391,10 @@ fi
 }
 
 /// Load the environment variables of the profile into the current session
-/// 
+///
 /// # Parameters
 /// - `profile_name` - the name of the profile to load
-/// 
+///
 /// # Returns
 /// - `Result<()>`: whether the operation was successful
 #[cfg(any(target_family = "unix"))]
@@ -420,7 +419,6 @@ pub fn load_profile(profile_name: &str) -> Result<()> {
     Ok(())
 }
 
-
 /// Windows implementation of the load_profile function
 #[cfg(target_family = "windows")]
 pub fn load_profile(profile: Profile) {
@@ -436,7 +434,7 @@ pub fn load_profile(profile: Profile) {
 }
 
 /// Unload the environment variables of the profile from the current session
-/// 
+///
 /// # Returns
 /// - `Result<()>`: whether the operation was successful
 #[cfg(any(target_family = "unix"))]

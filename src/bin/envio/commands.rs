@@ -1,5 +1,4 @@
 /// Implementation of all the subcommands that can be run by the CLI
-
 use colored::Colorize;
 use inquire::{min_length, Confirm, MultiSelect, Password, PasswordDisplayMode, Select, Text};
 use regex::Regex;

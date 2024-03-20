@@ -44,7 +44,7 @@ fn get_cache_dir() -> Option<PathBuf> {
 /// create the cache file If the cache file is older than 7 days, fetch the
 /// latest version from GitHub API If the GitHub API fails, fetch the latest
 /// version from git
-/// 
+///
 /// # Returns
 /// - `Version`: the latest version
 pub fn get_latest_version() -> Version {
@@ -114,14 +114,13 @@ pub fn get_latest_version() -> Version {
     }
 }
 
-
 /// Fetch the latest version from GitHub API or git If the GitHub API fails,
 /// fetch the latest version from git If the git command fails, return the
 /// fallback version
-/// 
+///
 /// # Parameters
 /// - `fallback_version`: &str - The fallback version
-/// 
+///
 /// # Returns
 /// - `Version`: The latest version
 fn fetch_latest_version(fallback_version: &str) -> Version {
