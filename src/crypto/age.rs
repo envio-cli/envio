@@ -5,6 +5,8 @@ use age::secrecy::Secret;
 use crate::crypto::EncryptionType;
 use crate::error::{Error, Result};
 
+pub const IDENTITY_BYTES: &[u8] = b"-----AGE ENCRYPTED FILE-----";
+
 /*
  * AGE encryption - its not a real encryption type, but a wrapper around the age crate to keep the
  * same interface as the other encryption types
@@ -42,8 +44,9 @@ impl EncryptionType for AGE {
         };
 
         writer.write_all(data.as_bytes())?;
-
         writer.finish()?;
+
+        encrypted.extend_from_slice(IDENTITY_BYTES);
 
         Ok(encrypted)
     }
@@ -65,5 +68,10 @@ impl EncryptionType for AGE {
         reader.read_to_end(&mut decrypted)?;
 
         String::from_utf8(decrypted).map_err(|e| Error::Utf8Error(e.utf8_error()))
+    }
+
+    fn is_this_type(encrypted_data: &[u8]) -> bool {
+        encrypted_data.len() >= IDENTITY_BYTES.len()
+            && &encrypted_data[encrypted_data.len() - IDENTITY_BYTES.len()..] == IDENTITY_BYTES
     }
 }

@@ -1,15 +1,11 @@
-mod age;
+pub mod age;
 pub mod gpg;
 
 // Re-export the encryption types so that users don't have to use envio::crypto::type::TYPE
 pub use age::AGE;
 pub use gpg::GPG;
 
-use std::io::Read;
-use std::path::Path;
-
 use crate::error::{Error, Result};
-use crate::utils::{contains_path_separator, get_configdir};
 
 /*
  * EncryptionType trait
@@ -47,6 +43,10 @@ pub trait EncryptionType {
      * Return the name of the encryption type
      */
     fn as_string(&self) -> &'static str;
+
+    fn is_this_type(encrypted_data: &[u8]) -> bool
+    where
+        Self: Sized;
 }
 
 /*
@@ -80,40 +80,13 @@ pub fn create_encryption_type(
  * @param get_key: FnOnce() -> String - a function that returns the key to use for encryption/decryption this is only used for AGE encryption
  * @return Box<dyn EncryptionType>: the encryption type
 */
-pub fn get_encryption_type(
-    name: &str,
-    get_key: Option<impl Fn() -> String>,
-) -> Result<Box<dyn EncryptionType>> {
-    let profile_file_path = if contains_path_separator(name) {
-        Path::new(name).to_path_buf()
+pub fn get_encryption_type(encrypted_content: &Vec<u8>) -> Result<Box<dyn EncryptionType>> {
+    let e_type;
+    if GPG::is_this_type(&encrypted_content) {
+        e_type = "gpg";
     } else {
-        let config_dir = get_configdir();
-        let profile_dir = config_dir.join("profiles");
-        profile_dir.join(name.to_owned() + ".env")
-    };
-
-    let mut file = std::fs::File::open(profile_file_path)?;
-
-    let mut file_contents = Vec::new();
-    file.read_to_end(&mut file_contents).unwrap();
-
-    let gpg_instance = match create_encryption_type("".to_string(), "gpg") {
-        Ok(instance) => instance,
-        Err(e) => {
-            return Err(e);
-        }
-    };
-
-    // If the file can be decrypted with GPG, then we use GPG, otherwise we use AGE
-    if gpg_instance.decrypt(&file_contents).is_ok() {
-        Ok(gpg_instance)
-    } else {
-        if get_key.is_none() {
-            return Err(Error::Crypto(
-                "No key provided for AGE encryption".to_string(),
-            ));
-        }
-
-        create_encryption_type(get_key.unwrap()(), "age")
+        e_type = "age";
     }
+
+    create_encryption_type("".to_string(), e_type)
 }

@@ -9,10 +9,10 @@ use std::io::Read;
 use std::path::Path;
 use url::Url;
 
+use envio::crypto::create_encryption_type;
 use envio::crypto::gpg::get_gpg_keys;
-use envio::crypto::{create_encryption_type, get_encryption_type};
 use envio::error::{Error, Result};
-use envio::Profile;
+use envio::{load_profile, Profile};
 
 use crate::clap_app::Command;
 use crate::cli;
@@ -285,9 +285,7 @@ impl Command {
                     return Err(Error::ProfileDoesNotExist(profile_name.to_string()));
                 }
 
-                let encryption_type = get_encryption_type(profile_name, Some(get_userkey))?;
-
-                let mut profile = Profile::load(profile_name, encryption_type)?;
+                let mut profile = load_profile!(profile_name, get_userkey)?;
 
                 for env in envs {
                     if (*env).contains('=') {
@@ -347,9 +345,7 @@ impl Command {
                         return Err(Error::ProfileDoesNotExist(profile_name.to_string()));
                     }
 
-                    let encryption_type = get_encryption_type(profile_name, Some(get_userkey))?;
-
-                    let profile = Profile::load(profile_name, encryption_type)?;
+                    let profile = load_profile!(profile_name, get_userkey)?;
 
                     cli::load_profile(profile);
                 }
@@ -366,9 +362,7 @@ impl Command {
                     return Err(Error::ProfileDoesNotExist(profile_name.to_string()));
                 }
 
-                let encryption_type = get_encryption_type(profile_name, Some(get_userkey))?;
-
-                let profile = Profile::load(profile_name, encryption_type)?;
+                let profile = load_profile!(profile_name, get_userkey)?;
 
                 cli::unload_profile(profile);
             }
@@ -384,9 +378,7 @@ impl Command {
                     return Err(Error::ProfileDoesNotExist(profile_name.to_string()));
                 }
 
-                let encryption_type = get_encryption_type(profile_name, Some(get_userkey))?;
-
-                let profile = Profile::load(profile_name, encryption_type)?;
+                let profile = load_profile!(profile_name, get_userkey)?;
 
                 let mut cmd = std::process::Command::new(program)
                     .envs(profile.envs)
@@ -422,9 +414,7 @@ impl Command {
                 }
 
                 if envs.is_some() && !envs.as_ref().unwrap().is_empty() {
-                    let encryption_type = get_encryption_type(profile_name, Some(get_userkey))?;
-
-                    let mut profile = Profile::load(profile_name, encryption_type)?;
+                    let mut profile = load_profile!(profile_name, get_userkey)?;
 
                     for env in envs.as_ref().unwrap() {
                         profile.remove_env(env)?;
@@ -451,12 +441,7 @@ impl Command {
                         ));
                     }
 
-                    let encryption_type = get_encryption_type(
-                        profile_name.as_ref().unwrap().as_str(),
-                        Some(get_userkey),
-                    )?;
-
-                    let profile = Profile::load(profile_name.as_ref().unwrap(), encryption_type)?;
+                    let profile = load_profile!(profile_name.as_ref().unwrap(), get_userkey)?;
 
                     if *no_pretty_print {
                         for (key, value) in profile.envs.iter() {
@@ -473,9 +458,7 @@ impl Command {
                     return Err(Error::ProfileDoesNotExist(profile_name.to_string()));
                 }
 
-                let encryption_type = get_encryption_type(profile_name, Some(get_userkey))?;
-
-                let mut profile = Profile::load(profile_name, encryption_type)?;
+                let mut profile = load_profile!(profile_name, get_userkey)?;
 
                 for env in envs {
                     if (*env).contains('=') {
@@ -539,9 +522,7 @@ impl Command {
                     file_name = &file.as_ref().unwrap()
                 }
 
-                let encryption_type = get_encryption_type(profile_name, Some(get_userkey))?;
-
-                let profile = Profile::load(profile_name, encryption_type)?;
+                let profile = load_profile!(profile_name, get_userkey)?;
 
                 if envs.is_some() && envs.as_ref().unwrap().contains(&"select".to_string()) {
                     let prompt = MultiSelect::new("Select the environment variables you want to export:", profile.envs.keys().collect())

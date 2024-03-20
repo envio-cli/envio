@@ -1,10 +1,6 @@
-use std::{
-    collections::HashMap,
-    io::{Read, Write},
-    path::{Path, PathBuf},
-};
+use std::{collections::HashMap, io::Write, path::PathBuf};
 
-use crate::utils::get_configdir;
+use crate::utils::{get_configdir, get_profile_filepath, truncate_identity_bytes};
 
 use crate::crypto::EncryptionType;
 use crate::error::{Error, Result};
@@ -17,28 +13,14 @@ pub struct Profile {
 }
 
 impl Profile {
-    pub fn load(name: &str, mut encryption_type: Box<dyn EncryptionType>) -> Result<Profile> {
-        let profile_file_path = match Path::new(name).exists() {
-            true => PathBuf::from(name),
-            false => {
-                if !Profile::does_exist(&name) {
-                    return Err(Error::ProfileDoesNotExist(name.to_string()));
-                }
+    pub fn from_content(
+        name: &str,
+        encrypted_content: &Vec<u8>,
+        mut encryption_type: Box<dyn EncryptionType>,
+    ) -> Result<Profile> {
+        let truncated_content = truncate_identity_bytes(&encrypted_content);
 
-                get_configdir()
-                    .join("profiles")
-                    .join(format!("{}.env", name))
-            }
-        };
-
-        let mut file = std::fs::OpenOptions::new()
-            .read(true)
-            .open(&profile_file_path)?;
-
-        let mut encrypted_contents = Vec::new();
-        file.read_to_end(&mut encrypted_contents).unwrap();
-
-        let content = match encryption_type.decrypt(&encrypted_contents) {
+        let content = match encryption_type.decrypt(&truncated_content) {
             Ok(c) => c,
             Err(e) => {
                 return Err(e);
@@ -62,6 +44,8 @@ impl Profile {
                 envs.insert(key.to_string(), value.to_string());
             }
         }
+
+        let profile_file_path = get_profile_filepath(name)?;
 
         Ok(Profile {
             name: name.to_string(),
@@ -169,4 +153,35 @@ impl Profile {
 
         Ok(())
     }
+}
+
+#[macro_export]
+macro_rules! load_profile {
+    ($name:expr $(, $get_key:expr)?) => {
+        (||->envio::error::Result<envio::Profile> {
+            use envio::Profile;
+            use envio::crypto;
+            use envio::utils;
+
+            let encrypted_content = utils::get_profile_content($name)?;
+            let mut encryption_type;
+
+            match crypto::get_encryption_type(&encrypted_content) {
+                Ok(t) => encryption_type = t,
+                Err(e) => return Err(e.into()),
+            }
+
+            if encryption_type.as_string() == "age" {
+                $(
+                    let key = $get_key();
+                    encryption_type.set_key(key);
+                )?
+            }
+
+            match Profile::from_content($name, &encrypted_content, encryption_type) {
+                Ok(profile) => return Ok(profile),
+                Err(e) => return Err(e.into()),
+            }
+         })()
+    };
 }

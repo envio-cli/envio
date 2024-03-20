@@ -35,28 +35,45 @@
 //!
 
 mod profile;
-mod utils;
+pub mod utils;
 
 pub mod crypto;
 pub mod error;
 pub use profile::Profile; // Re-export Profile so that users don't have to use envio::profile::Profile
 
-use error::Result;
+#[macro_export]
+macro_rules! load {
+    ($name:expr $(, $get_key:expr)?) => {
+        (||->envio::error::Result<()> {
+            use envio::Profile;
+            use envio::crypto;
+            use envio::utils;
 
-pub fn load(name: &str, get_key: Option<impl Fn() -> String>) -> Result<Profile> {
-    let encryption_type = match crypto::get_encryption_type(name, get_key) {
-        Ok(encryption_type) => encryption_type,
-        Err(e) => return Err(e),
+            let encrypted_content = utils::get_profile_content($name)?;
+            let mut encryption_type;
+
+            match crypto::get_encryption_type(&encrypted_content) {
+                Ok(t) => encryption_type = t,
+                Err(e) => return Err(e.into()),
+            }
+
+            if encryption_type.as_string() == "age" {
+                $(
+                    let key = $get_key();
+                    encryption_type.set_key(key);
+                )?
+            }
+
+            let profile = match Profile::from_content($name, &encrypted_content, encryption_type) {
+                Ok(profile) => profile,
+                Err(e) => return Err(e.into()),
+            };
+
+            for (env_var, value) in &profile.envs {
+                std::env::set_var(env_var, value);
+            }
+
+            Ok(())
+         })()
     };
-
-    let profile = match Profile::load(name, encryption_type) {
-        Ok(profile) => profile,
-        Err(e) => return Err(e),
-    };
-
-    for (env_var, value) in &profile.envs {
-        std::env::set_var(env_var, value);
-    }
-
-    Ok(profile)
 }

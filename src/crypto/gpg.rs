@@ -19,6 +19,8 @@ use std::process::{Command, Stdio};
 use crate::crypto::EncryptionType;
 use crate::error::{Error, Result};
 
+pub const IDENTITY_BYTES: &[u8] = b"-----GPG ENCRYPTED FILE-----";
+
 pub struct GPG {
     key_fingerprint: String,
 }
@@ -44,6 +46,8 @@ impl EncryptionType for GPG {
     }
 
     fn encrypt(&self, data: &str) -> Result<Vec<u8>> {
+        let mut encrypted_data = Vec::new();
+
         // Unix specific code
         #[cfg(target_family = "unix")]
         {
@@ -61,12 +65,11 @@ impl EncryptionType for GPG {
                 }
             };
 
-            let mut encrypted_data = Vec::new();
             if let Err(e) = ctx.encrypt(Some(&key), data, &mut encrypted_data) {
                 return Err(Error::Crypto(e.to_string()));
             };
 
-            Ok(encrypted_data)
+            encrypted_data.extend_from_slice(IDENTITY_BYTES);
         }
 
         // Windows specific code
@@ -95,8 +98,11 @@ impl EncryptionType for GPG {
             // Wait for the GPG process to finish and capture its output
             let output = gpg_process.wait_with_output()?;
 
-            Ok(output.stdout)
+            encrypted_data.extend_from_slice(&output.stdout);
+            encrypted_data.extend_from_slice(IDENTITY_BYTES);
         }
+
+        Ok(encrypted_data)
     }
 
     fn decrypt(&self, encrypted_data: &[u8]) -> Result<String> {
@@ -149,6 +155,11 @@ impl EncryptionType for GPG {
 
             Ok(String::from_utf8_lossy(&output.stdout).to_string())
         }
+    }
+
+    fn is_this_type(encrypted_data: &[u8]) -> bool {
+        encrypted_data.len() >= IDENTITY_BYTES.len()
+            && &encrypted_data[encrypted_data.len() - IDENTITY_BYTES.len()..] == IDENTITY_BYTES
     }
 }
 
