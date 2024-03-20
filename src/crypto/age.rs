@@ -5,12 +5,11 @@ use age::secrecy::Secret;
 use crate::crypto::EncryptionType;
 use crate::error::{Error, Result};
 
+// Bytes that identify the file as being encrypted using the `age` method
 pub const IDENTITY_BYTES: &[u8] = b"-----AGE ENCRYPTED FILE-----";
 
-/*
- * AGE encryption - its not a real encryption type, but a wrapper around the age crate to keep the
- * same interface as the other encryption types
-*/
+/// AGE is not a real encryption type, but rather a wrapper around the `age` crate
+/// It is supposed to represent the password-based encryption method that `envio` provides
 pub struct AGE {
     key: String,
 }

@@ -1,9 +1,3 @@
-/*
- * Note:
- * Crypto uses gpgme to interact with GPG on unix systems however gpgme isn't that well supported on Windows
- * So on Windows we use the gpg command line tool (gpg4win) to interact with GPG
-*/
-
 #[cfg(target_family = "unix")]
 use gpgme::{Context, Data, Protocol};
 
@@ -19,6 +13,7 @@ use std::process::{Command, Stdio};
 use crate::crypto::EncryptionType;
 use crate::error::{Error, Result};
 
+// Bytes that identify the file as being encrypted using the `gpg` method
 pub const IDENTITY_BYTES: &[u8] = b"-----GPG ENCRYPTED FILE-----";
 
 pub struct GPG {
@@ -30,9 +25,6 @@ impl EncryptionType for GPG {
         GPG { key_fingerprint }
     }
 
-    /*
-     * For GPG key is the fingerprint of the GPG key to use
-     */
     fn set_key(&mut self, key: String) {
         self.key_fingerprint = key;
     }
@@ -163,12 +155,29 @@ impl EncryptionType for GPG {
     }
 }
 
-/*
- * Get the GPG keys available on the system
- * Unix specific code
-
- * @return Vec<(String, String)>: Vec of tuples containing the name and email of the key and the fingerprint
-*/
+/// Get the GPG keys available on the system
+/// 
+/// There are two different implementations for Unix and Windows. 
+/// 
+/// The Unix implementation uses the gpgme crate to access the GPG keys on the
+/// system. The Windows implementation uses the gpg command line tool to access
+/// 
+/// # Returns
+/// - `Result<Vec<(String, String)>>`: Vec of tuples containing a formatted
+///   string of the user id with the email and the key fingerprint
+/// 
+/// # Example
+/// 
+/// ```rust
+/// use envio::crypto::get_gpg_keys;
+/// 
+/// let keys = get_gpg_keys().unwrap();
+/// 
+/// for key in keys {
+///    println!("{}: {}", key.0, key.1);
+/// }
+/// 
+/// ```
 #[cfg(target_family = "unix")]
 pub fn get_gpg_keys() -> Result<Vec<(String, String)>> {
     let mut context = Context::from_protocol(Protocol::OpenPgp).unwrap();
@@ -215,12 +224,7 @@ pub fn get_gpg_keys() -> Result<Vec<(String, String)>> {
     Ok(available_keys)
 }
 
-/*
- * Get the GPG keys available on the system
- * Windows specific code
-
- * @return Vec<(String, String)>: Vec of tuples containing the name and email of the key and the fingerprint
-*/
+/// Windows specific implementation of getting the GPG keys on the system
 #[cfg(target_family = "windows")]
 pub fn get_gpg_keys() -> Option<Vec<(String, String)>> {
     let output = Command::new("gpg")
@@ -286,12 +290,8 @@ pub fn get_gpg_keys() -> Option<Vec<(String, String)>> {
     Some(available_keys)
 }
 
-/*
- * It formats the fingerprint by removing the spaces and converting it to uppercase
- * Windows specific code
-
- * @return String: formatted fingerprint
-*/
+/// Utility function to format the fingerprint. 
+/// Windows specific code
 #[cfg(target_family = "windows")]
 fn format_fingerprint<S: AsRef<str>>(fingerprint: S) -> String {
     fingerprint.as_ref().trim().to_uppercase()

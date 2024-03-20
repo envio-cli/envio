@@ -1,4 +1,5 @@
 /// Implementation of all the subcommands that can be run by the CLI
+
 use colored::Colorize;
 use inquire::{min_length, Confirm, MultiSelect, Password, PasswordDisplayMode, Select, Text};
 use regex::Regex;
@@ -18,11 +19,7 @@ use crate::clap_app::Command;
 use crate::cli;
 use crate::utils::parse_envs_from_string;
 
-/**
- * Get the user key from the user using the inquire crate
-
- @return String
-*/
+/// Get the user's encryption key
 fn get_userkey() -> String {
     println!("{}", "Loading Profile".green());
     println!("{}", "Enter your encryption key".green());

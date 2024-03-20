@@ -1,23 +1,21 @@
 use clap::Parser;
 
 #[derive(Parser, Debug)]
-/*
- * Clap Application
-*/
+
+/// envio is a modern and secure CLI tool that simplifies the management of
+/// environment variables.
 pub struct ClapApp {
     #[command(subcommand)]
     pub command: Command,
 }
 
+/// List of all possible `subcommands` for the application
+/// When a subcommand is passed to the application, clap returns the corresponding enum variant
+/// The enum variant then calls the run method which is implemented in the command.rs file.
+///
+/// When adding a new subcommand, add it to this enum and then write a match arm in the run method
+/// which is located in the command.rs file
 #[derive(clap::Subcommand, Debug)]
-/*
- * The Command enum is a list of all possible subcommands
- * When a subcommand is passed to the application, clap returns the corresponding enum variant
- * The enum variant then calls the run method which is implemented in the command.rs file.
- *
- * When adding a new subcommand, add it to this enum and then write a match arm in the run method
- * which is located in the command.rs file
-*/
 pub enum Command {
     #[command(
         name = "create",

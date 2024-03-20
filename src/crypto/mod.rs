@@ -7,55 +7,86 @@ pub use gpg::GPG;
 
 use crate::error::{Error, Result};
 
-/*
- * EncryptionType trait
- * This trait is used to implement different encryption methods
- * Note: AGE is not a real encryption method, but a wrapper around the age crate to use the same interface as the other encryption methods
-*/
+/// Trait for encryption types
+/// 
+/// Used to define the methods that an encryption type must implement.
 pub trait EncryptionType {
     fn new(key: String) -> Self
     where
         Self: Sized;
-    /*
-    * Set the key to use for encryption/decryption
-
-    * @param key: key to use - for GPG it's the fingerprint of the key
-    */
+    
+    /// Set the key used for encryption/decryption
+    /// 
+    /// The key is the fingerprint of your gpg key or the password for the age
+    /// 
+    /// # Parameters
+    /// - `key`: String - the key to use for encryption/decryption
     fn set_key(&mut self, key: String);
-    /*
-    * Get the key used for encryption/decryption
-
-    * @return String
-    */
+    
+    /// Get the key used for encryption/decryption
+    /// 
+    /// # Returns
+    /// - `String`: the key
     fn get_key(&self) -> String;
-    /*
-    * Encrypt data
-
-    * @param data: data to encrypt
-    * @return encrypted data
-    */
+    
+    /// Encrypt data
+    /// 
+    /// # Parameters
+    /// - `data`: &str - the data to encrypt
+    /// 
+    /// # Returns
+    /// - `Result<Vec<u8>>`: the encrypted data
     fn encrypt(&self, data: &str) -> Result<Vec<u8>>;
-    /*
-     * Decrypt data
-     */
+    
+    /// Decrypt data
+    /// 
+    /// # Parameters
+    /// - `encrypted_data`: &[u8] - the encrypted data
+    /// 
+    /// # Returns
+    /// - `Result<String>`: the decrypted data
     fn decrypt(&self, encrypted_data: &[u8]) -> Result<String>;
-    /*
-     * Return the name of the encryption type
-     */
+    
+    /// Get the string representation of the encryption type
+    /// 
+    /// # Returns
+    /// - `&'static str`: the string representation of the encryption type
     fn as_string(&self) -> &'static str;
 
+    /// Check if the encrypted data was encrypted using this encryption type
+    /// 
+    /// # Parameters
+    /// - `encrypted_data`: &[u8] - the encrypted data
+    /// 
+    /// # Returns
+    /// - `bool`: true if the encrypted data was encrypted using this encryption
+    ///   type
     fn is_this_type(encrypted_data: &[u8]) -> bool
     where
         Self: Sized;
 }
 
-/*
- * Create an encryption type based on the string passed
 
- * @param key: String - the key to use for encryption/decryption (for GPG this is the fingerprint)
- * @param encryption_type_str: &str - the string to match against
- * @return Box<dyn EncryptionType>: the encryption type
-*/
+/// Create an encryption type based on the `str` provided to
+/// `encryption_type_str` argument
+/// 
+/// # Parameters
+/// - `key` - the key to use for encryption/decryption for gpg it's the
+///   fingerprint of your key
+/// - `encryption_type_str` - the encryption type string
+/// 
+/// # Returns
+/// - `Result<Box<dyn EncryptionType>>`: the encryption type
+/// 
+/// # Example
+/// 
+/// ```rust
+/// use envio::crypto::create_encryption_type;
+/// 
+/// let key = "my_key".to_string();
+/// 
+/// let encryption_type = create_encryption_type(key, "age").unwrap();
+/// ```
 pub fn create_encryption_type(
     key: String,
     encryption_type_str: &str,
@@ -71,15 +102,31 @@ pub fn create_encryption_type(
     }
 }
 
-/*
- * Get the encryption type for a profile
- * This is used to get the encryption type for a profile when decrypting a file, so we know which
- * encryption type to use
-
- * @param name: String - the name of the profile or absolute path to the profile file
- * @param get_key: FnOnce() -> String - a function that returns the key to use for encryption/decryption this is only used for AGE encryption
- * @return Box<dyn EncryptionType>: the encryption type
-*/
+/// Get the encryption type used to encrypt a profile
+/// 
+/// The user first needs to get the encrypted content of the profile and then
+/// pass it to this function to get the encryption type used. A
+/// [utility](crate::utils::get_profile_content) function is provided to get the
+/// encrypted content of a profile. 
+/// 
+/// # Parameters
+/// - `encrypted_content`: &Vec<u8> - the encrypted content of the profile
+/// 
+/// # Returns
+/// - `Result<Box<dyn EncryptionType>>`: the encryption type
+/// 
+/// # Example
+/// 
+/// ```rust
+/// use envio::utils::get_profile_content;
+/// use envio::crypto::get_encryption_type;
+/// 
+/// let encrypted_content = get_profile_content("my_profile").unwrap();
+/// 
+/// let encryption_type = get_encryption_type(&encrypted_content).unwrap();
+/// 
+/// println!("{}", encryption_type.as_string());
+/// ```
 pub fn get_encryption_type(encrypted_content: &Vec<u8>) -> Result<Box<dyn EncryptionType>> {
     let e_type;
     if GPG::is_this_type(&encrypted_content) {

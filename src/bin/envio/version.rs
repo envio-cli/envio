@@ -11,23 +11,12 @@ use semver::Version;
 use serde::{Deserialize, Serialize};
 use tokio::runtime::Builder;
 
-/*
- * Cache file structure
-
- * version: String
- * last_update_time: DateTime<Utc>
-*/
 #[derive(Serialize, Deserialize)]
 struct CacheData {
     version: String,
     last_update_time: chrono::DateTime<Utc>,
 }
 
-/*
- * Get the cache directory and create it if it doesn't exist
-
- * @return Option<PathBuf> - The cache directory
-*/
 fn get_cache_dir() -> Option<PathBuf> {
     let app_name = env!("CARGO_PKG_NAME");
     if let Some(cache_dir) = cache_dir() {
@@ -50,14 +39,14 @@ fn get_cache_dir() -> Option<PathBuf> {
     }
 }
 
-/*
- * Get the latest version from the cache file, GitHub API or git
- * If the cache file doesn't exist, fetch the latest version from the Github API or git and create the cache file
- * If the cache file is older than 7 days, fetch the latest version from GitHub API
- * If the GitHub API fails, fetch the latest version from git
-
- * @return Version - The latest version
-*/
+/// Get the latest version from the cache file, GitHub API or git If the cache
+/// file doesn't exist, fetch the latest version from the Github API or git and
+/// create the cache file If the cache file is older than 7 days, fetch the
+/// latest version from GitHub API If the GitHub API fails, fetch the latest
+/// version from git
+/// 
+/// # Returns
+/// - `Version`: the latest version
 pub fn get_latest_version() -> Version {
     let cache_dir = if let Some(cache_dir) = get_cache_dir() {
         cache_dir
@@ -125,14 +114,16 @@ pub fn get_latest_version() -> Version {
     }
 }
 
-/*
- * Fetch the latest version from GitHub API or git
- * If the GitHub API fails, fetch the latest version from git
- * If the git command fails, return the fallback version
 
- * @param fallback_version: &str - The fallback version
- * @return Version - The latest version
-*/
+/// Fetch the latest version from GitHub API or git If the GitHub API fails,
+/// fetch the latest version from git If the git command fails, return the
+/// fallback version
+/// 
+/// # Parameters
+/// - `fallback_version`: &str - The fallback version
+/// 
+/// # Returns
+/// - `Version`: The latest version
 fn fetch_latest_version(fallback_version: &str) -> Version {
     run_fetch_version_from_github_api().unwrap_or_else(|| {
         if let Some(val) = fetch_version_from_git() {
@@ -154,11 +145,6 @@ fn fetch_latest_version(fallback_version: &str) -> Version {
     })
 }
 
-/*
- * Run the async function fetch_version_from_github_api
-
- * @return Option<Version> - The latest version returned by the async function
-*/
 fn run_fetch_version_from_github_api() -> Option<Version> {
     let rt = if let Ok(val) = Builder::new_current_thread().enable_all().build() {
         val
@@ -169,12 +155,6 @@ fn run_fetch_version_from_github_api() -> Option<Version> {
     rt.block_on(fetch_version_from_github_api())
 }
 
-/*
- * Fetch the latest version from GitHub API
- * If the GitHub API fails, return None
-
- * @return Option<Version> - The latest version
-*/
 async fn fetch_version_from_github_api() -> Option<Version> {
     let url = "https://api.github.com/repos/humblepenguinn/envio/releases/latest";
     let client = reqwest::Client::new();
@@ -214,12 +194,6 @@ async fn fetch_version_from_github_api() -> Option<Version> {
     }
 }
 
-/*
- * Fetch the latest version from git
- * If the git command fails, return None
-
- * @return Option<Version> - The latest version
-*/
 fn fetch_version_from_git() -> Option<Version> {
     if Command::new("git").arg("--version").output().is_err() {
         println!("{}: Git is not installed", "Error".red());

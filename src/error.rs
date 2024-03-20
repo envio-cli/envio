@@ -41,4 +41,5 @@ impl From<String> for Error {
     }
 }
 
+/// A type alias for `Result<T, envio::error::Error>`.
 pub type Result<T> = std::result::Result<T, Error>;

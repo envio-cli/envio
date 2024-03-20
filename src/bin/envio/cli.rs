@@ -1,5 +1,6 @@
 /// Utility/helper functions specific to the CLI version of envio.
 /// These functions are designed for CLI usage and may not be something used by users interacting with the API directly
+
 use std::{
     collections::HashMap,
     io::{Read, Write},
@@ -22,14 +23,15 @@ use crate::utils::{contains_path_separator, download_file, get_configdir, get_cw
 #[cfg(target_family = "unix")]
 use crate::utils::get_shell_config;
 
-/*
-* Create a new profile
-* If the profile already exists, it will print an error message
-
-@param name String - Name of the new profile
-@param envs Option<HashMap<String, String>> - Environment variables to add to the new profile
-@param encryption_type Box<dyn EncryptionType> - Encryption type to use for the new profile
-*/
+/// Create a new profile which is stored in the profiles directory
+///
+/// # Parameters
+/// - `name` - the name of the profile
+/// - `envs` - the environment variables of the profile
+/// - `encryption_type` - the encryption type of the profile
+/// 
+/// # Returns
+/// - `Result<()>`: whether the operation was successful
 pub fn create_profile(
     name: String,
     envs: Option<HashMap<String, String>>,
@@ -81,18 +83,15 @@ pub fn create_profile(
     Ok(())
 }
 
-/*
-* Export the environment variables of the profile to a file
-
-* If the file does not exist, it will be created
-* If the file exists, it will be overwritten
-* If the profile does not have any environment variables, it will print an error message
-* The file will be created in the current working directory
-
-@param profile &Profile
-@param file_name &str
-@param envs_selected &Option<Vec<String>>
-*/
+/// Export all the environment variables of the profile to a file in plain text
+/// 
+/// # Parameters
+/// - `profile` - the profile to export ([Profile] object)
+/// - `file_name` - the name of the file to export to
+/// - `envs_selected` - the environment variables to export
+/// 
+/// # Returns
+/// - `Result<()>`: whether the operation was successful
 pub fn export_envs(
     profile: &Profile,
     file_name: &str,
@@ -144,9 +143,10 @@ pub fn export_envs(
     Ok(())
 }
 
-/*
- * List all the environment variables of the profile
- */
+/// List the environment variables stored in a profile
+/// 
+/// # Parameters
+/// - `profile` - the profile to list the environment variables of ([Profile] object)
 pub fn list_envs(profile: &Profile) {
     let mut table = Table::new();
     table.set_header(vec![
@@ -161,12 +161,13 @@ pub fn list_envs(profile: &Profile) {
     println!("{table}");
 }
 
-/*
-* Delete a profile
-* If the profile does not exist, it will print an error message
-
-@param name &str
-*/
+/// Delete a profile from the profiles directory
+/// 
+/// # Parameters
+/// - `name` - the name of the profile to delete
+/// 
+/// # Returns
+/// - `Result<()>`: whether the operation was successful
 pub fn delete_profile(name: &str) -> Result<()> {
     if Profile::does_exist(name) {
         let configdir = get_configdir()?;
@@ -183,9 +184,14 @@ pub fn delete_profile(name: &str) -> Result<()> {
     Ok(())
 }
 
-/*
- * List all the profiles
- */
+/// List all the stored profiles in the profiles directory
+/// 
+/// # Parameters
+/// - `raw` - whether to list the profiles in raw format. If true, the profiles
+///   will be listed without any decorations
+/// 
+/// # Returns
+/// - `Result<()>`: whether the operation was successful
 pub fn list_profiles(raw: bool) -> Result<()> {
     let configdir = get_configdir()?;
     let profile_dir = configdir.join("profiles");
@@ -235,13 +241,14 @@ pub fn list_profiles(raw: bool) -> Result<()> {
     Ok(())
 }
 
-/*
-* Download the profile from the url and save it to the config directory with the profile name
-* passed
-
-@param url String
-@param profile_name String
-*/
+/// Download a profile from a URL and store it in the profiles directory
+/// 
+/// # Parameters
+/// - `url` - the URL to download the profile from
+/// - `profile_name` - the name of the profile to store the downloaded profile as
+/// 
+/// # Returns
+/// - `Result<()>`: whether the operation was successful
 pub fn download_profile(url: String, profile_name: String) -> Result<()> {
     println!("Downloading profile from {}", url);
     let configdir = get_configdir()?;
@@ -273,12 +280,14 @@ pub fn download_profile(url: String, profile_name: String) -> Result<()> {
     Ok(())
 }
 
-/*
-* Import a profile from a file
-
-@param file_path String
-@param profile_name String
-*/
+/// Import a profile stored somewhere on the system but not in the profiles directory
+/// 
+/// # Parameters
+/// - `file_path` - the path to the profile file
+/// - `profile_name` - the name of the profile to store the imported profile as
+/// 
+/// # Returns
+/// - `Result<()>`: whether the operation was successful
 pub fn import_profile(file_path: String, profile_name: String) -> Result<()> {
     if !Path::new(&file_path).exists() {
         return Err(Error::Msg(format!("File `{}` does not exist", file_path)));
@@ -382,9 +391,13 @@ fi
     Ok(())
 }
 
-/*
- * Load the environment variables of the profile into the current session
- */
+/// Load the environment variables of the profile into the current session
+/// 
+/// # Parameters
+/// - `profile_name` - the name of the profile to load
+/// 
+/// # Returns
+/// - `Result<()>`: whether the operation was successful
 #[cfg(any(target_family = "unix"))]
 pub fn load_profile(profile_name: &str) -> Result<()> {
     if !Profile::does_exist(profile_name) {
@@ -407,10 +420,8 @@ pub fn load_profile(profile_name: &str) -> Result<()> {
     Ok(())
 }
 
-/*
- * Windows specific code
-*/
 
+/// Windows implementation of the load_profile function
 #[cfg(target_family = "windows")]
 pub fn load_profile(profile: Profile) {
     for (env, value) in &profile.envs {
@@ -424,9 +435,10 @@ pub fn load_profile(profile: Profile) {
     println!("Reload your shell to apply changes");
 }
 
-/*
- * Unload the environment variables of the profile from the current session
- */
+/// Unload the environment variables of the profile from the current session
+/// 
+/// # Returns
+/// - `Result<()>`: whether the operation was successful
 #[cfg(any(target_family = "unix"))]
 pub fn unload_profile() -> Result<()> {
     let file = std::fs::OpenOptions::new()
@@ -441,9 +453,7 @@ pub fn unload_profile() -> Result<()> {
     Ok(())
 }
 
-/*
- * Windows specific code
-*/
+/// Windows implementation of the unload_profile function
 #[cfg(target_family = "windows")]
 pub fn unload_profile(profile: Profile) {
     for env in profile.envs.keys() {

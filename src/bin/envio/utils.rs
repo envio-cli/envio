@@ -7,11 +7,10 @@ use envio::error::{Error, Result};
 use indicatif::{ProgressBar, ProgressStyle};
 use reqwest::Client;
 
-/*
-* Get the home directory of the user
-
-@return PathBuf
-*/
+/// Get the home directory
+/// 
+/// # Returns
+/// - `PathBuf`: the home directory
 pub fn get_homedir() -> Result<PathBuf> {
     match dirs::home_dir() {
         Some(home) => Ok(home),
@@ -22,12 +21,10 @@ pub fn get_homedir() -> Result<PathBuf> {
     }
 }
 
-/*
-* Get the config directory which is located in the home directory
-* The directory is called .envio
-
-@return PathBuf
-*/
+/// Get the config directory
+/// 
+/// # Returns
+/// - `PathBuf`: the config directory
 pub fn get_configdir() -> Result<PathBuf> {
     Ok(get_homedir()?.join(".envio"))
 }
@@ -40,13 +37,13 @@ pub fn get_cwd() -> PathBuf {
     std::env::current_dir().unwrap()
 }
 
-/*
-* Parse the environment variables from a string
-* The string should be in the format of KEY=VALUE
-
-* @param buffer &str
-* @return HashMap<String, String>
-*/
+/// Parse environment variables from a string 
+/// 
+/// # Parameters
+/// - `buffer`: &str - the buffer to parse
+/// 
+/// # Returns
+/// - `Result<HashMap<String, String>>`: the parsed environment variables
 pub fn parse_envs_from_string(buffer: &str) -> Result<HashMap<String, String>> {
     let mut envs_map = HashMap::new();
     for buf in buffer.lines() {
@@ -73,12 +70,14 @@ pub fn parse_envs_from_string(buffer: &str) -> Result<HashMap<String, String>> {
     Ok(envs_map)
 }
 
-/*
-* Download a file from a url with a progress bar
-
-@param url &str
-@param file_name &str
-*/
+/// Download a file from a url with a progress bar
+/// 
+/// # Parameters
+/// - `url`: &str - the url to download the file from
+/// - `file_name`: &str - the name of the file to save the downloaded file to
+/// 
+/// # Returns
+/// - `Result<()>`: an empty result
 pub async fn download_file(url: &str, file_name: &str) -> Result<()> {
     let client = Client::new();
     let mut resp = if let Err(e) = client.get(url).send().await {
@@ -114,9 +113,11 @@ pub async fn download_file(url: &str, file_name: &str) -> Result<()> {
     Ok(())
 }
 
-// Unix specific code
-// Returns the shell that is being used
-// @return String
+/// Unix specific code
+/// Returns the shell that is being used
+///
+/// # Returns
+/// - `Result<&'static str>`: the shell that is being used
 #[cfg(any(target_family = "unix"))]
 pub fn get_shell_config() -> Result<&'static str> {
     // Gets your default shell

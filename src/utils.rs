@@ -32,6 +32,15 @@ pub fn get_profile_filepath(name: &str) -> Result<PathBuf> {
     };
 }
 
+/// Reads the encrypted content of a profile and returns it
+/// 
+/// # Parameters
+/// - `name`: &str - the name of the profile
+/// 
+/// `name` can either be the name of the profile or the absolute path to the profile file.
+/// 
+/// # Returns
+/// - `Result<Vec<u8>>`: the encrypted content of the profile
 pub fn get_profile_content(name: &str) -> Result<Vec<u8>> {
     let profile_file_path = get_profile_filepath(name)?;
 
