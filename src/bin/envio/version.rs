@@ -209,7 +209,7 @@ fn fetch_version_from_git() -> Option<Version> {
     let reader = BufReader::new(output.stdout.as_slice());
     let mut latest_tag = None;
 
-    for line in reader.lines().filter_map(|x| x.ok()) {
+    for line in reader.lines().map_while(|x| x.ok()) {
         let parts: Vec<_> = line.split('\t').collect();
         if parts.len() != 2 {
             continue;

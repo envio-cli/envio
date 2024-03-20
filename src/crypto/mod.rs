@@ -93,11 +93,9 @@ pub fn create_encryption_type(
     match encryption_type_str {
         "age" => Ok(Box::new(AGE::new(key))),
         "gpg" => Ok(Box::new(GPG::new(key))),
-        _ => {
-            return Err(Error::InvalidEncryptionType(
-                encryption_type_str.to_string(),
-            ));
-        }
+        _ => Err(Error::InvalidEncryptionType(
+            encryption_type_str.to_string(),
+        )),
     }
 }
 
@@ -126,13 +124,12 @@ pub fn create_encryption_type(
 ///
 /// println!("{}", encryption_type.as_string());
 /// ```
-pub fn get_encryption_type(encrypted_content: &Vec<u8>) -> Result<Box<dyn EncryptionType>> {
-    let e_type;
-    if GPG::is_this_type(&encrypted_content) {
-        e_type = "gpg";
+pub fn get_encryption_type(encrypted_content: &[u8]) -> Result<Box<dyn EncryptionType>> {
+    let e_type = if GPG::is_this_type(encrypted_content) {
+        "gpg"
     } else {
-        e_type = "age";
-    }
+        "age"
+    };
 
     create_encryption_type("".to_string(), e_type)
 }

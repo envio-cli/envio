@@ -118,7 +118,7 @@ pub async fn download_file(url: &str, file_name: &str) -> Result<()> {
 ///
 /// # Returns
 /// - `Result<&'static str>`: the shell that is being used
-#[cfg(any(target_family = "unix"))]
+#[cfg(target_family = "unix")]
 pub fn get_shell_config() -> Result<&'static str> {
     // Gets your default shell
     // This is used to determine which shell config file to edit

@@ -62,7 +62,7 @@ fn main() {
                 std::process::exit(1);
             }
 
-            if let Err(e) = std::fs::create_dir(&configdir.join("profiles")) {
+            if let Err(e) = std::fs::create_dir(configdir.join("profiles")) {
                 println!("{}: {}", "Error".red(), e);
                 std::process::exit(1);
             }
@@ -70,7 +70,7 @@ fn main() {
 
         if !Path::new(&configdir.join("setenv.sh")).exists() {
             println!("{}", "Creating shellscript".bold());
-            if let Err(e) = std::fs::write(&configdir.join("setenv.sh"), "") {
+            if let Err(e) = std::fs::write(configdir.join("setenv.sh"), "") {
                 println!("{}: {}", "Error".red(), e);
                 if let Err(e) = std::fs::remove_dir_all(&configdir) {
                     println!("{}: {}", "Error".red(), e);

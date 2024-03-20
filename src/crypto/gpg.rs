@@ -196,7 +196,7 @@ pub fn get_gpg_keys() -> Result<Vec<(String, String)>> {
                 Ok(name) => name,
                 Err(e) => {
                     if e.is_none() {
-                        return Err(Error::Utf8Error(e.unwrap()));
+                        return Err(Error::Crypto("Failed to get name from user id".to_string()));
                     }
 
                     return Err(Error::Utf8Error(e.unwrap()));

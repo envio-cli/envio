@@ -58,7 +58,7 @@ pub fn create_profile(
 
     let profile_file = profile_dir.join(name + ".env");
 
-    let mut file = std::fs::File::create(&profile_file)?;
+    let mut file = std::fs::File::create(profile_file)?;
 
     let mut buffer = String::from("");
 
@@ -121,7 +121,6 @@ pub fn export_envs(
             keys = profile
                 .envs
                 .keys()
-                .into_iter()
                 .filter(|item| envs_selected.contains(item))
                 .cloned()
                 .collect::<Vec<String>>();
@@ -319,14 +318,14 @@ pub fn import_profile(file_path: String, profile_name: String) -> Result<()> {
         .open(location)
         .unwrap();
 
-    file.write(contents.as_bytes())?;
+    file.write_all(contents.as_bytes())?;
 
     Ok(())
 }
 
 // Unix specific code
 // Creates a shell script that can be sourced to set the environment variables
-#[cfg(any(target_family = "unix"))]
+#[cfg(target_family = "unix")]
 pub fn create_shellscript(profile: &str) -> Result<()> {
     let configdir = get_configdir()?;
     let shellscript_path = configdir.join("setenv.sh");
@@ -397,7 +396,7 @@ fi
 ///
 /// # Returns
 /// - `Result<()>`: whether the operation was successful
-#[cfg(any(target_family = "unix"))]
+#[cfg(target_family = "unix")]
 pub fn load_profile(profile_name: &str) -> Result<()> {
     if !Profile::does_exist(profile_name) {
         return Err(Error::ProfileDoesNotExist(profile_name.to_string()));
@@ -437,7 +436,7 @@ pub fn load_profile(profile: Profile) {
 ///
 /// # Returns
 /// - `Result<()>`: whether the operation was successful
-#[cfg(any(target_family = "unix"))]
+#[cfg(target_family = "unix")]
 pub fn unload_profile() -> Result<()> {
     let file = std::fs::OpenOptions::new()
         .write(true)

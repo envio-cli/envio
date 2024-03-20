@@ -19,17 +19,17 @@ pub fn contains_path_separator(s: &str) -> bool {
 
 pub fn get_profile_filepath(name: &str) -> Result<PathBuf> {
     match Path::new(name).exists() {
-        true => return Ok(PathBuf::from(name)),
+        true => Ok(PathBuf::from(name)),
         false => {
-            if !Profile::does_exist(&name) {
+            if !Profile::does_exist(name) {
                 return Err(Error::ProfileDoesNotExist(name.to_string()));
             }
 
-            return Ok(get_configdir()
+            Ok(get_configdir()
                 .join("profiles")
-                .join(format!("{}.env", name)));
+                .join(format!("{}.env", name)))
         }
-    };
+    }
 }
 
 /// Reads the encrypted content of a profile and returns it
@@ -46,7 +46,7 @@ pub fn get_profile_content(name: &str) -> Result<Vec<u8>> {
 
     let mut file = std::fs::OpenOptions::new()
         .read(true)
-        .open(&profile_file_path)?;
+        .open(profile_file_path)?;
 
     let mut encrypted_contents = Vec::new();
     file.read_to_end(&mut encrypted_contents).unwrap();
@@ -59,8 +59,8 @@ pub fn get_configdir() -> PathBuf {
     homedir.join(".envio")
 }
 
-pub fn truncate_identity_bytes(encrypted_contents: &Vec<u8>) -> Vec<u8> {
-    let mut truncated_contents = encrypted_contents.clone();
+pub fn truncate_identity_bytes(encrypted_contents: &[u8]) -> Vec<u8> {
+    let mut truncated_contents = encrypted_contents.to_owned();
 
     truncated_contents.truncate(encrypted_contents.len() - 28);
 

@@ -104,10 +104,10 @@ impl Profile {
     /// ```
     pub fn from_content(
         name: &str,
-        encrypted_content: &Vec<u8>,
+        encrypted_content: &[u8],
         mut encryption_type: Box<dyn EncryptionType>,
     ) -> Result<Profile> {
-        let truncated_content = truncate_identity_bytes(&encrypted_content);
+        let truncated_content = truncate_identity_bytes(encrypted_content);
 
         let content = match encryption_type.decrypt(&truncated_content) {
             Ok(c) => c,
@@ -250,7 +250,7 @@ impl Profile {
             self.envs.remove(env);
             Ok(())
         } else {
-            return Err(Error::EnvDoesNotExist(env.to_string()));
+            Err(Error::EnvDoesNotExist(env.to_string()))
         }
     }
 

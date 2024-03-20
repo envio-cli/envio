@@ -386,12 +386,7 @@ impl Command {
 
                 let status = match cmd.wait() {
                     Ok(s) => s,
-                    Err(e) => {
-                        return Err(Error::Msg(format!(
-                            "Failed to execute command: {}",
-                            e.to_string()
-                        )))
-                    }
+                    Err(e) => return Err(Error::Msg(format!("Failed to execute command: {}", e))),
                 };
 
                 match status.code() {
@@ -515,7 +510,7 @@ impl Command {
                 let mut file_name = ".env";
 
                 if file.is_some() {
-                    file_name = &file.as_ref().unwrap()
+                    file_name = file.as_ref().unwrap()
                 }
 
                 let profile = load_profile!(profile_name, get_userkey)?;
