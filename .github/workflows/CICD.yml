@@ -6,20 +6,20 @@ env:
 on:
   pull_request:
     paths:
-      - 'src/**'
-      - '.github/**'
-      - 'Cargo.toml'
-      - 'Cargo.lock'
-      - 'build.rs'
+      - "src/**"
+      - ".github/**"
+      - "Cargo.toml"
+      - "Cargo.lock"
+      - "build.rs"
   push:
     branches:
       - main
     paths:
-      - 'src/**'
-      - '.github/**'
-      - 'Cargo.toml'
-      - 'Cargo.lock'
-      - 'build.rs'
+      - "src/**"
+      - ".github/**"
+      - "Cargo.toml"
+      - "Cargo.lock"
+      - "build.rs"
     tags:
       - "*"
 
@@ -57,12 +57,24 @@ jobs:
       fail-fast: false
       matrix:
         job:
-          - { target: x86_64-unknown-linux-gnu,     os: ubuntu-20.04,   use-cross: true }
-          - { target: aarch64-unknown-linux-gnu,    os: ubuntu-20.04,   use-cross: true }
-          - { target: i686-unknown-linux-gnu,       os: ubuntu-20.04,   use-cross: true }
-          - { target: x86_64-apple-darwin,          os: macos-14,                       }
-          - { target: x86_64-pc-windows-gnu,        os: windows-2019,   arch: x86_64    }
-          - { target: i686-pc-windows-msvc,         os: windows-2019,   arch: x86       }
+          - {
+              target: x86_64-unknown-linux-gnu,
+              os: ubuntu-20.04,
+              use-cross: true,
+            }
+          - {
+              target: aarch64-unknown-linux-gnu,
+              os: ubuntu-20.04,
+              use-cross: true,
+            }
+          - {
+              target: i686-unknown-linux-gnu,
+              os: ubuntu-20.04,
+              use-cross: true,
+            }
+          - { target: aarch64-apple-darwin, os: macos-14 }
+          - { target: x86_64-pc-windows-gnu, os: windows-2019, arch: x86_64 }
+          - { target: i686-pc-windows-msvc, os: windows-2019, arch: x86 }
 
     env:
       BUILD_CMD: cargo
@@ -326,7 +338,6 @@ jobs:
           echo "PKG_NAME=${PKG_NAME}" >> $GITHUB_OUTPUT
           echo "PKG_PATH=target/wix/${PKG_NAME}" >> $GITHUB_OUTPUT
 
-
       - name: "Artifact upload: tarball"
         uses: actions/upload-artifact@master
         with:
@@ -364,3 +375,4 @@ jobs:
             ${{ steps.debian-package.outputs.DPKG_PATH }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
