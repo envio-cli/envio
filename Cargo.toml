@@ -25,7 +25,7 @@ comfy-table = "6.1.4"
 dirs = "5.0.0"
 indicatif = "0.17.3"
 inquire = "0.7.0"
-semver = "1.0.17"
+semver = "1.0.22"
 serde = { version = "1.0.159", features = ["derive"] }
 regex = "1.7"
 tokio = "1.28.0"
