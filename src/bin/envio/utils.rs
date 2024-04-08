@@ -10,9 +10,9 @@ use reqwest::Client;
 
 #[cfg(target_family = "unix")]
 pub fn initalize_config() -> Result<()> {
-    use std::path::Path;
     use colored::Colorize;
     use inquire::Text;
+    use std::path::Path;
 
     let configdir = get_configdir()?;
     let homedir = get_homedir()?;
@@ -41,11 +41,15 @@ pub fn initalize_config() -> Result<()> {
             file_path = if let Ok(val) = input {
                 PathBuf::from(val)
             } else {
-                return Err(Error::Msg("Failed to get shell config file path".to_string()));
+                return Err(Error::Msg(
+                    "Failed to get shell config file path".to_string(),
+                ));
             };
 
             if !file_path.exists() {
-                return Err(Error::Msg("Specified shell config file does not exist".to_string()));
+                return Err(Error::Msg(
+                    "Specified shell config file does not exist".to_string(),
+                ));
             }
         }
 
@@ -78,7 +82,7 @@ source {}
             )
         };
 
-        writeln!(file, "{}", buffer)? 
+        writeln!(file, "{}", buffer)?
     }
 
     Ok(())
