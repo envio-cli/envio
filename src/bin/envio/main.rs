@@ -9,8 +9,10 @@ use colored::Colorize;
 use semver::Version;
 
 use clap_app::ClapApp;
-use utils::initalize_config;
 use version::get_latest_version;
+
+#[cfg(target_family = "unix")]
+use utils::initalize_config;
 
 fn main() {
     color_eyre::install().unwrap();
@@ -35,6 +37,7 @@ fn main() {
 
     let args = ClapApp::parse();
 
+    #[cfg(target_family = "unix")]
     if let Err(e) = initalize_config() {
         println!("{}: {}", "Error".red(), e);
     }

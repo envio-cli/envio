@@ -69,21 +69,27 @@ impl From<HashMap<String, String>> for EnvVec {
 }
 
 /// Convert a `EnvVec` to a `Vec<Env>` or a `HashMap<String, String>`
-impl Into<Vec<Env>> for EnvVec {
-    fn into(self) -> Vec<Env> {
-        self.envs
+impl From<EnvVec> for Vec<Env> {
+    fn from(val: EnvVec) -> Self {
+        val.envs
     }
 }
 
-impl Into<HashMap<String, String>> for EnvVec {
-    fn into(self) -> HashMap<String, String> {
+impl From<EnvVec> for HashMap<String, String> {
+    fn from(val: EnvVec) -> Self {
         let mut envs = HashMap::new();
 
-        for e in self.envs {
+        for e in val.envs {
             envs.insert(e.name, e.value);
         }
 
         envs
+    }
+}
+
+impl Default for EnvVec {
+    fn default() -> Self {
+        Self::new()
     }
 }
 
@@ -427,9 +433,9 @@ impl Profile {
         };
 
         match bincode::deserialize(&content) {
-            Ok(profile) => return Ok(profile),
-            Err(e) => return Err(Error::Deserialization(e.to_string())),
-        };
+            Ok(profile) => Ok(profile),
+            Err(e) => Err(Error::Deserialization(e.to_string())),
+        }
     }
 
     /// Check to see if a profile with the given name exists on the system
