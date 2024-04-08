@@ -32,6 +32,7 @@ regex = "1.7"
 tokio = "1.28.0"
 url = "2.3.1"
 thiserror = "1.0.58"
+color-eyre = "0.6.3"
 
 [target.'cfg(unix)'.dependencies]
 gpgme = "0.11"

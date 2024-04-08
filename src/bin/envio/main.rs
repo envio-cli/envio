@@ -19,6 +19,8 @@ use clap_app::ClapApp;
 use version::get_latest_version;
 
 fn main() {
+    color_eyre::install().unwrap();
+    
     let latest_version = get_latest_version();
 
     let current_version = if let Ok(val) = Version::parse(env!("BUILD_VERSION")) {

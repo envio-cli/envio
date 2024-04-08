@@ -275,9 +275,9 @@ impl Command {
                         }
                     }
                 } else {
-                    envs_vec = None;
+                    envs_vec = Some(EnvVec::new()); // The user created a profile without any envs
                 }
-
+                
                 for env in envs_vec.as_mut().unwrap() {
                     if *add_comments {
                         let prompt =
@@ -364,7 +364,7 @@ impl Command {
                         profile.insert_env(env.to_string(), value)
                     }
                 }
-
+                
                 for env in &mut profile.envs {
                     if *add_comments {
                         let prompt =
