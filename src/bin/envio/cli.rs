@@ -8,6 +8,7 @@ use std::{
 #[cfg(target_family = "windows")]
 use std::process::Command;
 
+use chrono::{Local, NaiveDate};
 use colored::Colorize;
 use comfy_table::{Attribute, Cell, Table};
 use envio::{
@@ -61,6 +62,20 @@ pub fn create_profile(
 
     println!("{}: Profile created", "Success".green());
     Ok(())
+}
+
+pub fn check_expired_envs(profile: &Profile) {
+    for env in &profile.envs {
+        if let Some(date) = env.expiration_date {
+            if date <= Local::now().date_naive() {
+                println!(
+                    "{}: Environment variable '{}' has expired",
+                    "Warning".yellow(),
+                    env.name
+                );
+            }
+        }
+    }
 }
 
 /// Export all the environment variables of the profile to a file in plain text
@@ -125,15 +140,45 @@ pub fn export_envs(
 ///
 /// # Parameters
 /// - `profile` - the profile to list the environment variables of ([Profile] object)
-pub fn list_envs(profile: &Profile) {
+pub fn list_envs(profile: &Profile, display_comments: bool, display_expired: bool) {
     let mut table = Table::new();
-    table.set_header(vec![
+
+    let mut header = vec![
         Cell::new("Environment Variable").add_attribute(Attribute::Bold),
         Cell::new("Value").add_attribute(Attribute::Bold),
-    ]);
+    ];
 
+    if display_comments {
+        header.push(Cell::new("Comment").add_attribute(Attribute::Bold));
+    }
+
+    if display_expired {
+        header.push(Cell::new("Expiration Date").add_attribute(Attribute::Bold));
+    }
+
+    table.set_header(header);
+
+    let mut row;
     for env in &profile.envs {
-        table.add_row(vec![env.name, env.value]);
+        row = vec![env.name.clone(), env.value.clone()];
+
+        if display_comments {
+            if let Some(comment) = &env.comment {
+                row.push(comment.clone());
+            } else {
+                row.push("No comment".to_string());
+            }
+        }
+
+        if display_expired {
+            if let Some(date) = &env.expiration_date {
+                row.push(date.to_string());
+            } else {
+                row.push(NaiveDate::from_ymd_opt(1970, 1, 1).unwrap().to_string());
+            }
+        }
+
+        table.add_row(row);
     }
 
     println!("{table}");
@@ -401,10 +446,10 @@ pub fn load_profile(profile_name: &str) -> Result<()> {
 /// Windows implementation of the load_profile function
 #[cfg(target_family = "windows")]
 pub fn load_profile(profile: Profile) {
-    for (env, value) in &profile.envs {
+    for env in profile.envs {
         Command::new("setx")
-            .arg(env)
-            .arg(value)
+            .arg(env.name)
+            .arg(env.value)
             .spawn()
             .expect("setx command failed");
     }

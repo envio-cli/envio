@@ -37,6 +37,10 @@ pub enum Command {
         envs: Option<Vec<String>>,
         #[arg(required = false, long = "gpg-key-fingerprint", short = 'g')]
         gpg: Option<String>,
+        #[arg(required = false, long = "add-comments", short = 'c')]
+        add_comments: bool,
+        #[arg(required = false, long = "add-expiration-date", short = 'x')]
+        add_expiration_date: bool,
     },
     #[command(
         name = "add",
@@ -54,6 +58,10 @@ pub enum Command {
             num_args = 1..,
         )]
         envs: Vec<String>,
+        #[arg(required = false, long = "add-comments", short = 'c')]
+        add_comments: bool,
+        #[arg(required = false, long = "add-expiration-date", short = 'x')]
+        add_expiration_date: bool,
     },
     #[command(
         name = "load",
@@ -105,6 +113,10 @@ pub enum Command {
         profile_name: Option<String>,
         #[arg(required = false, long = "no-pretty-print", short = 'v')]
         no_pretty_print: bool,
+        #[arg(required = false, long = "display-comments", short = 'c')]
+        display_comments: bool,
+        #[arg(required = false, long = "display-expired", short = 'e')]
+        display_expired: bool,
     },
     #[command(
         name = "update",
@@ -122,6 +134,10 @@ pub enum Command {
             num_args = 1..,
         )]
         envs: Vec<String>,
+        #[arg(required = false, long = "update-comments", short = 'c')]
+        update_comments: bool,
+        #[arg(required = false, long = "update-expiration-date", short = 'x')]
+        update_expiration_date: bool,
     },
     #[command(
         name = "export",

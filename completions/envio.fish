@@ -14,8 +14,12 @@ complete -c envio -n "__fish_use_subcommand" -f -a "help" -d 'Print this message
 complete -c envio -n "__fish_seen_subcommand_from create" -s f -l file-to-import-envs-from -r
 complete -c envio -n "__fish_seen_subcommand_from create" -s e -l envs -r
 complete -c envio -n "__fish_seen_subcommand_from create" -s g -l gpg-key-fingerprint -r
+complete -c envio -n "__fish_seen_subcommand_from create" -s c -l add-comments
+complete -c envio -n "__fish_seen_subcommand_from create" -s x -l add-expiration-date
 complete -c envio -n "__fish_seen_subcommand_from create" -s h -l help -d 'Print help'
 complete -c envio -n "__fish_seen_subcommand_from add" -s e -l envs -r
+complete -c envio -n "__fish_seen_subcommand_from add" -s c -l add-comments
+complete -c envio -n "__fish_seen_subcommand_from add" -s x -l add-expiration-date
 complete -c envio -n "__fish_seen_subcommand_from add" -s h -l help -d 'Print help'
 complete -c envio -n "__fish_seen_subcommand_from load" -s h -l help -d 'Print help'
 complete -c envio -n "__fish_seen_subcommand_from unload" -s h -l help -d 'Print help'
@@ -26,8 +30,12 @@ complete -c envio -n "__fish_seen_subcommand_from remove" -s h -l help -d 'Print
 complete -c envio -n "__fish_seen_subcommand_from list" -s n -l profile-name -r
 complete -c envio -n "__fish_seen_subcommand_from list" -s p -l profiles
 complete -c envio -n "__fish_seen_subcommand_from list" -s v -l no-pretty-print
+complete -c envio -n "__fish_seen_subcommand_from list" -s c -l display-comments
+complete -c envio -n "__fish_seen_subcommand_from list" -s e -l display-expired
 complete -c envio -n "__fish_seen_subcommand_from list" -s h -l help -d 'Print help'
 complete -c envio -n "__fish_seen_subcommand_from update" -s e -l envs -r
+complete -c envio -n "__fish_seen_subcommand_from update" -s c -l update-comments
+complete -c envio -n "__fish_seen_subcommand_from update" -s x -l update-expiration-date
 complete -c envio -n "__fish_seen_subcommand_from update" -s h -l help -d 'Print help'
 complete -c envio -n "__fish_seen_subcommand_from export" -s f -l file-to-export-to -r
 complete -c envio -n "__fish_seen_subcommand_from export" -s e -l envs -r

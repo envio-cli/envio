@@ -34,6 +34,10 @@ _arguments "${_arguments_options[@]}" \
 '*--envs=[]:ENVS: ' \
 '-g+[]:GPG: ' \
 '--gpg-key-fingerprint=[]:GPG: ' \
+'-c[]' \
+'--add-comments[]' \
+'-x[]' \
+'--add-expiration-date[]' \
 '-h[Print help]' \
 '--help[Print help]' \
 ':profile_name:' \
@@ -43,6 +47,10 @@ _arguments "${_arguments_options[@]}" \
 _arguments "${_arguments_options[@]}" \
 '*-e+[]:ENVS: ' \
 '*--envs=[]:ENVS: ' \
+'-c[]' \
+'--add-comments[]' \
+'-x[]' \
+'--add-expiration-date[]' \
 '-h[Print help]' \
 '--help[Print help]' \
 ':profile_name:' \
@@ -88,6 +96,10 @@ _arguments "${_arguments_options[@]}" \
 '--profiles[]' \
 '-v[]' \
 '--no-pretty-print[]' \
+'-c[]' \
+'--display-comments[]' \
+'-e[]' \
+'--display-expired[]' \
 '-h[Print help]' \
 '--help[Print help]' \
 && ret=0
@@ -96,6 +108,10 @@ _arguments "${_arguments_options[@]}" \
 _arguments "${_arguments_options[@]}" \
 '*-e+[]:ENVS: ' \
 '*--envs=[]:ENVS: ' \
+'-c[]' \
+'--update-comments[]' \
+'-x[]' \
+'--update-expiration-date[]' \
 '-h[Print help]' \
 '--help[Print help]' \
 ':profile_name:' \

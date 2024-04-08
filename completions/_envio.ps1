@@ -44,6 +44,10 @@ Register-ArgumentCompleter -Native -CommandName 'envio' -ScriptBlock {
             [CompletionResult]::new('--envs', 'envs', [CompletionResultType]::ParameterName, 'envs')
             [CompletionResult]::new('-g', 'g', [CompletionResultType]::ParameterName, 'g')
             [CompletionResult]::new('--gpg-key-fingerprint', 'gpg-key-fingerprint', [CompletionResultType]::ParameterName, 'gpg-key-fingerprint')
+            [CompletionResult]::new('-c', 'c', [CompletionResultType]::ParameterName, 'c')
+            [CompletionResult]::new('--add-comments', 'add-comments', [CompletionResultType]::ParameterName, 'add-comments')
+            [CompletionResult]::new('-x', 'x', [CompletionResultType]::ParameterName, 'x')
+            [CompletionResult]::new('--add-expiration-date', 'add-expiration-date', [CompletionResultType]::ParameterName, 'add-expiration-date')
             [CompletionResult]::new('-h', 'h', [CompletionResultType]::ParameterName, 'Print help')
             [CompletionResult]::new('--help', 'help', [CompletionResultType]::ParameterName, 'Print help')
             break
@@ -51,6 +55,10 @@ Register-ArgumentCompleter -Native -CommandName 'envio' -ScriptBlock {
         'envio;add' {
             [CompletionResult]::new('-e', 'e', [CompletionResultType]::ParameterName, 'e')
             [CompletionResult]::new('--envs', 'envs', [CompletionResultType]::ParameterName, 'envs')
+            [CompletionResult]::new('-c', 'c', [CompletionResultType]::ParameterName, 'c')
+            [CompletionResult]::new('--add-comments', 'add-comments', [CompletionResultType]::ParameterName, 'add-comments')
+            [CompletionResult]::new('-x', 'x', [CompletionResultType]::ParameterName, 'x')
+            [CompletionResult]::new('--add-expiration-date', 'add-expiration-date', [CompletionResultType]::ParameterName, 'add-expiration-date')
             [CompletionResult]::new('-h', 'h', [CompletionResultType]::ParameterName, 'Print help')
             [CompletionResult]::new('--help', 'help', [CompletionResultType]::ParameterName, 'Print help')
             break
@@ -86,6 +94,10 @@ Register-ArgumentCompleter -Native -CommandName 'envio' -ScriptBlock {
             [CompletionResult]::new('--profiles', 'profiles', [CompletionResultType]::ParameterName, 'profiles')
             [CompletionResult]::new('-v', 'v', [CompletionResultType]::ParameterName, 'v')
             [CompletionResult]::new('--no-pretty-print', 'no-pretty-print', [CompletionResultType]::ParameterName, 'no-pretty-print')
+            [CompletionResult]::new('-c', 'c', [CompletionResultType]::ParameterName, 'c')
+            [CompletionResult]::new('--display-comments', 'display-comments', [CompletionResultType]::ParameterName, 'display-comments')
+            [CompletionResult]::new('-e', 'e', [CompletionResultType]::ParameterName, 'e')
+            [CompletionResult]::new('--display-expired', 'display-expired', [CompletionResultType]::ParameterName, 'display-expired')
             [CompletionResult]::new('-h', 'h', [CompletionResultType]::ParameterName, 'Print help')
             [CompletionResult]::new('--help', 'help', [CompletionResultType]::ParameterName, 'Print help')
             break
@@ -93,6 +105,10 @@ Register-ArgumentCompleter -Native -CommandName 'envio' -ScriptBlock {
         'envio;update' {
             [CompletionResult]::new('-e', 'e', [CompletionResultType]::ParameterName, 'e')
             [CompletionResult]::new('--envs', 'envs', [CompletionResultType]::ParameterName, 'envs')
+            [CompletionResult]::new('-c', 'c', [CompletionResultType]::ParameterName, 'c')
+            [CompletionResult]::new('--update-comments', 'update-comments', [CompletionResultType]::ParameterName, 'update-comments')
+            [CompletionResult]::new('-x', 'x', [CompletionResultType]::ParameterName, 'x')
+            [CompletionResult]::new('--update-expiration-date', 'update-expiration-date', [CompletionResultType]::ParameterName, 'update-expiration-date')
             [CompletionResult]::new('-h', 'h', [CompletionResultType]::ParameterName, 'Print help')
             [CompletionResult]::new('--help', 'help', [CompletionResultType]::ParameterName, 'Print help')
             break

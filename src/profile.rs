@@ -1,6 +1,7 @@
 use std::collections::HashMap;
 use std::{io::Write, path::PathBuf};
 
+use chrono::NaiveDate;
 use serde::{Deserialize, Serialize};
 
 use crate::utils::{get_configdir, truncate_identity_bytes};
@@ -13,16 +14,37 @@ use crate::error::{Error, Result};
 pub struct Env {
     pub name: String,
     pub value: String,
+    pub comment: Option<String>,
+    pub expiration_date: Option<NaiveDate>,
 }
 
 impl Env {
-    pub fn new(name: String, value: String) -> Env {
-        Env { name, value }
+    pub fn new(
+        name: String,
+        value: String,
+        comment: Option<String>,
+        expiration_date: Option<NaiveDate>,
+    ) -> Env {
+        Env {
+            name,
+            value,
+            comment,
+            expiration_date,
+        }
+    }
+
+    pub fn from_key_value(key: String, value: String) -> Env {
+        Env {
+            name: key,
+            value,
+            comment: None,
+            expiration_date: None,
+        }
     }
 }
 
 /// Wrapper around a vector of `Env`
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Clone)]
 pub struct EnvVec {
     envs: Vec<Env>,
 }
@@ -39,7 +61,7 @@ impl From<HashMap<String, String>> for EnvVec {
         let mut env_vec = EnvVec::new();
 
         for (key, value) in envs {
-            env_vec.push(Env::new(key, value));
+            env_vec.push(Env::from_key_value(key, value));
         }
 
         env_vec
@@ -262,12 +284,21 @@ impl IntoIterator for EnvVec {
     }
 }
 
-impl IntoIterator for &EnvVec {
-    type Item = Env;
-    type IntoIter = std::vec::IntoIter<Env>;
+impl<'a> IntoIterator for &'a EnvVec {
+    type Item = &'a Env;
+    type IntoIter = std::slice::Iter<'a, Env>;
 
     fn into_iter(self) -> Self::IntoIter {
-        self.envs.clone().into_iter()
+        self.envs.iter()
+    }
+}
+
+impl<'a> IntoIterator for &'a mut EnvVec {
+    type Item = &'a mut Env;
+    type IntoIter = std::slice::IterMut<'a, Env>;
+
+    fn into_iter(self) -> Self::IntoIter {
+        self.envs.iter_mut()
     }
 }
 
@@ -450,7 +481,7 @@ impl Profile {
     ///
     /// ```
     pub fn insert_env(&mut self, env: String, env_value: String) {
-        self.envs.push(Env::new(env, env_value));
+        self.envs.push(Env::from_key_value(env, env_value));
     }
 
     /// Edit an existing environment variable of the profile

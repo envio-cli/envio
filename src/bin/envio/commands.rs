@@ -1,8 +1,10 @@
 /// Implementation of all the subcommands that can be run by the CLI
+use chrono::Local;
 use colored::Colorize;
-use inquire::{min_length, Confirm, MultiSelect, Password, PasswordDisplayMode, Select, Text};
+use inquire::{
+    min_length, Confirm, DateSelect, MultiSelect, Password, PasswordDisplayMode, Select, Text,
+};
 use regex::Regex;
-
 use std::collections::HashMap;
 use std::env;
 use std::io::Read;
@@ -15,7 +17,7 @@ use envio::error::{Error, Result};
 use envio::{load_profile, Env, EnvVec, Profile};
 
 use crate::clap_app::Command;
-use crate::cli;
+use crate::cli::{self, check_expired_envs};
 use crate::utils::parse_envs_from_string;
 
 /// Get the user's encryption key
@@ -68,6 +70,8 @@ impl Command {
                 envs,
                 envs_file,
                 gpg,
+                add_comments,
+                add_expiration_date,
             } => {
                 if profile_name.is_empty() {
                     return Err(Error::ProfileNameEmpty(profile_name.to_string()));
@@ -172,7 +176,7 @@ impl Command {
 
                     let mut options = vec![];
 
-                    for env in envs_vec.as_ref().unwrap() {
+                    for env in envs_vec.clone().unwrap() {
                         if env.value.is_empty() {
                             let prompt = Confirm::new(&format!(
                                 "Would you like to assign a value to key: {} ?",
@@ -194,17 +198,17 @@ impl Command {
                                 if let Err(e) = prompt {
                                     return Err(Error::Msg(e.to_string()));
                                 } else {
-                                    envs_vec
-                                        .as_mut()
-                                        .unwrap()
-                                        .push(Env::new(env.name.clone(), prompt.unwrap()));
+                                    envs_vec.as_mut().unwrap().push(Env::from_key_value(
+                                        env.name.clone(),
+                                        prompt.unwrap(),
+                                    ));
                                 }
                             }
                         }
 
                         // we add the keys to the options list so that we can use them in the multi select prompt.
                         // The reason we do not have this in a separate loop is for efficiency reasons
-                        options.push(env.name);
+                        options.push(env.name.clone());
                     }
 
                     let default_options = (0..options.len()).collect::<Vec<usize>>();
@@ -236,10 +240,10 @@ impl Command {
 
                             if let Some(key) = parts.next() {
                                 if let Some(value) = parts.next() {
-                                    envs_vec
-                                        .as_mut()
-                                        .unwrap()
-                                        .push(Env::new(key.to_string(), value.to_string()));
+                                    envs_vec.as_mut().unwrap().push(Env::from_key_value(
+                                        key.to_string(),
+                                        value.to_string(),
+                                    ));
                                 } else {
                                     return Err(Error::Msg(format!(
                                         "Unable to parse value for key '{}'",
@@ -267,22 +271,56 @@ impl Command {
                             envs_vec
                                 .as_mut()
                                 .unwrap()
-                                .push(Env::new(env.to_string(), value));
+                                .push(Env::from_key_value(env.to_string(), value));
                         }
                     }
                 } else {
                     envs_vec = None;
                 }
 
+                for env in envs_vec.as_mut().unwrap() {
+                    if *add_comments {
+                        let prompt =
+                            Text::new(&format!("Enter a comment for '{}':", env.name)).prompt();
+
+                        if let Err(e) = prompt {
+                            return Err(Error::Msg(e.to_string()));
+                        } else {
+                            env.comment = Some(prompt.unwrap());
+                        }
+                    }
+
+                    if *add_expiration_date {
+                        let prompt = DateSelect::new(&format!(
+                            "Select an expiration date for '{}':",
+                            env.name
+                        ))
+                        .with_default(Local::now().date_naive())
+                        .prompt();
+
+                        if let Err(e) = prompt {
+                            return Err(Error::Msg(e.to_string()));
+                        } else {
+                            env.expiration_date = Some(prompt.unwrap());
+                        }
+                    }
+                }
+
                 cli::create_profile(profile_name.to_string(), envs_vec, encryption_type)?;
             }
 
-            Command::Add { profile_name, envs } => {
+            Command::Add {
+                profile_name,
+                envs,
+                add_comments,
+                add_expiration_date,
+            } => {
                 if !Profile::does_exist(profile_name) {
                     return Err(Error::ProfileDoesNotExist(profile_name.to_string()));
                 }
 
                 let mut profile = load_profile!(profile_name, get_userkey)?;
+                check_expired_envs(&profile);
 
                 for env in envs {
                     if (*env).contains('=') {
@@ -326,6 +364,35 @@ impl Command {
                         profile.insert_env(env.to_string(), value)
                     }
                 }
+
+                for env in &mut profile.envs {
+                    if *add_comments {
+                        let prompt =
+                            Text::new(&format!("Enter a comment for '{}':", env.name)).prompt();
+
+                        if let Err(e) = prompt {
+                            return Err(Error::Msg(e.to_string()));
+                        } else {
+                            env.comment = Some(prompt.unwrap());
+                        }
+                    }
+
+                    if *add_expiration_date {
+                        let prompt = DateSelect::new(&format!(
+                            "Select an expiration date for '{}':",
+                            env.name
+                        ))
+                        .with_default(Local::now().date_naive())
+                        .prompt();
+
+                        if let Err(e) = prompt {
+                            return Err(Error::Msg(e.to_string()));
+                        } else {
+                            env.expiration_date = Some(prompt.unwrap());
+                        }
+                    }
+                }
+
                 println!("{}", "Applying Changes".green());
                 profile.push_changes()?;
             }
@@ -343,6 +410,7 @@ impl Command {
                     }
 
                     let profile = load_profile!(profile_name, get_userkey)?;
+                    check_expired_envs(&profile);
 
                     cli::load_profile(profile);
                 }
@@ -360,6 +428,7 @@ impl Command {
                 }
 
                 let profile = load_profile!(profile_name, get_userkey)?;
+                check_expired_envs(&profile);
 
                 cli::unload_profile(profile);
             }
@@ -376,6 +445,7 @@ impl Command {
                 }
 
                 let profile = load_profile!(profile_name, get_userkey)?;
+                check_expired_envs(&profile);
 
                 let mut cmd = std::process::Command::new(program)
                     .envs::<HashMap<String, String>, _, _>(profile.envs.into())
@@ -407,6 +477,7 @@ impl Command {
 
                 if envs.is_some() && !envs.as_ref().unwrap().is_empty() {
                     let mut profile = load_profile!(profile_name, get_userkey)?;
+                    check_expired_envs(&profile);
 
                     for env in envs.as_ref().unwrap() {
                         profile.remove_env(env)?;
@@ -423,6 +494,8 @@ impl Command {
                 profiles,
                 profile_name,
                 no_pretty_print,
+                display_comments,
+                display_expired,
             } => {
                 if *profiles {
                     cli::list_profiles(*no_pretty_print)?;
@@ -434,23 +507,30 @@ impl Command {
                     }
 
                     let profile = load_profile!(profile_name.as_ref().unwrap(), get_userkey)?;
+                    check_expired_envs(&profile);
 
                     if *no_pretty_print {
                         for env in profile.envs {
                             println!("{}={}", env.name, env.value);
                         }
                     } else {
-                        cli::list_envs(&profile);
+                        cli::list_envs(&profile, *display_comments, *display_expired);
                     }
                 }
             }
 
-            Command::Update { profile_name, envs } => {
+            Command::Update {
+                profile_name,
+                envs,
+                update_comments,
+                update_expiration_date,
+            } => {
                 if !Profile::does_exist(profile_name) {
                     return Err(Error::ProfileDoesNotExist(profile_name.to_string()));
                 }
 
                 let mut profile = load_profile!(profile_name, get_userkey)?;
+                check_expired_envs(&profile);
 
                 for env in envs {
                     if (*env).contains('=') {
@@ -495,6 +575,38 @@ impl Command {
                     }
                 }
 
+                for env in &mut profile.envs {
+                    if !(*envs).contains(&env.name) {
+                        continue;
+                    }
+
+                    if *update_comments {
+                        let prompt =
+                            Text::new(&format!("Enter a new comment for '{}':", env.name)).prompt();
+
+                        if let Err(e) = prompt {
+                            return Err(Error::Msg(e.to_string()));
+                        } else {
+                            env.comment = Some(prompt.unwrap());
+                        }
+                    }
+
+                    if *update_expiration_date {
+                        let prompt = DateSelect::new(&format!(
+                            "Select a new expiration date for '{}':",
+                            env.name
+                        ))
+                        .with_default(Local::now().date_naive())
+                        .prompt();
+
+                        if let Err(e) = prompt {
+                            return Err(Error::Msg(e.to_string()));
+                        } else {
+                            env.expiration_date = Some(prompt.unwrap());
+                        }
+                    }
+                }
+
                 println!("{}", "Applying Changes".green());
                 profile.push_changes()?;
             }
@@ -515,6 +627,7 @@ impl Command {
                 }
 
                 let profile = load_profile!(profile_name, get_userkey)?;
+                check_expired_envs(&profile);
 
                 if envs.is_some() && envs.as_ref().unwrap().contains(&"select".to_string()) {
                     let prompt = MultiSelect::new("Select the environment variables you want to export:", profile.envs.keys())

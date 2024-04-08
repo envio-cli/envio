@@ -66,7 +66,7 @@ pub fn parse_envs_from_string(buffer: &str) -> Result<EnvVec> {
             value = Some("");
         }
 
-        envs_vec.push(Env::new(
+        envs_vec.push(Env::from_key_value(
             key.unwrap().to_string(),
             value.unwrap().to_string(),
         ));
