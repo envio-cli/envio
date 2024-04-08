@@ -27,6 +27,7 @@ indicatif = "0.17.3"
 inquire = "0.7.0"
 semver = "1.0.17"
 serde = { version = "1.0.159", features = ["derive"] }
+typetag = "0.2"
 regex = "1.7"
 tokio = "1.28.0"
 url = "2.3.1"

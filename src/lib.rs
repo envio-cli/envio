@@ -66,7 +66,9 @@ pub mod utils;
 
 pub mod crypto;
 pub mod error;
-pub use profile::Profile; // Re-export Profile so that users don't have to use envio::profile::Profile
+pub use profile::Env;
+pub use profile::EnvVec; // Re-export EnvVec so that users don't have to use envio::profile::EnvVec
+pub use profile::Profile; // Re-export Profile so that users don't have to use envio::profile::Profile // Re-export Env so that users don't have to use envio::profile::Env
 
 /// Main macro used to load profiles
 ///

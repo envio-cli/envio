@@ -1,7 +1,6 @@
 /// Utility/helper functions specific to the CLI version of envio.
 /// These functions are designed for CLI usage and may not be something used by users interacting with the API directly
 use std::{
-    collections::HashMap,
     io::{Read, Write},
     path::{Path, PathBuf},
 };
@@ -14,7 +13,7 @@ use comfy_table::{Attribute, Cell, Table};
 use envio::{
     crypto::EncryptionType,
     error::{Error, Result},
-    Profile,
+    EnvVec, Profile,
 };
 
 use crate::utils::{contains_path_separator, download_file, get_configdir, get_cwd};
@@ -33,7 +32,7 @@ use crate::utils::get_shell_config;
 /// - `Result<()>`: whether the operation was successful
 pub fn create_profile(
     name: String,
-    envs: Option<HashMap<String, String>>,
+    envs: Option<EnvVec>,
     encryption_type: Box<dyn EncryptionType>,
 ) -> Result<()> {
     if Profile::does_exist(&name) {
@@ -42,7 +41,7 @@ pub fn create_profile(
 
     let envs = match envs {
         Some(env) => env,
-        None => HashMap::new(),
+        None => EnvVec::new(),
     };
 
     let config_dir = get_configdir()?;
@@ -56,27 +55,9 @@ pub fn create_profile(
         std::fs::create_dir_all(&profile_dir).unwrap();
     }
 
-    let profile_file = profile_dir.join(name + ".env");
+    let profile_file_path = profile_dir.join(name.clone() + ".env");
 
-    let mut file = std::fs::File::create(profile_file)?;
-
-    let mut buffer = String::from("");
-
-    if envs.is_empty() {
-        buffer = buffer + &encryption_type.get_key();
-    } else {
-        for key in envs.keys() {
-            buffer = buffer + key + "=" + envs.get(&key.to_string()).unwrap() + "\n";
-        }
-
-        buffer = buffer + &encryption_type.get_key();
-    }
-
-    file.write_all(encryption_type.encrypt(&buffer).unwrap().as_slice())?;
-
-    file.flush()?;
-
-    file.sync_all()?;
+    Profile::new(name, envs, profile_file_path, encryption_type).push_changes()?;
 
     println!("{}: Profile created", "Success".green());
     Ok(())
@@ -115,14 +96,13 @@ pub fn export_envs(
         return Err(Error::EmptyProfile(profile.name.to_string()));
     }
 
-    let mut keys: Vec<_> = profile.envs.keys().cloned().collect::<Vec<String>>();
+    let mut keys: Vec<_> = profile.envs.keys();
+
     if let Some(envs_selected) = envs_selected {
         if !envs_selected.is_empty() {
-            keys = profile
-                .envs
-                .keys()
+            keys = keys
+                .into_iter()
                 .filter(|item| envs_selected.contains(item))
-                .cloned()
                 .collect::<Vec<String>>();
         }
 
@@ -152,8 +132,8 @@ pub fn list_envs(profile: &Profile) {
         Cell::new("Value").add_attribute(Attribute::Bold),
     ]);
 
-    for key in profile.envs.keys() {
-        table.add_row(vec![key, profile.envs.get(key).unwrap()]);
+    for env in &profile.envs {
+        table.add_row(vec![env.name, env.value]);
     }
 
     println!("{table}");

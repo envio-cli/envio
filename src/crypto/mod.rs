@@ -10,6 +10,7 @@ use crate::error::{Error, Result};
 /// Trait for encryption types
 ///
 /// Used to define the methods that an encryption type must implement.
+#[typetag::serde(tag = "type")]
 pub trait EncryptionType {
     fn new(key: String) -> Self
     where
@@ -32,11 +33,11 @@ pub trait EncryptionType {
     /// Encrypt data
     ///
     /// # Parameters
-    /// - `data`: &str - the data to encrypt
+    /// - `data`: &[u8] - the data to encrypt
     ///
     /// # Returns
     /// - `Result<Vec<u8>>`: the encrypted data
-    fn encrypt(&self, data: &str) -> Result<Vec<u8>>;
+    fn encrypt(&self, data: &[u8]) -> Result<Vec<u8>>;
 
     /// Decrypt data
     ///
@@ -44,8 +45,8 @@ pub trait EncryptionType {
     /// - `encrypted_data`: &[u8] - the encrypted data
     ///
     /// # Returns
-    /// - `Result<String>`: the decrypted data
-    fn decrypt(&self, encrypted_data: &[u8]) -> Result<String>;
+    /// - `Result<Vec<u8>>`: the decrypted data
+    fn decrypt(&self, encrypted_data: &[u8]) -> Result<Vec<u8>>;
 
     /// Get the string representation of the encryption type
     ///

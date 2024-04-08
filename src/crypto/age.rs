@@ -1,6 +1,7 @@
 use std::io::{Read, Write};
 
 use age::secrecy::Secret;
+use serde::{Deserialize, Serialize};
 
 use crate::crypto::EncryptionType;
 use crate::error::{Error, Result};
@@ -10,10 +11,12 @@ pub const IDENTITY_BYTES: &[u8] = b"-----AGE ENCRYPTED FILE-----";
 
 /// AGE is not a real encryption type, but rather a wrapper around the `age` crate
 /// It is supposed to represent the password-based encryption method that `envio` provides
+#[derive(Serialize, Deserialize)]
 pub struct AGE {
     key: String,
 }
 
+#[typetag::serde]
 impl EncryptionType for AGE {
     fn new(key: String) -> Self {
         AGE { key }
@@ -31,7 +34,7 @@ impl EncryptionType for AGE {
         "age"
     }
 
-    fn encrypt(&self, data: &str) -> Result<Vec<u8>> {
+    fn encrypt(&self, data: &[u8]) -> Result<Vec<u8>> {
         let encryptor = age::Encryptor::with_user_passphrase(Secret::new(self.key.to_owned()));
 
         let mut encrypted = vec![];
@@ -42,7 +45,7 @@ impl EncryptionType for AGE {
             }
         };
 
-        writer.write_all(data.as_bytes())?;
+        writer.write_all(data)?;
         writer.finish()?;
 
         encrypted.extend_from_slice(IDENTITY_BYTES);
@@ -50,7 +53,7 @@ impl EncryptionType for AGE {
         Ok(encrypted)
     }
 
-    fn decrypt(&self, encrypted_data: &[u8]) -> Result<String> {
+    fn decrypt(&self, encrypted_data: &[u8]) -> Result<Vec<u8>> {
         let decryptor = match age::Decryptor::new(encrypted_data).unwrap() {
             age::Decryptor::Passphrase(d) => d,
             _ => unreachable!(),
@@ -66,7 +69,7 @@ impl EncryptionType for AGE {
 
         reader.read_to_end(&mut decrypted)?;
 
-        String::from_utf8(decrypted).map_err(|e| Error::Utf8Error(e.utf8_error()))
+        Ok(decrypted)
     }
 
     fn is_this_type(encrypted_data: &[u8]) -> bool {

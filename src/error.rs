@@ -5,6 +5,10 @@ use thiserror::Error;
 pub enum Error {
     #[error("IO error: {0}")]
     Io(#[from] std::io::Error),
+    #[error("Serialization error: {0}")]
+    Serialization(String),
+    #[error("Deserialization error: {0}")]
+    Deserialization(String),
     #[error("Profile `{0}` already exists")]
     ProfileAlreadyExists(String),
     #[error("Profile `{0}` does not exist")]

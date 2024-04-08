@@ -1,9 +1,275 @@
-use std::{collections::HashMap, io::Write, path::PathBuf};
+use std::collections::HashMap;
+use std::{io::Write, path::PathBuf};
 
-use crate::utils::{get_configdir, get_profile_filepath, truncate_identity_bytes};
+use serde::{Deserialize, Serialize};
+
+use crate::utils::{get_configdir, truncate_identity_bytes};
 
 use crate::crypto::EncryptionType;
 use crate::error::{Error, Result};
+
+/// Representation of an environment variable
+#[derive(Serialize, Deserialize, Clone)]
+pub struct Env {
+    pub name: String,
+    pub value: String,
+}
+
+impl Env {
+    pub fn new(name: String, value: String) -> Env {
+        Env { name, value }
+    }
+}
+
+/// Wrapper around a vector of `Env`
+#[derive(Serialize, Deserialize)]
+pub struct EnvVec {
+    envs: Vec<Env>,
+}
+
+/// Build a `EnvVec` from a `Vec<Env>` or a `HashMap<String, String>`
+impl From<Vec<Env>> for EnvVec {
+    fn from(envs: Vec<Env>) -> Self {
+        EnvVec { envs }
+    }
+}
+
+impl From<HashMap<String, String>> for EnvVec {
+    fn from(envs: HashMap<String, String>) -> Self {
+        let mut env_vec = EnvVec::new();
+
+        for (key, value) in envs {
+            env_vec.push(Env::new(key, value));
+        }
+
+        env_vec
+    }
+}
+
+/// Convert a `EnvVec` to a `Vec<Env>` or a `HashMap<String, String>`
+impl Into<Vec<Env>> for EnvVec {
+    fn into(self) -> Vec<Env> {
+        self.envs
+    }
+}
+
+impl Into<HashMap<String, String>> for EnvVec {
+    fn into(self) -> HashMap<String, String> {
+        let mut envs = HashMap::new();
+
+        for e in self.envs {
+            envs.insert(e.name, e.value);
+        }
+
+        envs
+    }
+}
+
+impl EnvVec {
+    pub fn new() -> EnvVec {
+        EnvVec { envs: Vec::new() }
+    }
+
+    /// Add a new environment variable to the `EnvVec`
+    ///
+    /// # Parameters
+    /// - `env` - The environment variable to add. Has to be an instance of the
+    ///   [Env](crate::Env) struct
+    ///
+    /// # Examples
+    /// ```
+    /// use envio::EnvVec;
+    ///
+    /// let mut envs = EnvVec::new();
+    ///
+    /// envs.push(envio::Env::new("NEW_ENV".to_string(), "NEW_VALUE".to_string()));
+    ///
+    /// ```
+    pub fn push(&mut self, env: Env) {
+        self.envs.push(env);
+    }
+
+    /// Remove an environment variable from the `EnvVec`
+    ///
+    /// # Parameters
+    /// - `env` - The name of the environment variable to remove. Has to be an
+    ///   instance of the [Env](crate::Env) struct
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use envio::EnvVec;
+    ///
+    /// let mut envs = EnvVec::new();
+    ///
+    /// envs.push(envio::Env::new("NEW_ENV".to_string(), "NEW_VALUE".to_string()));
+    ///
+    /// envs.remove("NEW_ENV");
+    ///
+    /// ```
+    pub fn remove(&mut self, env: &str) {
+        self.envs.retain(|e| e.name != env);
+    }
+
+    /// Return an iterator over the `EnvVec`
+    pub fn iter(&self) -> std::slice::Iter<Env> {
+        self.envs.iter()
+    }
+
+    /// Return a mutable iterator over the `EnvVec`
+    pub fn iter_mut(&mut self) -> std::slice::IterMut<Env> {
+        self.envs.iter_mut()
+    }
+
+    /// Return a vector of all the keys in the `EnvVec`
+    ///
+    /// # Returns
+    /// - `Vec<String>`: A vector of all the keys in the `EnvVec`
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use envio::EnvVec;
+    ///
+    /// let mut envs = EnvVec::new();
+    ///
+    /// envs.push(envio::Env::new("NEW_ENV".to_string(), "NEW_VALUE".to_string()));
+    ///
+    /// let keys = envs.keys();
+    ///
+    /// for key in keys {
+    ///    println!("{}", key);
+    /// }
+    /// ```
+    pub fn keys(&self) -> Vec<String> {
+        self.envs.iter().map(|e| e.name.clone()).collect()
+    }
+
+    /// Check to see if an environment variable with the given key exists in the
+    /// `EnvVec`
+    ///
+    /// # Parameters
+    /// - `key` - The key to check for
+    ///
+    /// # Returns
+    /// - `bool`: indicating whether the key exists or not
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use envio::EnvVec;
+    ///
+    /// let mut envs = EnvVec::new();
+    ///
+    /// envs.push(envio::Env::new("NEW_ENV".to_string(), "NEW_VALUE".to_string()));
+    ///
+    /// let exists = envs.contains_key("NEW_ENV");
+    ///
+    /// if exists {
+    ///   println!("The key exists");
+    ///
+    /// } else {
+    ///  println!("The key does not exist");
+    /// }
+    /// ```
+    pub fn contains_key(&self, key: &str) -> bool {
+        self.envs.iter().any(|e| e.name == key)
+    }
+
+    /// Get the value of an environment variable with the given key
+    ///
+    /// # Parameters
+    /// - `key` - The key of the environment variable
+    ///
+    /// # Returns
+    /// - `Option<&String>`: The value of the environment variable if it exists
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use envio::EnvVec;
+    ///
+    /// let mut envs = EnvVec::new();
+    ///
+    /// envs.push(envio::Env::new("NEW_ENV".to_string(), "NEW_VALUE".to_string()));
+    ///
+    /// let value = envs.get("NEW_ENV");
+    ///
+    /// if let Some(v) = value {
+    ///     println!("The value of the environment variable is: {}", v);
+    /// } else {
+    ///     println!("The environment variable does not exist");
+    /// }
+    /// ```
+    pub fn get(&self, key: &str) -> Option<&String> {
+        for e in self.envs.iter() {
+            if e.name == key {
+                return Some(&e.value);
+            }
+        }
+
+        None
+    }
+
+    /// Check to see if the `EnvVec` is empty
+    ///
+    /// # Returns
+    /// - `bool`: indicating whether the `EnvVec` is empty or not
+    pub fn is_empty(&self) -> bool {
+        self.envs.is_empty()
+    }
+
+    /// Get the number of environment variables in the `EnvVec`
+    ///
+    /// # Returns
+    /// - `usize`: The number of environment variables in the `EnvVec`
+    pub fn len(&self) -> usize {
+        self.envs.len()
+    }
+
+    /// Retain only the environment variables that satisfy the given predicate
+    ///
+    /// # Parameters
+    /// - `f` - The predicate to use
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use envio::EnvVec;
+    ///
+    /// let mut envs = EnvVec::new();
+    ///
+    /// envs.push(envio::Env::new("NEW_ENV".to_string(), "NEW_VALUE".to_string()));
+    /// envs.push(envio::Env::new("NEW_ENV_2".to_string(), "NEW_VALUE_2".to_string()));
+    ///
+    /// envs.retain(|e| e.name == "NEW_ENV"); // Only keep the environment variable with the key "NEW_ENV"
+    /// ```
+    pub fn retain<F>(&mut self, f: F)
+    where
+        F: FnMut(&Env) -> bool,
+    {
+        self.envs.retain(f);
+    }
+}
+
+/// Allow users to iterate over the `EnvVec` struct
+impl IntoIterator for EnvVec {
+    type Item = Env;
+    type IntoIter = std::vec::IntoIter<Env>;
+
+    fn into_iter(self) -> Self::IntoIter {
+        self.envs.into_iter()
+    }
+}
+
+impl IntoIterator for &EnvVec {
+    type Item = Env;
+    type IntoIter = std::vec::IntoIter<Env>;
+
+    fn into_iter(self) -> Self::IntoIter {
+        self.envs.clone().into_iter()
+    }
+}
 
 /// This struct is a representation of a profile env file stored on the system.
 /// For more information on what a profile is, see the
@@ -62,14 +328,28 @@ use crate::error::{Error, Result};
 ///   // Push the changes to the profile file
 ///   profile.push_changes().unwrap();
 /// ```
+#[derive(Serialize, Deserialize)]
 pub struct Profile {
     pub name: String,
-    pub envs: HashMap<String, String>,
+    pub envs: EnvVec,
     pub profile_file_path: PathBuf,
     encryption_type: Box<dyn EncryptionType>,
 }
 
 impl Profile {
+    pub fn new(
+        name: String,
+        envs: EnvVec,
+        profile_file_path: PathBuf,
+        encryption_type: Box<dyn EncryptionType>,
+    ) -> Profile {
+        Profile {
+            name,
+            envs,
+            profile_file_path,
+            encryption_type,
+        }
+    }
     /// Create a new profile object from the encrypted contents of a stored
     /// profile file
     ///  
@@ -103,9 +383,8 @@ impl Profile {
     ///  };
     /// ```
     pub fn from_content(
-        name: &str,
         encrypted_content: &[u8],
-        mut encryption_type: Box<dyn EncryptionType>,
+        encryption_type: Box<dyn EncryptionType>,
     ) -> Result<Profile> {
         let truncated_content = truncate_identity_bytes(encrypted_content);
 
@@ -116,32 +395,10 @@ impl Profile {
             }
         };
 
-        let mut envs = HashMap::new();
-
-        for line in content.lines() {
-            if line.is_empty() {
-                continue;
-            }
-
-            if !line.contains('=') {
-                encryption_type.set_key(line.to_string());
-                continue;
-            }
-
-            let mut parts = line.splitn(2, '=');
-            if let (Some(key), Some(value)) = (parts.next(), parts.next()) {
-                envs.insert(key.to_string(), value.to_string());
-            }
-        }
-
-        let profile_file_path = get_profile_filepath(name)?;
-
-        Ok(Profile {
-            name: name.to_string(),
-            envs,
-            profile_file_path,
-            encryption_type,
-        })
+        match bincode::deserialize(&content) {
+            Ok(profile) => return Ok(profile),
+            Err(e) => return Err(Error::Deserialization(e.to_string())),
+        };
     }
 
     /// Check to see if a profile with the given name exists on the system
@@ -193,7 +450,7 @@ impl Profile {
     ///
     /// ```
     pub fn insert_env(&mut self, env: String, env_value: String) {
-        self.envs.insert(env, env_value);
+        self.envs.push(Env::new(env, env_value));
     }
 
     /// Edit an existing environment variable of the profile
@@ -217,12 +474,16 @@ impl Profile {
     ///
     /// ```
     pub fn edit_env(&mut self, env: String, new_value: String) -> Result<()> {
-        if let std::collections::hash_map::Entry::Occupied(mut e) = self.envs.entry(env.clone()) {
-            e.insert(new_value);
-            Ok(())
-        } else {
-            Err(Error::EnvDoesNotExist(env.to_string()))
+        if self.envs.iter().any(|e| e.name == env) {
+            for e in self.envs.iter_mut() {
+                if e.name == env {
+                    e.value = new_value;
+                    return Ok(());
+                }
+            }
         }
+
+        Err(Error::EnvDoesNotExist(env))
     }
 
     /// Remove an environment variable from the profile
@@ -246,12 +507,12 @@ impl Profile {
     ///
     /// ```
     pub fn remove_env(&mut self, env: &str) -> Result<()> {
-        if self.envs.contains_key(env) {
-            self.envs.remove(env);
-            Ok(())
-        } else {
-            Err(Error::EnvDoesNotExist(env.to_string()))
+        if self.envs.iter().any(|e| e.name == env) {
+            self.envs.retain(|e| e.name != env);
+            return Ok(());
         }
+
+        Err(Error::EnvDoesNotExist(env.to_string()))
     }
 
     /// Get the value of an environment variable from the profile
@@ -278,7 +539,23 @@ impl Profile {
     /// }
     /// ```
     pub fn get_env(&self, env: &str) -> Option<&String> {
-        self.envs.get(env)
+        for e in self.envs.iter() {
+            if e.name == env {
+                return Some(&e.value);
+            }
+        }
+
+        None
+    }
+
+    pub fn get_envs_hashmap(&self) -> std::collections::HashMap<String, String> {
+        let mut envs = std::collections::HashMap::new();
+
+        for e in self.envs.iter() {
+            envs.insert(e.name.clone(), e.value.clone());
+        }
+
+        envs
     }
 
     /// Push the changes made to the profile object to the profile file
@@ -302,27 +579,26 @@ impl Profile {
         let mut file = std::fs::OpenOptions::new()
             .write(true)
             .append(false)
-            .open(&self.profile_file_path)
-            .unwrap();
+            .create(true)
+            .open(&self.profile_file_path)?;
 
         file.set_len(0)?;
 
-        let mut buffer = String::from("");
+        let serialized_data = match bincode::serialize(&self) {
+            Ok(data) => data,
+            Err(e) => {
+                return Err(Error::Serialization(e.to_string()));
+            }
+        };
 
-        for key in self.envs.keys() {
-            buffer = buffer + key + "=" + self.envs.get(key).unwrap() + "\n";
-        }
-
-        buffer = buffer + &self.encryption_type.get_key();
-
-        let encrypted_data = match self.encryption_type.encrypt(&buffer) {
+        let encrypted_data = match self.encryption_type.encrypt(&serialized_data) {
             Ok(data) => data,
             Err(e) => {
                 return Err(e);
             }
         };
 
-        file.write_all(encrypted_data.as_slice())?;
+        file.write_all(&encrypted_data)?;
 
         file.flush()?;
 
@@ -417,7 +693,7 @@ macro_rules! load_profile {
                 )?
             }
 
-            match Profile::from_content($name, &encrypted_content, encryption_type) {
+            match Profile::from_content(&encrypted_content, encryption_type) {
                 Ok(profile) => return Ok(profile),
                 Err(e) => return Err(e.into()),
             }

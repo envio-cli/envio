@@ -1,3 +1,5 @@
+use serde::{Deserialize, Serialize};
+
 #[cfg(target_family = "unix")]
 use gpgme::{Context, Data, Protocol};
 
@@ -16,10 +18,12 @@ use crate::error::{Error, Result};
 // Bytes that identify the file as being encrypted using the `gpg` method
 pub const IDENTITY_BYTES: &[u8] = b"-----GPG ENCRYPTED FILE-----";
 
+#[derive(Serialize, Deserialize)]
 pub struct GPG {
     key_fingerprint: String,
 }
 
+#[typetag::serde]
 impl EncryptionType for GPG {
     fn new(key_fingerprint: String) -> Self {
         GPG { key_fingerprint }
@@ -37,7 +41,7 @@ impl EncryptionType for GPG {
         "gpg"
     }
 
-    fn encrypt(&self, data: &str) -> Result<Vec<u8>> {
+    fn encrypt(&self, data: &[u8]) -> Result<Vec<u8>> {
         let mut encrypted_data = Vec::new();
 
         // Unix specific code
@@ -97,7 +101,7 @@ impl EncryptionType for GPG {
         Ok(encrypted_data)
     }
 
-    fn decrypt(&self, encrypted_data: &[u8]) -> Result<String> {
+    fn decrypt(&self, encrypted_data: &[u8]) -> Result<Vec<u8>> {
         // Unix specific code
         #[cfg(target_family = "unix")]
         {
@@ -120,7 +124,7 @@ impl EncryptionType for GPG {
                 return Err(Error::Crypto(e.to_string()));
             };
 
-            Ok(String::from_utf8_lossy(&plain).to_string())
+            Ok(plain)
         }
 
         // Windows specific code
@@ -145,7 +149,7 @@ impl EncryptionType for GPG {
 
             let output = gpg_process.wait_with_output()?;
 
-            Ok(String::from_utf8_lossy(&output.stdout).to_string())
+            Ok(output.stdout)
         }
     }
 

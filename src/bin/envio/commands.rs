@@ -12,7 +12,7 @@ use url::Url;
 use envio::crypto::create_encryption_type;
 use envio::crypto::gpg::get_gpg_keys;
 use envio::error::{Error, Result};
-use envio::{load_profile, Profile};
+use envio::{load_profile, Env, EnvVec, Profile};
 
 use crate::clap_app::Command;
 use crate::cli;
@@ -150,7 +150,7 @@ impl Command {
                     encryption_type = create_encryption_type(user_key, "age")?;
                 }
 
-                let mut envs_hashmap;
+                let mut envs_vec;
 
                 if envs_file.is_some() {
                     let file = envs_file.as_ref().unwrap();
@@ -164,19 +164,19 @@ impl Command {
                     let mut buffer = String::new();
                     file.read_to_string(&mut buffer).unwrap();
 
-                    envs_hashmap = Some(parse_envs_from_string(&buffer)?);
+                    envs_vec = Some(parse_envs_from_string(&buffer)?);
 
-                    if envs_hashmap.is_none() {
+                    if envs_vec.is_none() {
                         return Err(Error::Msg("Unable to parse envs from file".to_string()));
                     }
 
                     let mut options = vec![];
 
-                    for (key, value) in envs_hashmap.as_ref().unwrap().clone() {
-                        if value.is_empty() {
+                    for env in envs_vec.as_ref().unwrap() {
+                        if env.value.is_empty() {
                             let prompt = Confirm::new(&format!(
                                 "Would you like to assign a value to key: {} ?",
-                                key
+                                env.name
                             ))
                             .with_default(false)
                             .with_help_message(
@@ -188,22 +188,23 @@ impl Command {
                                 return Err(Error::Msg(e.to_string()));
                             } else if prompt.unwrap() {
                                 let prompt =
-                                    Text::new(&format!("Enter the value for {}:", key)).prompt();
+                                    Text::new(&format!("Enter the value for {}:", env.name))
+                                        .prompt();
 
                                 if let Err(e) = prompt {
                                     return Err(Error::Msg(e.to_string()));
                                 } else {
-                                    envs_hashmap
+                                    envs_vec
                                         .as_mut()
                                         .unwrap()
-                                        .insert(key.to_string(), prompt.unwrap());
+                                        .push(Env::new(env.name.clone(), prompt.unwrap()));
                                 }
                             }
                         }
 
                         // we add the keys to the options list so that we can use them in the multi select prompt.
                         // The reason we do not have this in a separate loop is for efficiency reasons
-                        options.push(key);
+                        options.push(env.name);
                     }
 
                     let default_options = (0..options.len()).collect::<Vec<usize>>();
@@ -222,12 +223,12 @@ impl Command {
 
                         for key in options {
                             if !selected_keys.contains(&key) {
-                                envs_hashmap.as_mut().unwrap().remove(&key);
+                                envs_vec.as_mut().unwrap().remove(&key);
                             }
                         }
                     }
                 } else if envs.is_some() {
-                    envs_hashmap = Some(HashMap::new());
+                    envs_vec = Some(EnvVec::new());
 
                     for env in envs.as_ref().unwrap() {
                         if (*env).contains('=') {
@@ -235,10 +236,10 @@ impl Command {
 
                             if let Some(key) = parts.next() {
                                 if let Some(value) = parts.next() {
-                                    envs_hashmap
+                                    envs_vec
                                         .as_mut()
                                         .unwrap()
-                                        .insert(key.to_string(), value.to_string());
+                                        .push(Env::new(key.to_string(), value.to_string()));
                                 } else {
                                     return Err(Error::Msg(format!(
                                         "Unable to parse value for key '{}'",
@@ -263,17 +264,17 @@ impl Command {
                             return Err(Error::Msg(e.to_string()));
                         } else {
                             value = prompt.unwrap();
-                            envs_hashmap
+                            envs_vec
                                 .as_mut()
                                 .unwrap()
-                                .insert(env.to_string(), value);
+                                .push(Env::new(env.to_string(), value));
                         }
                     }
                 } else {
-                    envs_hashmap = None;
+                    envs_vec = None;
                 }
 
-                cli::create_profile(profile_name.to_string(), envs_hashmap, encryption_type)?;
+                cli::create_profile(profile_name.to_string(), envs_vec, encryption_type)?;
             }
 
             Command::Add { profile_name, envs } => {
@@ -377,7 +378,7 @@ impl Command {
                 let profile = load_profile!(profile_name, get_userkey)?;
 
                 let mut cmd = std::process::Command::new(program)
-                    .envs(profile.envs)
+                    .envs::<HashMap<String, String>, _, _>(profile.envs.into())
                     .args(args)
                     .stdout(std::process::Stdio::inherit())
                     .stderr(std::process::Stdio::inherit())
@@ -435,8 +436,8 @@ impl Command {
                     let profile = load_profile!(profile_name.as_ref().unwrap(), get_userkey)?;
 
                     if *no_pretty_print {
-                        for (key, value) in profile.envs.iter() {
-                            println!("{}={}", key, value);
+                        for env in profile.envs {
+                            println!("{}={}", env.name, env.value);
                         }
                     } else {
                         cli::list_envs(&profile);
@@ -516,7 +517,7 @@ impl Command {
                 let profile = load_profile!(profile_name, get_userkey)?;
 
                 if envs.is_some() && envs.as_ref().unwrap().contains(&"select".to_string()) {
-                    let prompt = MultiSelect::new("Select the environment variables you want to export:", profile.envs.keys().collect())
+                    let prompt = MultiSelect::new("Select the environment variables you want to export:", profile.envs.keys())
                         .with_default(&(0..profile.envs.len()).collect::<Vec<usize>>())
                         .with_vim_mode(vim_mode)
                         .with_help_message("↑↓ to move, space to select/unselect one, → to all, ← to none, type to filter, enter to confirm")

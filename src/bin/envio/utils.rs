@@ -1,9 +1,10 @@
+use std::fs::File;
 /// Utility functions used throughout the binary crate
 use std::io::Write;
 use std::path::PathBuf;
-use std::{collections::HashMap, fs::File};
 
 use envio::error::{Error, Result};
+use envio::{Env, EnvVec};
 use indicatif::{ProgressBar, ProgressStyle};
 use reqwest::Client;
 
@@ -44,8 +45,9 @@ pub fn get_cwd() -> PathBuf {
 ///
 /// # Returns
 /// - `Result<HashMap<String, String>>`: the parsed environment variables
-pub fn parse_envs_from_string(buffer: &str) -> Result<HashMap<String, String>> {
-    let mut envs_map = HashMap::new();
+pub fn parse_envs_from_string(buffer: &str) -> Result<EnvVec> {
+    let mut envs_vec = EnvVec::new();
+
     for buf in buffer.lines() {
         if buf.is_empty() || !buf.contains('=') {
             continue;
@@ -64,10 +66,13 @@ pub fn parse_envs_from_string(buffer: &str) -> Result<HashMap<String, String>> {
             value = Some("");
         }
 
-        envs_map.insert(key.unwrap().to_owned(), value.unwrap().to_owned());
+        envs_vec.push(Env::new(
+            key.unwrap().to_string(),
+            value.unwrap().to_string(),
+        ));
     }
 
-    Ok(envs_map)
+    Ok(envs_vec)
 }
 
 /// Download a file from a url with a progress bar
