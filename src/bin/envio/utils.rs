@@ -8,6 +8,81 @@ use envio::{Env, EnvVec};
 use indicatif::{ProgressBar, ProgressStyle};
 use reqwest::Client;
 
+#[cfg(target_family = "unix")]
+pub fn initalize_config() -> Result<()> {
+    use std::path::Path;
+    use colored::Colorize;
+    use inquire::Text;
+
+    let configdir = get_configdir()?;
+    let homedir = get_homedir()?;
+
+    if !Path::new(&configdir).exists() {
+        println!("{}", "Creating config directory".bold());
+
+        std::fs::create_dir(&configdir)?;
+        std::fs::create_dir(configdir.join("profiles"))?;
+    }
+
+    if !Path::new(&configdir.join("setenv.sh")).exists() {
+        println!("{}", "Creating shellscript".bold());
+        std::fs::write(configdir.join("setenv.sh"), "")?;
+
+        let shellconfig = get_shell_config()?;
+
+        let mut file_path =
+            PathBuf::from(&(homedir.to_str().unwrap().to_owned() + &format!("/{}", shellconfig)));
+        if !file_path.exists() {
+            let input = Text::new(
+                "Shell config file not found, please enter the path to your shell config file:",
+            )
+            .prompt();
+
+            file_path = if let Ok(val) = input {
+                PathBuf::from(val)
+            } else {
+                return Err(Error::Msg("Failed to get shell config file path".to_string()));
+            };
+
+            if !file_path.exists() {
+                return Err(Error::Msg("Specified shell config file does not exist".to_string()));
+            }
+        }
+
+        let mut file = std::fs::OpenOptions::new()
+            .append(true)
+            .open(file_path)
+            .unwrap();
+
+        let shellscript_path = &configdir.join("setenv.sh");
+
+        let buffer = if shellconfig.contains("fish") {
+            println!(
+                    "To use the shellscript properly you need to install the {}(https://github.com/edc/bass) plugin for fish",
+                    "bass".bold()
+                );
+            format!(
+                "
+# envio DO NOT MODIFY
+bass source {}
+",
+                shellscript_path.to_str().unwrap()
+            )
+        } else {
+            format!(
+                "
+#envio DO NOT MODIFY
+source {}
+",
+                shellscript_path.to_str().unwrap()
+            )
+        };
+
+        writeln!(file, "{}", buffer)? 
+    }
+
+    Ok(())
+}
 /// Get the home directory
 ///
 /// # Returns
