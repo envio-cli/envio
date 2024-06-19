@@ -412,7 +412,9 @@ impl Command {
                     let profile = load_profile!(profile_name, get_userkey)?;
                     check_expired_envs(&profile);
 
-                    cli::load_profile(profile);
+                    if let Err(e) = cli::load_profile(profile) {
+                        return Err(e);
+                    }
                 }
             }
 
@@ -430,7 +432,9 @@ impl Command {
                 let profile = load_profile!(profile_name, get_userkey)?;
                 check_expired_envs(&profile);
 
-                cli::unload_profile(profile);
+                if let Err(e) = cli::unload_profile(profile) {
+                    return Err(e);
+                }
             }
             Command::Launch {
                 profile_name,

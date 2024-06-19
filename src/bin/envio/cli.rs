@@ -445,16 +445,27 @@ pub fn load_profile(profile_name: &str) -> Result<()> {
 
 /// Windows implementation of the load_profile function
 #[cfg(target_family = "windows")]
-pub fn load_profile(profile: Profile) {
+pub fn load_profile(profile: Profile) -> envio::error::Result<()> {
     for env in profile.envs {
-        Command::new("setx")
-            .arg(env.name)
-            .arg(env.value)
-            .spawn()
-            .expect("setx command failed");
+        let output = Command::new("setx").arg(&env.name).arg(&env.value).output();
+
+        match output {
+            Ok(output) => {
+                if !output.status.success() {
+                    return Err(envio::error::Error::Msg(format!(
+                        "Failed to execute setx for environment variable: {} with value: {}",
+                        env.name, env.value
+                    )));
+                }
+            }
+            Err(e) => {
+                return Err(envio::error::Error::Msg(format!("{}", e)));
+            }
+        }
     }
 
     println!("Reload your shell to apply changes");
+    Ok(())
 }
 
 /// Unload the environment variables of the profile from the current session
@@ -477,17 +488,31 @@ pub fn unload_profile() -> Result<()> {
 
 /// Windows implementation of the unload_profile function
 #[cfg(target_family = "windows")]
-pub fn unload_profile(profile: Profile) {
+pub fn unload_profile(profile: Profile) -> Result<()> {
     for env in profile.envs.keys() {
-        Command::new("REG")
+        let status = Command::new("REG")
             .arg("delete")
             .arg("HKCU\\Environment")
             .arg("/F")
             .arg("/V")
-            .arg(format!("\"{}\"", env))
-            .arg("")
-            .spawn()
-            .expect("setx command failed");
+            .arg(&env)
+            .status();
+
+        match status {
+            Ok(status) => {
+                if !status.success() {
+                    return Err(Error::Msg(format!(
+                        "Failed to delete environment variable: {}",
+                        env
+                    )));
+                }
+            }
+            Err(e) => {
+                return Err(Error::Msg(format!("{}", e)));
+            }
+        }
     }
     println!("Reload your shell to apply changes");
+
+    Ok(())
 }
