@@ -1,4 +1,23 @@
 # Change Log
+# v0.6.0
+## Features
+* Launch command as positional argument by @Rubensei in https://github.com/envio-cli/envio/pull/41
+* Stream output from launched command by @afh in https://github.com/envio-cli/envio/pull/40
+* Add --envs option to export by @afh in https://github.com/envio-cli/envio/pull/42
+* Allow selection with vi keys by @afh in https://github.com/envio-cli/envio/pull/46
+* Add support for nix flakes by @afh in https://github.com/envio-cli/envio/pull/51
+
+## Bug Fixes
+* Fix non-truncated shellscript by @jerome-jutteau in https://github.com/envio-cli/envio/pull/49
+
+## Others
+* Bump clap_complete from 4.2.1 to 4.5.1 by @dependabot in https://github.com/envio-cli/envio/pull/37
+* Bump inquire from 0.6.1 to 0.7.0 by @afh in https://github.com/envio-cli/envio/pull/47
+
+## New Contributors
+* @Rubensei made their first contribution in https://github.com/envio-cli/envio/pull/41
+* @jerome-jutteau made their first contribution in https://github.com/envio-cli/envio/pull/49
+
 # v0.5.1
 ## Improvements
 * Improve `add`, `launch`, `update` and `remove` commands usage
