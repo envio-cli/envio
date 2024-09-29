@@ -62,7 +62,17 @@ pub fn get_configdir() -> PathBuf {
 pub fn truncate_identity_bytes(encrypted_contents: &[u8]) -> Vec<u8> {
     let mut truncated_contents = encrypted_contents.to_owned();
 
-    truncated_contents.truncate(encrypted_contents.len() - 28);
+    if encrypted_contents.len() < 28 {
+        return truncated_contents;
+    }
+
+    // check if the last 28 bytes are the identity bytes
+    if &truncated_contents[encrypted_contents.len() - 28..] == crate::crypto::age::IDENTITY_BYTES
+        || &truncated_contents[encrypted_contents.len() - 28..]
+            == crate::crypto::gpg::IDENTITY_BYTES
+    {
+        truncated_contents.truncate(encrypted_contents.len() - 28);
+    }
 
     truncated_contents
 }

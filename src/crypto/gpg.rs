@@ -1,4 +1,6 @@
 use serde::{Deserialize, Serialize};
+use std::io::Write;
+use std::process::{Command, Stdio};
 
 #[cfg(target_family = "unix")]
 use gpgme::{Context, Data, Protocol};
@@ -7,13 +9,10 @@ use gpgme::{Context, Data, Protocol};
 use regex::Regex;
 #[cfg(target_family = "windows")]
 use std::collections::VecDeque;
-#[cfg(target_family = "windows")]
-use std::io::Write;
-#[cfg(target_family = "windows")]
-use std::process::{Command, Stdio};
 
 use crate::crypto::EncryptionType;
 use crate::error::{Error, Result};
+use crate::utils;
 
 // Bytes that identify the file as being encrypted using the `gpg` method
 pub const IDENTITY_BYTES: &[u8] = b"-----GPG ENCRYPTED FILE-----";
@@ -156,6 +155,46 @@ impl EncryptionType for GPG {
     fn is_this_type(encrypted_data: &[u8]) -> bool {
         encrypted_data.len() >= IDENTITY_BYTES.len()
             && &encrypted_data[encrypted_data.len() - IDENTITY_BYTES.len()..] == IDENTITY_BYTES
+    }
+}
+
+impl GPG {
+    pub fn is_this_type_fallback(profile_name: &str) -> Result<bool> {
+        let profile_file_path = utils::get_profile_filepath(profile_name)?;
+
+        let mut gpg_process = Command::new("gpg")
+            .arg("--pinentry-mode")
+            .arg("loopback")
+            .arg("--passphrase-fd")
+            .arg("0")
+            .arg("--decrypt")
+            .arg(profile_file_path)
+            .stdin(Stdio::piped())
+            .stdout(Stdio::piped())
+            .stderr(Stdio::piped())
+            .spawn()
+            .map_err(|err| Error::from(err))?;
+
+        {
+            let stdin = gpg_process
+                .stdin
+                .as_mut()
+                .ok_or_else(|| Error::Msg("Failed to open stdin".to_owned()))?;
+            writeln!(stdin, "{}", "passphrase")?; // Pass in a dummy passphrase
+        }
+
+        let output = gpg_process
+            .wait_with_output()
+            .map_err(|err| Error::from(err))?;
+
+        let stderr_output = String::from_utf8_lossy(&output.stderr);
+        let stdout_output = String::from_utf8_lossy(&output.stdout);
+
+        if stderr_output.contains("encrypted with") || stdout_output.contains("encrypted with") {
+            Ok(true)
+        } else {
+            Ok(false)
+        }
     }
 }
 

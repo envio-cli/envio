@@ -5,7 +5,10 @@ pub mod gpg;
 pub use age::AGE;
 pub use gpg::GPG;
 
-use crate::error::{Error, Result};
+use crate::{
+    error::{Error, Result},
+    utils,
+};
 
 /// Trait for encryption types
 ///
@@ -125,12 +128,15 @@ pub fn create_encryption_type(
 ///
 /// println!("{}", encryption_type.as_string());
 /// ```
-pub fn get_encryption_type(encrypted_content: &[u8]) -> Result<Box<dyn EncryptionType>> {
-    let e_type = if GPG::is_this_type(encrypted_content) {
-        "gpg"
-    } else {
-        "age"
-    };
+pub fn get_encryption_type(profile_name: &str) -> Result<Box<dyn EncryptionType>> {
+    let encrypted_content = utils::get_profile_content(profile_name)?;
+
+    let e_type =
+        if GPG::is_this_type(&encrypted_content) || GPG::is_this_type_fallback(profile_name)? {
+            "gpg"
+        } else {
+            "age"
+        };
 
     create_encryption_type("".to_string(), e_type)
 }

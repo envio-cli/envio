@@ -2,9 +2,11 @@ use std::collections::HashMap;
 use std::{io::Write, path::PathBuf};
 
 use chrono::NaiveDate;
+use colored::Colorize;
+use inquire::Confirm;
 use serde::{Deserialize, Serialize};
 
-use crate::utils::{get_configdir, truncate_identity_bytes};
+use crate::utils::{self, get_configdir, truncate_identity_bytes};
 
 use crate::crypto::EncryptionType;
 use crate::error::{Error, Result};
@@ -387,31 +389,28 @@ impl Profile {
             encryption_type,
         }
     }
-    /// Create a new profile object from the encrypted contents of a stored
-    /// profile file
-    ///  
+
+    /// Create a new profile object from a profile file stored on the system
     ///
-    /// This method is not meant to be used by the end user. It is recommended
-    /// to use the [load_profile](crate::load_profile) macro to load a profile.
+    /// This method is not meant to be used by the end user. It is recommended to
+    /// use the [load_profile](crate::load_profile) macro to load a profile.
     ///
     /// # Parameters
-    /// - `name` - The name of the profile
-    /// - `encrypted_content` - The encrypted contents of the profile file
+    /// - `profile_name` - The name of the profile
     /// - `encryption_type` - The encryption type used to encrypt the profile
     ///
-    /// `name` can either be the name of the profile or the absolute path to the
-    /// profile file.
+    /// `profile_name` can either be the name of the profile or the absolute path
+    /// to the profile file.
     ///
     /// # Returns
     /// - `Result<Profile>`: the profile object if the operation was successful or an error if it was not
     ///
-    /// # Examples
+    ///   /// # Examples
     /// ```
     /// use envio::Profile;
     ///
-    /// let encrypted_content = envio::utils::get_profile_content("my-profile").unwrap();
-    ///
-    /// let mut profile = match Profile::from_content("my-profile", &encrypted_content, envio::crypto::get_encryption_type(&encrypted_content).unwrap()) {
+    /// let profile_name = "my-profile";
+    /// let mut profile = match Profile::from(profile_name, envio::crypto::get_encryption_type(profile_name).unwrap()) {
     ///     Ok(p) => p,
     ///     Err(e) => {
     ///         eprintln!("An error occurred: {}", e);
@@ -419,11 +418,14 @@ impl Profile {
     ///     }
     ///  };
     /// ```
-    pub fn from_content(
-        encrypted_content: &[u8],
-        encryption_type: Box<dyn EncryptionType>,
+    pub fn from(
+        profile_name: &str,
+        mut encryption_type: Box<dyn EncryptionType>,
     ) -> Result<Profile> {
-        let truncated_content = truncate_identity_bytes(encrypted_content);
+        let profile_file_path = utils::get_profile_filepath(profile_name)?;
+        let encrypted_content = std::fs::read(&profile_file_path)?;
+
+        let truncated_content = truncate_identity_bytes(&encrypted_content);
 
         let content = match encryption_type.decrypt(&truncated_content) {
             Ok(c) => c,
@@ -434,7 +436,68 @@ impl Profile {
 
         match bincode::deserialize(&content) {
             Ok(profile) => Ok(profile),
-            Err(e) => Err(Error::Deserialization(e.to_string())),
+            Err(_) => {
+                // Profiles created with older versions of envio are not serialized using bincode
+                println!(
+                    "{}",
+                    format!(
+                        "{}: Unable to deserialize the profile content\n\
+                    \n\
+                    This may indicate:\n\
+                     - The file has been tampered with\n\
+                     - It was created with an older version of the tool\n",
+                        "Warning".yellow().bold()
+                    )
+                );
+
+                let prompt =
+                    Confirm::new("Do you want to fallback to the old way of reading the profile?")
+                        .with_default(false)
+                        .with_help_message("If the file has been tampered with, then falling back to the old way of reading the profile will not work")
+                        .prompt();
+
+                let fallback = match prompt {
+                    Ok(f) => f,
+                    Err(e) => return Err(Error::Msg(e.to_string())),
+                };
+
+                if !fallback {
+                    return Err(Error::Deserialization(
+                        "Unable to deserialize the profile content".to_string(),
+                    ));
+                }
+
+                let mut envs = HashMap::new();
+                let string_content = String::from_utf8_lossy(&content);
+                for line in string_content.lines() {
+                    if line.is_empty() {
+                        continue;
+                    }
+
+                    if !line.contains('=') {
+                        encryption_type.set_key(line.to_string());
+                        continue;
+                    }
+
+                    let mut parts = line.splitn(2, '=');
+                    if let (Some(key), Some(value)) = (parts.next(), parts.next()) {
+                        envs.insert(key.to_string(), value.to_string());
+                    }
+                }
+
+                let mut profile = Profile::new(
+                    profile_name.to_owned(),
+                    envs.into(),
+                    profile_file_path,
+                    encryption_type,
+                );
+
+                profile.push_changes()?; // Update the profile file with the new format
+
+                println!("{}", "Fallback successful!".green().bold());
+
+                return Ok(profile);
+            }
         }
     }
 
@@ -715,10 +778,9 @@ macro_rules! load_profile {
             use envio::crypto;
             use envio::utils;
 
-            let encrypted_content = utils::get_profile_content($name)?;
             let mut encryption_type;
 
-            match crypto::get_encryption_type(&encrypted_content) {
+            match crypto::get_encryption_type($name) {
                 Ok(t) => encryption_type = t,
                 Err(e) => return Err(e.into()),
             }
@@ -730,7 +792,7 @@ macro_rules! load_profile {
                 )?
             }
 
-            match Profile::from_content(&encrypted_content, encryption_type) {
+            match Profile::from($name, encryption_type) {
                 Ok(profile) => return Ok(profile),
                 Err(e) => return Err(e.into()),
             }
