@@ -366,6 +366,10 @@ impl Command {
                 }
 
                 for env in &mut profile.envs {
+                    if envs.iter().find(|&e| e.contains(&env.name)).is_none() {
+                        continue;
+                    }
+
                     if *add_comments {
                         let prompt =
                             Text::new(&format!("Enter a comment for '{}':", env.name)).prompt();
@@ -580,7 +584,7 @@ impl Command {
                 }
 
                 for env in &mut profile.envs {
-                    if !(*envs).contains(&env.name) {
+                    if envs.iter().find(|&e| e.contains(&env.name)).is_none() {
                         continue;
                     }
 
