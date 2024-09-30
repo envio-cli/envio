@@ -98,8 +98,8 @@ _arguments "${_arguments_options[@]}" \
 '--no-pretty-print[]' \
 '-c[]' \
 '--display-comments[]' \
-'-e[]' \
-'--display-expired[]' \
+'-x[]' \
+'--display-expiration-date[]' \
 '-h[Print help]' \
 '--help[Print help]' \
 && ret=0

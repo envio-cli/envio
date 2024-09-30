@@ -503,7 +503,7 @@ impl Command {
                 profile_name,
                 no_pretty_print,
                 display_comments,
-                display_expired,
+                display_expiration_date,
             } => {
                 if *profiles {
                     cli::list_profiles(*no_pretty_print)?;
@@ -522,7 +522,7 @@ impl Command {
                             println!("{}={}", env.name, env.value);
                         }
                     } else {
-                        cli::list_envs(&profile, *display_comments, *display_expired);
+                        cli::list_envs(&profile, *display_comments, *display_expiration_date);
                     }
                 }
             }

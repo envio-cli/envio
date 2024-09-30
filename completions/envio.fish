@@ -31,7 +31,7 @@ complete -c envio -n "__fish_seen_subcommand_from list" -s n -l profile-name -r
 complete -c envio -n "__fish_seen_subcommand_from list" -s p -l profiles
 complete -c envio -n "__fish_seen_subcommand_from list" -s v -l no-pretty-print
 complete -c envio -n "__fish_seen_subcommand_from list" -s c -l display-comments
-complete -c envio -n "__fish_seen_subcommand_from list" -s e -l display-expired
+complete -c envio -n "__fish_seen_subcommand_from list" -s x -l display-expiration-date
 complete -c envio -n "__fish_seen_subcommand_from list" -s h -l help -d 'Print help'
 complete -c envio -n "__fish_seen_subcommand_from update" -s e -l envs -r
 complete -c envio -n "__fish_seen_subcommand_from update" -s v -l update-values

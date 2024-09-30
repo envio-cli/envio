@@ -115,8 +115,8 @@ pub enum Command {
         no_pretty_print: bool,
         #[arg(required = false, long = "display-comments", short = 'c')]
         display_comments: bool,
-        #[arg(required = false, long = "display-expired", short = 'e')]
-        display_expired: bool,
+        #[arg(required = false, long = "display-expiration-date", short = 'x')]
+        display_expiration_date: bool,
     },
     #[command(
         name = "update",
