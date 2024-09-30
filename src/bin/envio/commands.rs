@@ -38,11 +38,7 @@ fn get_userkey() -> String {
     }
 }
 
-/**
- * Check to see if the user is using a vi based editor so that we can use the vim mode in the inquire crate
-
- @return Result<bool, String>
-*/
+/// Check to see if the user is using a vi based editor so that we can use the vim mode in the inquire crate
 fn get_vim_mode() -> Result<bool> {
     let env = env::var("VISUAL").unwrap_or_else(|_| env::var("EDITOR").unwrap_or_default());
 
@@ -57,9 +53,7 @@ fn get_vim_mode() -> Result<bool> {
 }
 
 impl Command {
-    /**
-     * Run the subcommand that was passed to the program
-     */
+    /// Run the subcommand that was passed to the CLI
     pub fn run(&self) -> Result<()> {
         let vim_mode = get_vim_mode().unwrap_or(false);
 
