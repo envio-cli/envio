@@ -23,7 +23,6 @@ use crate::utils::parse_envs_from_string;
 /// Get the user's encryption key
 fn get_userkey() -> String {
     println!("{}", "Loading Profile".green());
-    println!("{}", "Enter your encryption key".green());
     let prompt = Password::new("Enter your encryption key:")
         .with_display_toggle_enabled()
         .with_display_mode(PasswordDisplayMode::Masked)
