@@ -108,6 +108,8 @@ _arguments "${_arguments_options[@]}" \
 _arguments "${_arguments_options[@]}" \
 '*-e+[]:ENVS: ' \
 '*--envs=[]:ENVS: ' \
+'-v[]' \
+'--update-values[]' \
 '-c[]' \
 '--update-comments[]' \
 '-x[]' \

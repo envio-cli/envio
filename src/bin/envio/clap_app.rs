@@ -134,6 +134,8 @@ pub enum Command {
             num_args = 1..,
         )]
         envs: Vec<String>,
+        #[arg(required = false, long = "update-values", short = 'v')]
+        update_values: bool,
         #[arg(required = false, long = "update-comments", short = 'c')]
         update_comments: bool,
         #[arg(required = false, long = "update-expiration-date", short = 'x')]

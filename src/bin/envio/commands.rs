@@ -530,6 +530,7 @@ impl Command {
             Command::Update {
                 profile_name,
                 envs,
+                update_values,
                 update_comments,
                 update_expiration_date,
             } => {
@@ -537,49 +538,64 @@ impl Command {
                     return Err(Error::ProfileDoesNotExist(profile_name.to_string()));
                 }
 
+                if envs.is_empty() {
+                    return Err(Error::Msg(
+                        "You must provide at least one environment variable to update".to_string(),
+                    ));
+                }
+
                 let mut profile = load_profile!(profile_name, get_userkey)?;
                 check_expired_envs(&profile);
 
-                for env in envs {
-                    if (*env).contains('=') {
-                        let mut parts = env.splitn(2, '=');
+                if !*update_values && !*update_comments && !*update_expiration_date {
+                    return Err(Error::Msg(
+                        "You must provide at least one flag to update".to_string(),
+                    ));
+                }
 
-                        if let Some(key) = parts.next() {
-                            if !profile.envs.contains_key(key) {
-                                return Err(Error::EnvDoesNotExist(key.to_string()));
-                            }
+                if *update_values {
+                    for env in envs {
+                        if (*env).contains('=') {
+                            let mut parts = env.splitn(2, '=');
 
-                            if let Some(value) = parts.next() {
-                                profile.edit_env(key.to_string(), value.to_string())?
+                            if let Some(key) = parts.next() {
+                                if !profile.envs.contains_key(key) {
+                                    return Err(Error::EnvDoesNotExist(key.to_string()));
+                                }
+
+                                if let Some(value) = parts.next() {
+                                    profile.edit_env(key.to_string(), value.to_string())?
+                                } else {
+                                    return Err(Error::Msg(format!(
+                                        "Unable to parse value for key '{}'",
+                                        key
+                                    )));
+                                }
                             } else {
                                 return Err(Error::Msg(format!(
-                                    "Unable to parse value for key '{}'",
-                                    key
+                                    "Unable to parse key-value pair from '{}'",
+                                    env
                                 )));
                             }
-                        } else {
-                            return Err(Error::Msg(format!(
-                                "Unable to parse key-value pair from '{}'",
-                                env
-                            )));
+
+                            continue;
                         }
 
-                        continue;
-                    }
+                        if !profile.envs.contains_key(env) {
+                            return Err(Error::EnvDoesNotExist(env.to_string()));
+                        }
 
-                    if !profile.envs.contains_key(env) {
-                        return Err(Error::EnvDoesNotExist(env.to_string()));
-                    }
+                        let new_value;
 
-                    let new_value;
+                        let prompt =
+                            Text::new(&format!("Enter the new value for {}:", env)).prompt();
 
-                    let prompt = Text::new(&format!("Enter the new value for {}:", env)).prompt();
-
-                    if let Err(e) = prompt {
-                        return Err(Error::Msg(e.to_string()));
-                    } else {
-                        new_value = prompt.unwrap();
-                        profile.edit_env(env.to_string(), new_value)?;
+                        if let Err(e) = prompt {
+                            return Err(Error::Msg(e.to_string()));
+                        } else {
+                            new_value = prompt.unwrap();
+                            profile.edit_env(env.to_string(), new_value)?;
+                        }
                     }
                 }
 

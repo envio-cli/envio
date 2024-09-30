@@ -501,7 +501,7 @@ _envio() {
             return 0
             ;;
         envio__update)
-            opts="-e -c -x -h --envs --update-comments --update-expiration-date --help <PROFILE_NAME>"
+            opts="-e -v -c -x -h --envs --update-values --update-comments --update-expiration-date --help <PROFILE_NAME>"
             if [[ ${cur} == -* || ${COMP_CWORD} -eq 2 ]] ; then
                 COMPREPLY=( $(compgen -W "${opts}" -- "${cur}") )
                 return 0

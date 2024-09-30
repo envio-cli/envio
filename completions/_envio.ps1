@@ -105,6 +105,8 @@ Register-ArgumentCompleter -Native -CommandName 'envio' -ScriptBlock {
         'envio;update' {
             [CompletionResult]::new('-e', 'e', [CompletionResultType]::ParameterName, 'e')
             [CompletionResult]::new('--envs', 'envs', [CompletionResultType]::ParameterName, 'envs')
+            [CompletionResult]::new('-v', 'v', [CompletionResultType]::ParameterName, 'v')
+            [CompletionResult]::new('--update-values', 'update-values', [CompletionResultType]::ParameterName, 'update-values')
             [CompletionResult]::new('-c', 'c', [CompletionResultType]::ParameterName, 'c')
             [CompletionResult]::new('--update-comments', 'update-comments', [CompletionResultType]::ParameterName, 'update-comments')
             [CompletionResult]::new('-x', 'x', [CompletionResultType]::ParameterName, 'x')
