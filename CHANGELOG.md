@@ -1,4 +1,12 @@
 # Change Log
+# v0.6.1
+## Features
+* Users can now pass in the `-v` (or `--update-values`) argument to optionally update the values of their envs in the `update` command
+
+## Bug Fixes
+* Implement backward compatibility with older profile handling #67
+* Fix issue where adding a comment or expiration date to a new or updated environment variable prompted input for all existing environment variables in the profile #70
+
 # v0.6.0
 ## Features
 * Launch command as positional argument by @Rubensei in https://github.com/envio-cli/envio/pull/41
