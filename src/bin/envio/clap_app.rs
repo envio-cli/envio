@@ -175,8 +175,8 @@ pub enum Command {
     },
     #[command(name = "version", about = "Print the version")]
     Version {
-        #[arg(required = false)]
-        verbose: Option<bool>,
+        #[arg(required = false, long = "verbose", short = 'v')]
+        verbose: bool,
     },
 }
 

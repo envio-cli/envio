@@ -143,9 +143,10 @@ _arguments "${_arguments_options[@]}" \
 ;;
 (version)
 _arguments "${_arguments_options[@]}" \
+'-v[]' \
+'--verbose[]' \
 '-h[Print help]' \
 '--help[Print help]' \
-'::verbose:(true false)' \
 && ret=0
 ;;
 (help)

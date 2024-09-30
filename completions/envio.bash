@@ -523,7 +523,7 @@ _envio() {
             return 0
             ;;
         envio__version)
-            opts="-h --help true false"
+            opts="-v -h --verbose --help"
             if [[ ${cur} == -* || ${COMP_CWORD} -eq 2 ]] ; then
                 COMPREPLY=( $(compgen -W "${opts}" -- "${cur}") )
                 return 0

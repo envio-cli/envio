@@ -715,7 +715,7 @@ impl Command {
             }
 
             Command::Version { verbose } => {
-                if verbose.is_some() && verbose.unwrap() {
+                if *verbose {
                     println!("{} {}", "Version".green(), env!("BUILD_VERSION"));
                     println!("{} {}", "Build Timestamp".green(), env!("BUILD_TIMESTAMP"));
                     println!("{} {}", "Author".green(), env!("CARGO_PKG_AUTHORS"));
