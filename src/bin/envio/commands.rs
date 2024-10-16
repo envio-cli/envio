@@ -133,9 +133,9 @@ impl Command {
                         .with_validator(min_length!(8))
                         .with_formatter(&|_| String::from("Input received"))
                         .with_help_message(
-                            "Remeber this key, you will need it to decrypt your profile later",
+                            "Remember this key, you will need it to decrypt your profile later",
                         )
-                        .with_custom_confirmation_error_message("The keys don't match.")
+                        .with_custom_confirmation_error_message("The keys don7't match.")
                         .prompt();
 
                     let user_key = if let Err(e) = prompt {
