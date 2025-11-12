@@ -34,6 +34,8 @@ _arguments "${_arguments_options[@]}" \
 '*--envs=[]:ENVS: ' \
 '-g+[]:GPG: ' \
 '--gpg-key-fingerprint=[]:GPG: ' \
+'-n[]' \
+'--no-encryption[]' \
 '-c[]' \
 '--add-comments[]' \
 '-x[]' \

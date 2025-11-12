@@ -1,9 +1,11 @@
 pub mod age;
 pub mod gpg;
+pub mod no_encryption;
 
 // Re-export the encryption types so that users don't have to use envio::crypto::type::TYPE
 pub use age::AGE;
 pub use gpg::GPG;
+pub use no_encryption::NoEncryption;
 
 use crate::{
     error::{Error, Result},
@@ -97,6 +99,7 @@ pub fn create_encryption_type(
     match encryption_type_str {
         "age" => Ok(Box::new(AGE::new(key))),
         "gpg" => Ok(Box::new(GPG::new(key))),
+        "none" => Ok(Box::new(NoEncryption::new(key))),
         _ => Err(Error::InvalidEncryptionType(
             encryption_type_str.to_string(),
         )),
@@ -131,12 +134,13 @@ pub fn create_encryption_type(
 pub fn get_encryption_type(profile_name: &str) -> Result<Box<dyn EncryptionType>> {
     let encrypted_content = utils::get_profile_content(profile_name)?;
 
-    let e_type =
-        if GPG::is_this_type(&encrypted_content) || GPG::is_this_type_fallback(profile_name)? {
-            "gpg"
-        } else {
-            "age"
-        };
+    let e_type = if NoEncryption::is_this_type(&encrypted_content) {
+        "none"
+    } else if GPG::is_this_type(&encrypted_content) || GPG::is_this_type_fallback(profile_name)? {
+        "gpg"
+    } else {
+        "age"
+    };
 
     create_encryption_type("".to_string(), e_type)
 }

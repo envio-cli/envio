@@ -127,7 +127,7 @@ _envio() {
             return 0
             ;;
         envio__create)
-            opts="-f -e -g -c -x -h --file-to-import-envs-from --envs --gpg-key-fingerprint --add-comments --add-expiration-date --help <PROFILE_NAME>"
+            opts="-f -e -g -n -c -x -h --file-to-import-envs-from --envs --gpg-key-fingerprint --no-encryption --add-comments --add-expiration-date --help <PROFILE_NAME>"
             if [[ ${cur} == -* || ${COMP_CWORD} -eq 2 ]] ; then
                 COMPREPLY=( $(compgen -W "${opts}" -- "${cur}") )
                 return 0

@@ -37,6 +37,8 @@ pub enum Command {
         envs: Option<Vec<String>>,
         #[arg(required = false, long = "gpg-key-fingerprint", short = 'g')]
         gpg: Option<String>,
+        #[arg(required = false, long = "no-encryption", short = 'n')]
+        no_encryption: bool,
         #[arg(required = false, long = "add-comments", short = 'c')]
         add_comments: bool,
         #[arg(required = false, long = "add-expiration-date", short = 'x')]

@@ -44,6 +44,8 @@ Register-ArgumentCompleter -Native -CommandName 'envio' -ScriptBlock {
             [CompletionResult]::new('--envs', 'envs', [CompletionResultType]::ParameterName, 'envs')
             [CompletionResult]::new('-g', 'g', [CompletionResultType]::ParameterName, 'g')
             [CompletionResult]::new('--gpg-key-fingerprint', 'gpg-key-fingerprint', [CompletionResultType]::ParameterName, 'gpg-key-fingerprint')
+            [CompletionResult]::new('-n', 'n', [CompletionResultType]::ParameterName, 'n')
+            [CompletionResult]::new('--no-encryption', 'no-encryption', [CompletionResultType]::ParameterName, 'no-encryption')
             [CompletionResult]::new('-c', 'c', [CompletionResultType]::ParameterName, 'c')
             [CompletionResult]::new('--add-comments', 'add-comments', [CompletionResultType]::ParameterName, 'add-comments')
             [CompletionResult]::new('-x', 'x', [CompletionResultType]::ParameterName, 'x')

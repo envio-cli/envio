@@ -63,6 +63,7 @@ impl Command {
                 envs,
                 envs_file,
                 gpg,
+                no_encryption,
                 add_comments,
                 add_expiration_date,
             } => {
@@ -77,7 +78,9 @@ impl Command {
                 let gpg_key;
                 let encryption_type;
 
-                if gpg.is_some() {
+                if *no_encryption {
+                    encryption_type = create_encryption_type("".to_string(), "none")?;
+                } else if gpg.is_some() {
                     if gpg.as_ref().unwrap() == "select" {
                         let available_keys;
 

@@ -14,6 +14,7 @@ complete -c envio -n "__fish_use_subcommand" -f -a "help" -d 'Print this message
 complete -c envio -n "__fish_seen_subcommand_from create" -s f -l file-to-import-envs-from -r
 complete -c envio -n "__fish_seen_subcommand_from create" -s e -l envs -r
 complete -c envio -n "__fish_seen_subcommand_from create" -s g -l gpg-key-fingerprint -r
+complete -c envio -n "__fish_seen_subcommand_from create" -s n -l no-encryption
 complete -c envio -n "__fish_seen_subcommand_from create" -s c -l add-comments
 complete -c envio -n "__fish_seen_subcommand_from create" -s x -l add-expiration-date
 complete -c envio -n "__fish_seen_subcommand_from create" -s h -l help -d 'Print help'

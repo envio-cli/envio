@@ -790,6 +790,8 @@ macro_rules! load_profile {
                     let key = $get_key();
                     encryption_type.set_key(key);
                 )?
+            } else if encryption_type.as_string() == "none" {
+                // No key required for unencrypted profiles
             }
 
             match Profile::from($name, encryption_type) {
