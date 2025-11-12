@@ -19,9 +19,6 @@ use envio::{
 
 use crate::utils::{contains_path_separator, download_file, get_configdir, get_cwd};
 
-#[cfg(target_family = "unix")]
-use crate::utils::get_shell_config;
-
 /// Create a new profile which is stored in the profiles directory
 ///
 /// # Parameters
@@ -414,18 +411,9 @@ esac
 /// - `Result<()>`: whether the operation was successful
 #[cfg(target_family = "unix")]
 pub fn load_profile(profile: Profile) -> Result<()> {
-    let shell_config = get_shell_config()?;
-
     create_shellscript(&profile)?;
 
-    if !shell_config.is_empty() {
-        println!(
-            "Reload your shell to apply changes or run `source {}`",
-            format_args!("~/{}", shell_config)
-        );
-    } else {
-        println!("Reload your shell to apply changes");
-    }
+    println!("{}", "Environment variables loaded successfully!".green());
 
     Ok(())
 }
@@ -451,7 +439,8 @@ pub fn load_profile(profile: Profile) -> envio::error::Result<()> {
         }
     }
 
-    println!("Reload your shell to apply changes");
+    println!("{}", "Environment variables loaded successfully!".green());
+    println!("{}", "Note: Reload your shell to apply changes on Windows".yellow());
     Ok(())
 }
 
@@ -469,7 +458,7 @@ pub fn unload_profile() -> Result<()> {
 
     file.set_len(0)?;
 
-    println!("Reload your shell to apply changes");
+    println!("{}", "Environment variables unloaded successfully!".green());
     Ok(())
 }
 
@@ -499,7 +488,8 @@ pub fn unload_profile(profile: Profile) -> Result<()> {
             }
         }
     }
-    println!("Reload your shell to apply changes");
+    println!("{}", "Environment variables unloaded successfully!".green());
+    println!("{}", "Note: Reload your shell to apply changes on Windows".yellow());
 
     Ok(())
 }

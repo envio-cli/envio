@@ -21,8 +21,8 @@ Register-ArgumentCompleter -Native -CommandName 'envio' -ScriptBlock {
 
     $completions = @(switch ($command) {
         'envio' {
-            [CompletionResult]::new('-h', 'h', [CompletionResultType]::ParameterName, 'Print help')
-            [CompletionResult]::new('--help', 'help', [CompletionResultType]::ParameterName, 'Print help')
+            [CompletionResult]::new('-h', '-h', [CompletionResultType]::ParameterName, 'Print help')
+            [CompletionResult]::new('--help', '--help', [CompletionResultType]::ParameterName, 'Print help')
             [CompletionResult]::new('create', 'create', [CompletionResultType]::ParameterValue, 'Create a new profile')
             [CompletionResult]::new('add', 'add', [CompletionResultType]::ParameterValue, 'Add envionment variables to a profile')
             [CompletionResult]::new('load', 'load', [CompletionResultType]::ParameterValue, 'Load all environment variables in a profile for use in your terminal sessions')
@@ -38,108 +38,108 @@ Register-ArgumentCompleter -Native -CommandName 'envio' -ScriptBlock {
             break
         }
         'envio;create' {
-            [CompletionResult]::new('-f', 'f', [CompletionResultType]::ParameterName, 'f')
-            [CompletionResult]::new('--file-to-import-envs-from', 'file-to-import-envs-from', [CompletionResultType]::ParameterName, 'file-to-import-envs-from')
-            [CompletionResult]::new('-e', 'e', [CompletionResultType]::ParameterName, 'e')
-            [CompletionResult]::new('--envs', 'envs', [CompletionResultType]::ParameterName, 'envs')
-            [CompletionResult]::new('-g', 'g', [CompletionResultType]::ParameterName, 'g')
-            [CompletionResult]::new('--gpg-key-fingerprint', 'gpg-key-fingerprint', [CompletionResultType]::ParameterName, 'gpg-key-fingerprint')
-            [CompletionResult]::new('-n', 'n', [CompletionResultType]::ParameterName, 'n')
-            [CompletionResult]::new('--no-encryption', 'no-encryption', [CompletionResultType]::ParameterName, 'no-encryption')
-            [CompletionResult]::new('-c', 'c', [CompletionResultType]::ParameterName, 'c')
-            [CompletionResult]::new('--add-comments', 'add-comments', [CompletionResultType]::ParameterName, 'add-comments')
-            [CompletionResult]::new('-x', 'x', [CompletionResultType]::ParameterName, 'x')
-            [CompletionResult]::new('--add-expiration-date', 'add-expiration-date', [CompletionResultType]::ParameterName, 'add-expiration-date')
-            [CompletionResult]::new('-h', 'h', [CompletionResultType]::ParameterName, 'Print help')
-            [CompletionResult]::new('--help', 'help', [CompletionResultType]::ParameterName, 'Print help')
+            [CompletionResult]::new('-f', '-f', [CompletionResultType]::ParameterName, 'f')
+            [CompletionResult]::new('--file-to-import-envs-from', '--file-to-import-envs-from', [CompletionResultType]::ParameterName, 'file-to-import-envs-from')
+            [CompletionResult]::new('-e', '-e', [CompletionResultType]::ParameterName, 'e')
+            [CompletionResult]::new('--envs', '--envs', [CompletionResultType]::ParameterName, 'envs')
+            [CompletionResult]::new('-g', '-g', [CompletionResultType]::ParameterName, 'g')
+            [CompletionResult]::new('--gpg-key-fingerprint', '--gpg-key-fingerprint', [CompletionResultType]::ParameterName, 'gpg-key-fingerprint')
+            [CompletionResult]::new('-n', '-n', [CompletionResultType]::ParameterName, 'n')
+            [CompletionResult]::new('--no-encryption', '--no-encryption', [CompletionResultType]::ParameterName, 'no-encryption')
+            [CompletionResult]::new('-c', '-c', [CompletionResultType]::ParameterName, 'c')
+            [CompletionResult]::new('--add-comments', '--add-comments', [CompletionResultType]::ParameterName, 'add-comments')
+            [CompletionResult]::new('-x', '-x', [CompletionResultType]::ParameterName, 'x')
+            [CompletionResult]::new('--add-expiration-date', '--add-expiration-date', [CompletionResultType]::ParameterName, 'add-expiration-date')
+            [CompletionResult]::new('-h', '-h', [CompletionResultType]::ParameterName, 'Print help')
+            [CompletionResult]::new('--help', '--help', [CompletionResultType]::ParameterName, 'Print help')
             break
         }
         'envio;add' {
-            [CompletionResult]::new('-e', 'e', [CompletionResultType]::ParameterName, 'e')
-            [CompletionResult]::new('--envs', 'envs', [CompletionResultType]::ParameterName, 'envs')
-            [CompletionResult]::new('-c', 'c', [CompletionResultType]::ParameterName, 'c')
-            [CompletionResult]::new('--add-comments', 'add-comments', [CompletionResultType]::ParameterName, 'add-comments')
-            [CompletionResult]::new('-x', 'x', [CompletionResultType]::ParameterName, 'x')
-            [CompletionResult]::new('--add-expiration-date', 'add-expiration-date', [CompletionResultType]::ParameterName, 'add-expiration-date')
-            [CompletionResult]::new('-h', 'h', [CompletionResultType]::ParameterName, 'Print help')
-            [CompletionResult]::new('--help', 'help', [CompletionResultType]::ParameterName, 'Print help')
+            [CompletionResult]::new('-e', '-e', [CompletionResultType]::ParameterName, 'e')
+            [CompletionResult]::new('--envs', '--envs', [CompletionResultType]::ParameterName, 'envs')
+            [CompletionResult]::new('-c', '-c', [CompletionResultType]::ParameterName, 'c')
+            [CompletionResult]::new('--add-comments', '--add-comments', [CompletionResultType]::ParameterName, 'add-comments')
+            [CompletionResult]::new('-x', '-x', [CompletionResultType]::ParameterName, 'x')
+            [CompletionResult]::new('--add-expiration-date', '--add-expiration-date', [CompletionResultType]::ParameterName, 'add-expiration-date')
+            [CompletionResult]::new('-h', '-h', [CompletionResultType]::ParameterName, 'Print help')
+            [CompletionResult]::new('--help', '--help', [CompletionResultType]::ParameterName, 'Print help')
             break
         }
         'envio;load' {
-            [CompletionResult]::new('-h', 'h', [CompletionResultType]::ParameterName, 'Print help')
-            [CompletionResult]::new('--help', 'help', [CompletionResultType]::ParameterName, 'Print help')
+            [CompletionResult]::new('-h', '-h', [CompletionResultType]::ParameterName, 'Print help')
+            [CompletionResult]::new('--help', '--help', [CompletionResultType]::ParameterName, 'Print help')
             break
         }
         'envio;unload' {
-            [CompletionResult]::new('-h', 'h', [CompletionResultType]::ParameterName, 'Print help')
-            [CompletionResult]::new('--help', 'help', [CompletionResultType]::ParameterName, 'Print help')
+            [CompletionResult]::new('-h', '-h', [CompletionResultType]::ParameterName, 'Print help')
+            [CompletionResult]::new('--help', '--help', [CompletionResultType]::ParameterName, 'Print help')
             break
         }
         'envio;launch' {
-            [CompletionResult]::new('-c', 'c', [CompletionResultType]::ParameterName, 'c')
-            [CompletionResult]::new('--command', 'command', [CompletionResultType]::ParameterName, 'command')
-            [CompletionResult]::new('-h', 'h', [CompletionResultType]::ParameterName, 'Print help')
-            [CompletionResult]::new('--help', 'help', [CompletionResultType]::ParameterName, 'Print help')
+            [CompletionResult]::new('-c', '-c', [CompletionResultType]::ParameterName, 'c')
+            [CompletionResult]::new('--command', '--command', [CompletionResultType]::ParameterName, 'command')
+            [CompletionResult]::new('-h', '-h', [CompletionResultType]::ParameterName, 'Print help')
+            [CompletionResult]::new('--help', '--help', [CompletionResultType]::ParameterName, 'Print help')
             break
         }
         'envio;remove' {
-            [CompletionResult]::new('-e', 'e', [CompletionResultType]::ParameterName, 'e')
-            [CompletionResult]::new('--envs-to-remove', 'envs-to-remove', [CompletionResultType]::ParameterName, 'envs-to-remove')
-            [CompletionResult]::new('-h', 'h', [CompletionResultType]::ParameterName, 'Print help')
-            [CompletionResult]::new('--help', 'help', [CompletionResultType]::ParameterName, 'Print help')
+            [CompletionResult]::new('-e', '-e', [CompletionResultType]::ParameterName, 'e')
+            [CompletionResult]::new('--envs-to-remove', '--envs-to-remove', [CompletionResultType]::ParameterName, 'envs-to-remove')
+            [CompletionResult]::new('-h', '-h', [CompletionResultType]::ParameterName, 'Print help')
+            [CompletionResult]::new('--help', '--help', [CompletionResultType]::ParameterName, 'Print help')
             break
         }
         'envio;list' {
-            [CompletionResult]::new('-n', 'n', [CompletionResultType]::ParameterName, 'n')
-            [CompletionResult]::new('--profile-name', 'profile-name', [CompletionResultType]::ParameterName, 'profile-name')
-            [CompletionResult]::new('-p', 'p', [CompletionResultType]::ParameterName, 'p')
-            [CompletionResult]::new('--profiles', 'profiles', [CompletionResultType]::ParameterName, 'profiles')
-            [CompletionResult]::new('-v', 'v', [CompletionResultType]::ParameterName, 'v')
-            [CompletionResult]::new('--no-pretty-print', 'no-pretty-print', [CompletionResultType]::ParameterName, 'no-pretty-print')
-            [CompletionResult]::new('-c', 'c', [CompletionResultType]::ParameterName, 'c')
-            [CompletionResult]::new('--display-comments', 'display-comments', [CompletionResultType]::ParameterName, 'display-comments')
-            [CompletionResult]::new('-x', 'x', [CompletionResultType]::ParameterName, 'x')
-            [CompletionResult]::new('--display-expiration-date', 'display-expiration-date', [CompletionResultType]::ParameterName, 'display-expiration-date')
-            [CompletionResult]::new('-h', 'h', [CompletionResultType]::ParameterName, 'Print help')
-            [CompletionResult]::new('--help', 'help', [CompletionResultType]::ParameterName, 'Print help')
+            [CompletionResult]::new('-n', '-n', [CompletionResultType]::ParameterName, 'n')
+            [CompletionResult]::new('--profile-name', '--profile-name', [CompletionResultType]::ParameterName, 'profile-name')
+            [CompletionResult]::new('-p', '-p', [CompletionResultType]::ParameterName, 'p')
+            [CompletionResult]::new('--profiles', '--profiles', [CompletionResultType]::ParameterName, 'profiles')
+            [CompletionResult]::new('-v', '-v', [CompletionResultType]::ParameterName, 'v')
+            [CompletionResult]::new('--no-pretty-print', '--no-pretty-print', [CompletionResultType]::ParameterName, 'no-pretty-print')
+            [CompletionResult]::new('-c', '-c', [CompletionResultType]::ParameterName, 'c')
+            [CompletionResult]::new('--display-comments', '--display-comments', [CompletionResultType]::ParameterName, 'display-comments')
+            [CompletionResult]::new('-x', '-x', [CompletionResultType]::ParameterName, 'x')
+            [CompletionResult]::new('--display-expiration-date', '--display-expiration-date', [CompletionResultType]::ParameterName, 'display-expiration-date')
+            [CompletionResult]::new('-h', '-h', [CompletionResultType]::ParameterName, 'Print help')
+            [CompletionResult]::new('--help', '--help', [CompletionResultType]::ParameterName, 'Print help')
             break
         }
         'envio;update' {
-            [CompletionResult]::new('-e', 'e', [CompletionResultType]::ParameterName, 'e')
-            [CompletionResult]::new('--envs', 'envs', [CompletionResultType]::ParameterName, 'envs')
-            [CompletionResult]::new('-v', 'v', [CompletionResultType]::ParameterName, 'v')
-            [CompletionResult]::new('--update-values', 'update-values', [CompletionResultType]::ParameterName, 'update-values')
-            [CompletionResult]::new('-c', 'c', [CompletionResultType]::ParameterName, 'c')
-            [CompletionResult]::new('--update-comments', 'update-comments', [CompletionResultType]::ParameterName, 'update-comments')
-            [CompletionResult]::new('-x', 'x', [CompletionResultType]::ParameterName, 'x')
-            [CompletionResult]::new('--update-expiration-date', 'update-expiration-date', [CompletionResultType]::ParameterName, 'update-expiration-date')
-            [CompletionResult]::new('-h', 'h', [CompletionResultType]::ParameterName, 'Print help')
-            [CompletionResult]::new('--help', 'help', [CompletionResultType]::ParameterName, 'Print help')
+            [CompletionResult]::new('-e', '-e', [CompletionResultType]::ParameterName, 'e')
+            [CompletionResult]::new('--envs', '--envs', [CompletionResultType]::ParameterName, 'envs')
+            [CompletionResult]::new('-v', '-v', [CompletionResultType]::ParameterName, 'v')
+            [CompletionResult]::new('--update-values', '--update-values', [CompletionResultType]::ParameterName, 'update-values')
+            [CompletionResult]::new('-c', '-c', [CompletionResultType]::ParameterName, 'c')
+            [CompletionResult]::new('--update-comments', '--update-comments', [CompletionResultType]::ParameterName, 'update-comments')
+            [CompletionResult]::new('-x', '-x', [CompletionResultType]::ParameterName, 'x')
+            [CompletionResult]::new('--update-expiration-date', '--update-expiration-date', [CompletionResultType]::ParameterName, 'update-expiration-date')
+            [CompletionResult]::new('-h', '-h', [CompletionResultType]::ParameterName, 'Print help')
+            [CompletionResult]::new('--help', '--help', [CompletionResultType]::ParameterName, 'Print help')
             break
         }
         'envio;export' {
-            [CompletionResult]::new('-f', 'f', [CompletionResultType]::ParameterName, 'f')
-            [CompletionResult]::new('--file-to-export-to', 'file-to-export-to', [CompletionResultType]::ParameterName, 'file-to-export-to')
-            [CompletionResult]::new('-e', 'e', [CompletionResultType]::ParameterName, 'e')
-            [CompletionResult]::new('--envs', 'envs', [CompletionResultType]::ParameterName, 'envs')
-            [CompletionResult]::new('-h', 'h', [CompletionResultType]::ParameterName, 'Print help')
-            [CompletionResult]::new('--help', 'help', [CompletionResultType]::ParameterName, 'Print help')
+            [CompletionResult]::new('-f', '-f', [CompletionResultType]::ParameterName, 'f')
+            [CompletionResult]::new('--file-to-export-to', '--file-to-export-to', [CompletionResultType]::ParameterName, 'file-to-export-to')
+            [CompletionResult]::new('-e', '-e', [CompletionResultType]::ParameterName, 'e')
+            [CompletionResult]::new('--envs', '--envs', [CompletionResultType]::ParameterName, 'envs')
+            [CompletionResult]::new('-h', '-h', [CompletionResultType]::ParameterName, 'Print help')
+            [CompletionResult]::new('--help', '--help', [CompletionResultType]::ParameterName, 'Print help')
             break
         }
         'envio;import' {
-            [CompletionResult]::new('-f', 'f', [CompletionResultType]::ParameterName, 'f')
-            [CompletionResult]::new('--file-to-import-from', 'file-to-import-from', [CompletionResultType]::ParameterName, 'file-to-import-from')
-            [CompletionResult]::new('-u', 'u', [CompletionResultType]::ParameterName, 'u')
-            [CompletionResult]::new('--url', 'url', [CompletionResultType]::ParameterName, 'url')
-            [CompletionResult]::new('-h', 'h', [CompletionResultType]::ParameterName, 'Print help')
-            [CompletionResult]::new('--help', 'help', [CompletionResultType]::ParameterName, 'Print help')
+            [CompletionResult]::new('-f', '-f', [CompletionResultType]::ParameterName, 'f')
+            [CompletionResult]::new('--file-to-import-from', '--file-to-import-from', [CompletionResultType]::ParameterName, 'file-to-import-from')
+            [CompletionResult]::new('-u', '-u', [CompletionResultType]::ParameterName, 'u')
+            [CompletionResult]::new('--url', '--url', [CompletionResultType]::ParameterName, 'url')
+            [CompletionResult]::new('-h', '-h', [CompletionResultType]::ParameterName, 'Print help')
+            [CompletionResult]::new('--help', '--help', [CompletionResultType]::ParameterName, 'Print help')
             break
         }
         'envio;version' {
-            [CompletionResult]::new('-v', 'v', [CompletionResultType]::ParameterName, 'v')
-            [CompletionResult]::new('--verbose', 'verbose', [CompletionResultType]::ParameterName, 'verbose')
-            [CompletionResult]::new('-h', 'h', [CompletionResultType]::ParameterName, 'Print help')
-            [CompletionResult]::new('--help', 'help', [CompletionResultType]::ParameterName, 'Print help')
+            [CompletionResult]::new('-v', '-v', [CompletionResultType]::ParameterName, 'v')
+            [CompletionResult]::new('--verbose', '--verbose', [CompletionResultType]::ParameterName, 'verbose')
+            [CompletionResult]::new('-h', '-h', [CompletionResultType]::ParameterName, 'Print help')
+            [CompletionResult]::new('--help', '--help', [CompletionResultType]::ParameterName, 'Print help')
             break
         }
         'envio;help' {
