@@ -395,23 +395,15 @@ impl Command {
             }
 
             Command::Load { profile_name } => {
-                #[cfg(target_family = "unix")]
-                {
-                    cli::load_profile(profile_name)?;
+                if !Profile::does_exist(profile_name) {
+                    return Err(Error::ProfileDoesNotExist(profile_name.to_string()));
                 }
 
-                #[cfg(target_family = "windows")]
-                {
-                    if !Profile::does_exist(profile_name) {
-                        return Err(Error::ProfileDoesNotExist(profile_name.to_string()));
-                    }
+                let profile = load_profile!(profile_name, get_userkey)?;
+                check_expired_envs(&profile);
 
-                    let profile = load_profile!(profile_name, get_userkey)?;
-                    check_expired_envs(&profile);
-
-                    if let Err(e) = cli::load_profile(profile) {
-                        return Err(e);
-                    }
+                if let Err(e) = cli::load_profile(profile) {
+                    return Err(e);
                 }
             }
 
