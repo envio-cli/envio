@@ -69,7 +69,17 @@ pub fn initalize_config() -> Result<()> {
                 "
 # envio DO NOT MODIFY
 bass source {}
+
+# envio wrapper function for auto-loading environment variables
+function envio
+    command envio $argv
+    if test \"$argv[1]\" = \"load\"; and test -f {}
+        bass source {}
+    end
+end
 ",
+                shellscript_path.to_str().unwrap(),
+                shellscript_path.to_str().unwrap(),
                 shellscript_path.to_str().unwrap()
             )
         } else {
@@ -77,12 +87,31 @@ bass source {}
                 "
 #envio DO NOT MODIFY
 source {}
+
+# envio wrapper function for auto-loading environment variables
+envio() {{
+    command envio \"$@\"
+    if [ \"$1\" = \"load\" ] && [ -f {} ]; then
+        source {}
+    fi
+}}
 ",
+                shellscript_path.to_str().unwrap(),
+                shellscript_path.to_str().unwrap(),
                 shellscript_path.to_str().unwrap()
             )
         };
 
-        writeln!(file, "{}", buffer)?
+        writeln!(file, "{}", buffer)?;
+
+        println!();
+        println!("{}", "Setup complete!".green().bold());
+        println!("{}", "Please run the following command to apply changes:".yellow());
+        println!("  {}", format!("source ~/{}", shellconfig).cyan().bold());
+        println!();
+        println!("{}", "After sourcing, you can use:".green());
+        println!("  {} - Environment variables will be loaded automatically", "envio load <profile>".cyan());
+        println!("  {} - Create a profile without encryption", "envio create <profile> --no-encryption".cyan())
     }
 
     Ok(())
