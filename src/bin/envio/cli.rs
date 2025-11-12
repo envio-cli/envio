@@ -351,12 +351,30 @@ pub fn import_profile(file_path: String, profile_name: String) -> Result<()> {
 pub fn create_shellscript(profile: &Profile) -> Result<()> {
     let configdir = get_configdir()?;
     let shellscript_path = configdir.join("setenv.sh");
+    let varlist_path = configdir.join(".envio_vars");
+
+    // Read previously loaded variables
+    let prev_vars = if varlist_path.exists() {
+        std::fs::read_to_string(&varlist_path)
+            .unwrap_or_default()
+            .lines()
+            .map(|s| s.to_string())
+            .collect::<Vec<String>>()
+    } else {
+        Vec::new()
+    };
 
     let mut file = std::fs::OpenOptions::new()
         .write(true)
         .truncate(true)
         .append(false)
         .open(shellscript_path)?;
+
+    // Build unset statements for previously loaded variables
+    let mut bash_unsets = String::new();
+    for var in &prev_vars {
+        bash_unsets.push_str(&format!("unset {}\n", var));
+    }
 
     // Build export statements for bash/zsh
     let mut bash_exports = String::new();
@@ -366,13 +384,22 @@ pub fn create_shellscript(profile: &Profile) -> Result<()> {
         bash_exports.push_str(&format!("export {}='{}'\n", env.name, escaped_value));
     }
 
-    // Build set statements for fish
+    // Build unset and set statements for fish
+    let mut fish_unsets = String::new();
+    for var in &prev_vars {
+        fish_unsets.push_str(&format!("set -e {}\n", var));
+    }
+
     let mut fish_exports = String::new();
     for env in &profile.envs {
         // Escape single quotes in values
         let escaped_value = env.value.replace('\'', "'\\''");
         fish_exports.push_str(&format!("set -gx {} '{}'\n", env.name, escaped_value));
     }
+
+    // Save current variable names for next time
+    let current_vars: Vec<String> = profile.envs.iter().map(|e| e.name.clone()).collect();
+    std::fs::write(&varlist_path, current_vars.join("\n"))?;
 
     let shellscript = format!(
         r#"#!/bin/bash
@@ -382,9 +409,15 @@ SHELL_NAME=$(basename "$SHELL")
 
 case "$SHELL_NAME" in
     bash | zsh)
+        # Unset previously loaded variables
+{}
+        # Export new variables
 {}
         ;;
     fish)
+        # Unset previously loaded variables
+{}
+        # Export new variables
 {}
         ;;
     *)
@@ -392,7 +425,9 @@ case "$SHELL_NAME" in
         ;;
 esac
 "#,
+        bash_unsets.trim_end(),
         bash_exports.trim_end(),
+        fish_unsets.trim_end(),
         fish_exports.trim_end()
     );
 
@@ -450,13 +485,21 @@ pub fn load_profile(profile: Profile) -> envio::error::Result<()> {
 /// - `Result<()>`: whether the operation was successful
 #[cfg(target_family = "unix")]
 pub fn unload_profile() -> Result<()> {
+    let configdir = get_configdir()?;
+
     let file = std::fs::OpenOptions::new()
         .write(true)
         .append(false)
-        .open(get_configdir()?.join("setenv.sh"))
+        .open(configdir.join("setenv.sh"))
         .unwrap();
 
     file.set_len(0)?;
+
+    // Remove the variable tracking file
+    let varlist_path = configdir.join(".envio_vars");
+    if varlist_path.exists() {
+        std::fs::remove_file(varlist_path)?;
+    }
 
     println!("{}", "Environment variables unloaded successfully!".green());
     Ok(())

@@ -14,7 +14,7 @@ _envio() {
     fi
 
     local context curcontext="$curcontext" state line
-    _arguments "${_arguments_options[@]}" : \
+    _arguments "${_arguments_options[@]}" \
 '-h[Print help]' \
 '--help[Print help]' \
 ":: :_envio_commands" \
@@ -27,13 +27,13 @@ _envio() {
         curcontext="${curcontext%:*:*}:envio-command-$line[1]:"
         case $line[1] in
             (create)
-_arguments "${_arguments_options[@]}" : \
-'-f+[]:ENVS_FILE:_default' \
-'--file-to-import-envs-from=[]:ENVS_FILE:_default' \
-'*-e+[]:ENVS:_default' \
-'*--envs=[]:ENVS:_default' \
-'-g+[]:GPG:_default' \
-'--gpg-key-fingerprint=[]:GPG:_default' \
+_arguments "${_arguments_options[@]}" \
+'-f+[]:ENVS_FILE: ' \
+'--file-to-import-envs-from=[]:ENVS_FILE: ' \
+'*-e+[]:ENVS: ' \
+'*--envs=[]:ENVS: ' \
+'-g+[]:GPG: ' \
+'--gpg-key-fingerprint=[]:GPG: ' \
 '-n[]' \
 '--no-encryption[]' \
 '-c[]' \
@@ -42,58 +42,58 @@ _arguments "${_arguments_options[@]}" : \
 '--add-expiration-date[]' \
 '-h[Print help]' \
 '--help[Print help]' \
-':profile_name:_default' \
+':profile_name:' \
 && ret=0
 ;;
 (add)
-_arguments "${_arguments_options[@]}" : \
-'*-e+[]:ENVS:_default' \
-'*--envs=[]:ENVS:_default' \
+_arguments "${_arguments_options[@]}" \
+'*-e+[]:ENVS: ' \
+'*--envs=[]:ENVS: ' \
 '-c[]' \
 '--add-comments[]' \
 '-x[]' \
 '--add-expiration-date[]' \
 '-h[Print help]' \
 '--help[Print help]' \
-':profile_name:_default' \
+':profile_name:' \
 && ret=0
 ;;
 (load)
-_arguments "${_arguments_options[@]}" : \
+_arguments "${_arguments_options[@]}" \
 '-h[Print help]' \
 '--help[Print help]' \
-':profile_name:_default' \
+':profile_name:' \
 && ret=0
 ;;
 (unload)
-_arguments "${_arguments_options[@]}" : \
+_arguments "${_arguments_options[@]}" \
 '-h[Print help]' \
 '--help[Print help]' \
 && ret=0
 ;;
 (launch)
-_arguments "${_arguments_options[@]}" : \
-'-c+[]:STRING_COMMAND:_default' \
-'--command=[]:STRING_COMMAND:_default' \
+_arguments "${_arguments_options[@]}" \
+'-c+[]:STRING_COMMAND: ' \
+'--command=[]:STRING_COMMAND: ' \
 '-h[Print help]' \
 '--help[Print help]' \
-':profile_name:_default' \
-'*::COMMAND:_default' \
+':profile_name:' \
+'*::COMMAND:' \
 && ret=0
 ;;
 (remove)
-_arguments "${_arguments_options[@]}" : \
-'*-e+[]:ENVS:_default' \
-'*--envs-to-remove=[]:ENVS:_default' \
+_arguments "${_arguments_options[@]}" \
+'*-e+[]:ENVS: ' \
+'*--envs-to-remove=[]:ENVS: ' \
 '-h[Print help]' \
 '--help[Print help]' \
-':profile_name:_default' \
+':profile_name:' \
 && ret=0
 ;;
 (list)
-_arguments "${_arguments_options[@]}" : \
-'-n+[]:PROFILE_NAME:_default' \
-'--profile-name=[]:PROFILE_NAME:_default' \
+_arguments "${_arguments_options[@]}" \
+'-n+[]:PROFILE_NAME: ' \
+'--profile-name=[]:PROFILE_NAME: ' \
 '-p[]' \
 '--profiles[]' \
 '-v[]' \
@@ -107,9 +107,9 @@ _arguments "${_arguments_options[@]}" : \
 && ret=0
 ;;
 (update)
-_arguments "${_arguments_options[@]}" : \
-'*-e+[]:ENVS:_default' \
-'*--envs=[]:ENVS:_default' \
+_arguments "${_arguments_options[@]}" \
+'*-e+[]:ENVS: ' \
+'*--envs=[]:ENVS: ' \
 '-v[]' \
 '--update-values[]' \
 '-c[]' \
@@ -118,33 +118,33 @@ _arguments "${_arguments_options[@]}" : \
 '--update-expiration-date[]' \
 '-h[Print help]' \
 '--help[Print help]' \
-':profile_name:_default' \
+':profile_name:' \
 && ret=0
 ;;
 (export)
-_arguments "${_arguments_options[@]}" : \
-'-f+[]:FILE:_default' \
-'--file-to-export-to=[]:FILE:_default' \
-'*-e+[]:ENVS:_default' \
-'*--envs=[]:ENVS:_default' \
+_arguments "${_arguments_options[@]}" \
+'-f+[]:FILE: ' \
+'--file-to-export-to=[]:FILE: ' \
+'*-e+[]:ENVS: ' \
+'*--envs=[]:ENVS: ' \
 '-h[Print help]' \
 '--help[Print help]' \
-':profile_name:_default' \
+':profile_name:' \
 && ret=0
 ;;
 (import)
-_arguments "${_arguments_options[@]}" : \
-'-f+[]:FILE:_default' \
-'--file-to-import-from=[]:FILE:_default' \
-'-u+[]:URL:_default' \
-'--url=[]:URL:_default' \
+_arguments "${_arguments_options[@]}" \
+'-f+[]:FILE: ' \
+'--file-to-import-from=[]:FILE: ' \
+'-u+[]:URL: ' \
+'--url=[]:URL: ' \
 '-h[Print help]' \
 '--help[Print help]' \
-':profile_name:_default' \
+':profile_name:' \
 && ret=0
 ;;
 (version)
-_arguments "${_arguments_options[@]}" : \
+_arguments "${_arguments_options[@]}" \
 '-v[]' \
 '--verbose[]' \
 '-h[Print help]' \
@@ -152,7 +152,7 @@ _arguments "${_arguments_options[@]}" : \
 && ret=0
 ;;
 (help)
-_arguments "${_arguments_options[@]}" : \
+_arguments "${_arguments_options[@]}" \
 ":: :_envio__help_commands" \
 "*::: :->help" \
 && ret=0
@@ -164,51 +164,51 @@ _arguments "${_arguments_options[@]}" : \
         curcontext="${curcontext%:*:*}:envio-help-command-$line[1]:"
         case $line[1] in
             (create)
-_arguments "${_arguments_options[@]}" : \
+_arguments "${_arguments_options[@]}" \
 && ret=0
 ;;
 (add)
-_arguments "${_arguments_options[@]}" : \
+_arguments "${_arguments_options[@]}" \
 && ret=0
 ;;
 (load)
-_arguments "${_arguments_options[@]}" : \
+_arguments "${_arguments_options[@]}" \
 && ret=0
 ;;
 (unload)
-_arguments "${_arguments_options[@]}" : \
+_arguments "${_arguments_options[@]}" \
 && ret=0
 ;;
 (launch)
-_arguments "${_arguments_options[@]}" : \
+_arguments "${_arguments_options[@]}" \
 && ret=0
 ;;
 (remove)
-_arguments "${_arguments_options[@]}" : \
+_arguments "${_arguments_options[@]}" \
 && ret=0
 ;;
 (list)
-_arguments "${_arguments_options[@]}" : \
+_arguments "${_arguments_options[@]}" \
 && ret=0
 ;;
 (update)
-_arguments "${_arguments_options[@]}" : \
+_arguments "${_arguments_options[@]}" \
 && ret=0
 ;;
 (export)
-_arguments "${_arguments_options[@]}" : \
+_arguments "${_arguments_options[@]}" \
 && ret=0
 ;;
 (import)
-_arguments "${_arguments_options[@]}" : \
+_arguments "${_arguments_options[@]}" \
 && ret=0
 ;;
 (version)
-_arguments "${_arguments_options[@]}" : \
+_arguments "${_arguments_options[@]}" \
 && ret=0
 ;;
 (help)
-_arguments "${_arguments_options[@]}" : \
+_arguments "${_arguments_options[@]}" \
 && ret=0
 ;;
         esac
@@ -243,15 +243,30 @@ _envio__add_commands() {
     local commands; commands=()
     _describe -t commands 'envio add commands' commands "$@"
 }
+(( $+functions[_envio__help__add_commands] )) ||
+_envio__help__add_commands() {
+    local commands; commands=()
+    _describe -t commands 'envio help add commands' commands "$@"
+}
 (( $+functions[_envio__create_commands] )) ||
 _envio__create_commands() {
     local commands; commands=()
     _describe -t commands 'envio create commands' commands "$@"
 }
+(( $+functions[_envio__help__create_commands] )) ||
+_envio__help__create_commands() {
+    local commands; commands=()
+    _describe -t commands 'envio help create commands' commands "$@"
+}
 (( $+functions[_envio__export_commands] )) ||
 _envio__export_commands() {
     local commands; commands=()
     _describe -t commands 'envio export commands' commands "$@"
+}
+(( $+functions[_envio__help__export_commands] )) ||
+_envio__help__export_commands() {
+    local commands; commands=()
+    _describe -t commands 'envio help export commands' commands "$@"
 }
 (( $+functions[_envio__help_commands] )) ||
 _envio__help_commands() {
@@ -271,21 +286,6 @@ _envio__help_commands() {
     )
     _describe -t commands 'envio help commands' commands "$@"
 }
-(( $+functions[_envio__help__add_commands] )) ||
-_envio__help__add_commands() {
-    local commands; commands=()
-    _describe -t commands 'envio help add commands' commands "$@"
-}
-(( $+functions[_envio__help__create_commands] )) ||
-_envio__help__create_commands() {
-    local commands; commands=()
-    _describe -t commands 'envio help create commands' commands "$@"
-}
-(( $+functions[_envio__help__export_commands] )) ||
-_envio__help__export_commands() {
-    local commands; commands=()
-    _describe -t commands 'envio help export commands' commands "$@"
-}
 (( $+functions[_envio__help__help_commands] )) ||
 _envio__help__help_commands() {
     local commands; commands=()
@@ -296,75 +296,75 @@ _envio__help__import_commands() {
     local commands; commands=()
     _describe -t commands 'envio help import commands' commands "$@"
 }
-(( $+functions[_envio__help__launch_commands] )) ||
-_envio__help__launch_commands() {
-    local commands; commands=()
-    _describe -t commands 'envio help launch commands' commands "$@"
-}
-(( $+functions[_envio__help__list_commands] )) ||
-_envio__help__list_commands() {
-    local commands; commands=()
-    _describe -t commands 'envio help list commands' commands "$@"
-}
-(( $+functions[_envio__help__load_commands] )) ||
-_envio__help__load_commands() {
-    local commands; commands=()
-    _describe -t commands 'envio help load commands' commands "$@"
-}
-(( $+functions[_envio__help__remove_commands] )) ||
-_envio__help__remove_commands() {
-    local commands; commands=()
-    _describe -t commands 'envio help remove commands' commands "$@"
-}
-(( $+functions[_envio__help__unload_commands] )) ||
-_envio__help__unload_commands() {
-    local commands; commands=()
-    _describe -t commands 'envio help unload commands' commands "$@"
-}
-(( $+functions[_envio__help__update_commands] )) ||
-_envio__help__update_commands() {
-    local commands; commands=()
-    _describe -t commands 'envio help update commands' commands "$@"
-}
-(( $+functions[_envio__help__version_commands] )) ||
-_envio__help__version_commands() {
-    local commands; commands=()
-    _describe -t commands 'envio help version commands' commands "$@"
-}
 (( $+functions[_envio__import_commands] )) ||
 _envio__import_commands() {
     local commands; commands=()
     _describe -t commands 'envio import commands' commands "$@"
+}
+(( $+functions[_envio__help__launch_commands] )) ||
+_envio__help__launch_commands() {
+    local commands; commands=()
+    _describe -t commands 'envio help launch commands' commands "$@"
 }
 (( $+functions[_envio__launch_commands] )) ||
 _envio__launch_commands() {
     local commands; commands=()
     _describe -t commands 'envio launch commands' commands "$@"
 }
+(( $+functions[_envio__help__list_commands] )) ||
+_envio__help__list_commands() {
+    local commands; commands=()
+    _describe -t commands 'envio help list commands' commands "$@"
+}
 (( $+functions[_envio__list_commands] )) ||
 _envio__list_commands() {
     local commands; commands=()
     _describe -t commands 'envio list commands' commands "$@"
+}
+(( $+functions[_envio__help__load_commands] )) ||
+_envio__help__load_commands() {
+    local commands; commands=()
+    _describe -t commands 'envio help load commands' commands "$@"
 }
 (( $+functions[_envio__load_commands] )) ||
 _envio__load_commands() {
     local commands; commands=()
     _describe -t commands 'envio load commands' commands "$@"
 }
+(( $+functions[_envio__help__remove_commands] )) ||
+_envio__help__remove_commands() {
+    local commands; commands=()
+    _describe -t commands 'envio help remove commands' commands "$@"
+}
 (( $+functions[_envio__remove_commands] )) ||
 _envio__remove_commands() {
     local commands; commands=()
     _describe -t commands 'envio remove commands' commands "$@"
+}
+(( $+functions[_envio__help__unload_commands] )) ||
+_envio__help__unload_commands() {
+    local commands; commands=()
+    _describe -t commands 'envio help unload commands' commands "$@"
 }
 (( $+functions[_envio__unload_commands] )) ||
 _envio__unload_commands() {
     local commands; commands=()
     _describe -t commands 'envio unload commands' commands "$@"
 }
+(( $+functions[_envio__help__update_commands] )) ||
+_envio__help__update_commands() {
+    local commands; commands=()
+    _describe -t commands 'envio help update commands' commands "$@"
+}
 (( $+functions[_envio__update_commands] )) ||
 _envio__update_commands() {
     local commands; commands=()
     _describe -t commands 'envio update commands' commands "$@"
+}
+(( $+functions[_envio__help__version_commands] )) ||
+_envio__help__version_commands() {
+    local commands; commands=()
+    _describe -t commands 'envio help version commands' commands "$@"
 }
 (( $+functions[_envio__version_commands] )) ||
 _envio__version_commands() {
