@@ -10,8 +10,8 @@ use std::io::Read;
 use std::path::Path;
 use url::Url;
 
-use envio::crypto::create_encryption_type;
 use envio::crypto::gpg::get_gpg_keys;
+use envio::crypto::{create_cipher, CipherKind};
 use envio::error::{Error, Result};
 use envio::{get_profile, Env, EnvVec};
 
@@ -74,7 +74,7 @@ impl Command {
                 }
 
                 let gpg_key;
-                let encryption_type;
+                let cipher;
 
                 if gpg.is_some() {
                     if gpg.as_ref().unwrap() == "select" {
@@ -124,7 +124,7 @@ impl Command {
                         gpg_key = gpg.as_ref().unwrap().to_string();
                     }
 
-                    encryption_type = create_encryption_type(gpg_key, "gpg")?;
+                    cipher = create_cipher(gpg_key, CipherKind::Gpg)?;
                 } else {
                     let prompt = Password::new("Enter your encryption key:")
                         .with_display_toggle_enabled()
@@ -143,7 +143,7 @@ impl Command {
                         prompt.unwrap()
                     };
 
-                    encryption_type = create_encryption_type(user_key, "age")?;
+                    cipher = create_cipher(user_key, CipherKind::Age)?;
                 }
 
                 let mut envs_vec;
@@ -298,7 +298,7 @@ impl Command {
                     }
                 }
 
-                cli::create_profile(profile_name.to_string(), envs_vec, encryption_type)?;
+                cli::create_profile(profile_name.to_string(), envs_vec, cipher)?;
             }
 
             Command::Add {

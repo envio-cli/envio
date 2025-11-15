@@ -25,8 +25,8 @@ pub enum Error {
     EnvExists(String),
     #[error("Crypto error: {0}")]
     Crypto(String),
-    #[error("Invalid encryption type: {0}")]
-    InvalidEncryptionType(String),
+    #[error("Invalid cipher type: {0}")]
+    InvalidCipherType(String),
     #[error("Invalid UTF-8: {0}")]
     Utf8Error(#[from] std::str::Utf8Error),
     #[error("{0}")]

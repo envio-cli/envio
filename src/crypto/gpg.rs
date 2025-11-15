@@ -7,16 +7,19 @@ use gpgme::{Context, Data, Protocol};
 use regex::Regex;
 #[cfg(target_family = "windows")]
 use std::collections::VecDeque;
+#[cfg(target_family = "windows")]
+use std::io::Write;
+#[cfg(target_family = "windows")]
+use std::process::{Command, Stdio};
 
-use crate::crypto::EncryptionType;
+use crate::crypto::{Cipher, CipherKind};
 use crate::error::{Error, Result};
 #[derive(Serialize, Deserialize)]
 pub struct GPG {
     key_fingerprint: String,
 }
 
-#[typetag::serde]
-impl EncryptionType for GPG {
+impl Cipher for GPG {
     fn new(key_fingerprint: String) -> Self {
         GPG { key_fingerprint }
     }
@@ -29,14 +32,13 @@ impl EncryptionType for GPG {
         self.key_fingerprint.clone()
     }
 
-    fn as_string(&self) -> &'static str {
-        "gpg"
+    fn kind(&self) -> CipherKind {
+        CipherKind::Gpg
     }
 
     fn encrypt(&self, data: &[u8]) -> Result<Vec<u8>> {
         let mut encrypted_data = Vec::new();
 
-        // Unix specific code
         #[cfg(target_family = "unix")]
         {
             let mut ctx = match Context::from_protocol(Protocol::OpenPgp) {

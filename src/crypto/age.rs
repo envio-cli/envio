@@ -3,18 +3,16 @@ use std::io::{Read, Write};
 use age::secrecy::Secret;
 use serde::{Deserialize, Serialize};
 
-use crate::crypto::EncryptionType;
+use crate::crypto::{Cipher, CipherKind};
 use crate::error::{Error, Result};
 
-/// AGE is not a real encryption type, but rather a wrapper around the `age` crate
-/// It is supposed to represent the password-based encryption method that `envio` provides
+/// Represents the password-based cipher that `envio` provides
 #[derive(Serialize, Deserialize)]
 pub struct AGE {
     key: String,
 }
 
-#[typetag::serde]
-impl EncryptionType for AGE {
+impl Cipher for AGE {
     fn new(key: String) -> Self {
         AGE { key }
     }
@@ -27,8 +25,8 @@ impl EncryptionType for AGE {
         self.key.clone()
     }
 
-    fn as_string(&self) -> &'static str {
-        "age"
+    fn kind(&self) -> CipherKind {
+        CipherKind::Age
     }
 
     fn encrypt(&self, data: &[u8]) -> Result<Vec<u8>> {
@@ -44,7 +42,7 @@ impl EncryptionType for AGE {
 
         writer.write_all(data)?;
         writer.finish()?;
-        
+
         Ok(encrypted)
     }
 

@@ -4,7 +4,7 @@ use std::{io::Write, path::PathBuf};
 use chrono::{DateTime, Local};
 use serde::{Deserialize, Serialize};
 
-use crate::crypto::EncryptionType;
+use crate::crypto::{Cipher, CipherKind};
 use crate::env::{Env, EnvVec};
 use crate::error::{Error, Result};
 
@@ -13,7 +13,7 @@ pub struct ProfileMetadata {
     pub name: String,
     pub description: Option<String>,
     pub file_path: PathBuf,
-    pub encryption_type_name: String,
+    pub cipher_kind: CipherKind,
     pub created_at: DateTime<Local>,
     pub updated_at: DateTime<Local>,
 }
@@ -21,7 +21,7 @@ pub struct ProfileMetadata {
 pub struct Profile {
     pub metadata: ProfileMetadata,
     pub envs: EnvVec,
-    pub encryption_type: Option<Box<dyn EncryptionType>>,
+    pub cipher: Box<dyn Cipher>,
 }
 
 #[derive(Serialize, Deserialize)]
@@ -31,28 +31,21 @@ pub(crate) struct SerializedProfile {
 }
 
 impl Profile {
-    pub fn new(
-        metadata: ProfileMetadata,
-        encryption_type: Box<dyn EncryptionType>,
-        envs: EnvVec,
-    ) -> Profile {
+    pub fn new(metadata: ProfileMetadata, cipher: Box<dyn Cipher>, envs: EnvVec) -> Profile {
         Profile {
             metadata,
-            encryption_type: Some(encryption_type),
+            cipher,
             envs,
         }
     }
 
-    pub fn from_file<P: AsRef<Path>>(
-        file_path: P,
-        encryption_type: Box<dyn EncryptionType>,
-    ) -> Result<Profile> {
+    pub fn from_file<P: AsRef<Path>>(file_path: P, cipher: Box<dyn Cipher>) -> Result<Profile> {
         let file_content = std::fs::read(&file_path)?;
 
         let serialized_profile: SerializedProfile = serde_json::from_slice(&file_content)
             .map_err(|e| Error::Deserialization(format!("Failed to parse profile JSON: {}", e)))?;
 
-        let decrypted_envs_bytes = encryption_type.decrypt(&serialized_profile.content)?;
+        let decrypted_envs_bytes = cipher.decrypt(&serialized_profile.content)?;
 
         let envs: EnvVec = bincode::deserialize(&decrypted_envs_bytes)
             .map_err(|e| Error::Deserialization(format!("Failed to deserialize envs: {}", e)))?;
@@ -60,7 +53,7 @@ impl Profile {
         Ok(Profile {
             metadata: serialized_profile.metadata,
             envs,
-            encryption_type: Some(encryption_type),
+            cipher,
         })
     }
 
@@ -126,16 +119,10 @@ impl Profile {
             }
         };
 
-        // unwrapping is completely safe since we always pass a encryption type when creating a new profile
-        let encrypted_envs = match self
-            .encryption_type
-            .as_ref()
-            .unwrap()
-            .encrypt(&serialized_envs)
-        {
+        let encrypted_envs = match self.cipher.encrypt(&serialized_envs) {
             Ok(data) => data,
             Err(e) => {
-                return Err(e);
+                return Err(Error::Crypto(e.to_string()));
             }
         };
 

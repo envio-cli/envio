@@ -12,7 +12,7 @@ use chrono::{Local, NaiveDate};
 use colored::Colorize;
 use comfy_table::{Attribute, Cell, Table};
 use envio::{
-    crypto::EncryptionType,
+    crypto::Cipher,
     error::{Error, Result},
     profile::ProfileMetadata,
     EnvVec, Profile,
@@ -30,15 +30,11 @@ use crate::utils::get_shell_config;
 /// # Parameters
 /// - `name` - the name of the profile
 /// - `envs` - the environment variables of the profile
-/// - `encryption_type` - the encryption type of the profile
+/// - `cipher` - the cipher type of the profile
 ///
 /// # Returns
 /// - `Result<()>`: whether the operation was successful
-pub fn create_profile(
-    name: String,
-    envs: Option<EnvVec>,
-    encryption_type: Box<dyn EncryptionType>,
-) -> Result<()> {
+pub fn create_profile(name: String, envs: Option<EnvVec>, cipher: Box<dyn Cipher>) -> Result<()> {
     if does_profile_exist(&name) {
         return Err(Error::ProfileAlreadyExists(name));
     }
@@ -65,12 +61,12 @@ pub fn create_profile(
         name,
         description: None,
         file_path: profile_file_path,
-        encryption_type_name: encryption_type.as_string().to_string(),
+        cipher_kind: cipher.kind(),
         created_at: Local::now(),
         updated_at: Local::now(),
     };
 
-    Profile::new(metadata, encryption_type, envs).save()?;
+    Profile::new(metadata, cipher, envs).save()?;
 
     println!("{}: Profile created", "Success".green());
     Ok(())

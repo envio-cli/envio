@@ -7,21 +7,20 @@ pub mod utils;
 pub use env::{Env, EnvVec};
 pub use profile::{Profile, ProfileMetadata};
 
-use std::path::Path;
-use crate::crypto::{get_encryption_type, ENCRYPTION_TYPE_AGE};
+use crate::crypto::{get_cipher, CipherKind};
 use crate::error::{Error, Result};
-
+use std::path::Path;
 
 pub fn get_profile<P, F>(file_path: P, get_key: Option<F>) -> Result<Profile>
 where
     P: AsRef<Path>,
     F: FnOnce() -> String,
 {
-    let mut encryption_type = get_encryption_type(&file_path)?;
+    let mut cipher = get_cipher(&file_path)?;
 
-    if encryption_type.as_string() == ENCRYPTION_TYPE_AGE {
+    if cipher.kind() == CipherKind::Age {
         if let Some(key_provider) = get_key {
-            encryption_type.set_key(key_provider());
+            cipher.set_key(key_provider());
         } else {
             return Err(Error::Msg(
                 "Key provider is required for age-encrypted profiles".to_string(),
@@ -29,7 +28,7 @@ where
         }
     }
 
-    Profile::from_file(file_path, encryption_type)
+    Profile::from_file(file_path, cipher)
 }
 
 pub fn load_profile<P, F>(file_path: P, get_key: Option<F>) -> Result<Profile>
