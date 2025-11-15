@@ -1,5 +1,4 @@
 use std::fs::File;
-/// Utility functions used throughout the binary crate
 use std::io::Write;
 use std::path::PathBuf;
 
@@ -14,8 +13,8 @@ pub fn initalize_config() -> Result<()> {
     use inquire::Text;
     use std::path::Path;
 
-    let configdir = get_configdir()?;
-    let homedir = get_homedir()?;
+    let configdir = get_configdir();
+    let homedir = dirs::home_dir().unwrap();
 
     if !Path::new(&configdir).exists() {
         println!("{}", "Creating config directory".bold());
@@ -87,26 +86,11 @@ source {}
 
     Ok(())
 }
-/// Get the home directory
-///
-/// # Returns
-/// - `PathBuf`: the home directory
-pub fn get_homedir() -> Result<PathBuf> {
-    match dirs::home_dir() {
-        Some(home) => Ok(home),
-        None => Err(Error::Io(std::io::Error::new(
-            std::io::ErrorKind::NotFound,
-            "Could not find home directory",
-        ))),
-    }
-}
 
-/// Get the config directory
-///
-/// # Returns
-/// - `PathBuf`: the config directory
-pub fn get_configdir() -> Result<PathBuf> {
-    Ok(get_homedir()?.join(".envio"))
+pub fn get_configdir() -> PathBuf {
+    let homedir = dirs::home_dir().unwrap();
+
+    homedir.join(".envio")
 }
 
 pub fn contains_path_separator(s: &str) -> bool {
@@ -115,6 +99,22 @@ pub fn contains_path_separator(s: &str) -> bool {
 
 pub fn get_cwd() -> PathBuf {
     std::env::current_dir().unwrap()
+}
+
+pub fn does_profile_exist(profile_name: &str) -> bool {
+    let profile_path = get_profile_path(profile_name);
+
+    if profile_path.exists() {
+        return true;
+    }
+
+    false
+}
+
+pub fn get_profile_path(profile_name: &str) -> PathBuf {
+    get_configdir()
+        .join("profiles")
+        .join(format!("{}.env", profile_name))
 }
 
 /// Parse environment variables from a string

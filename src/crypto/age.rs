@@ -6,9 +6,6 @@ use serde::{Deserialize, Serialize};
 use crate::crypto::EncryptionType;
 use crate::error::{Error, Result};
 
-// Bytes that identify the file as being encrypted using the `age` method
-pub const IDENTITY_BYTES: &[u8] = b"-----AGE ENCRYPTED FILE-----";
-
 /// AGE is not a real encryption type, but rather a wrapper around the `age` crate
 /// It is supposed to represent the password-based encryption method that `envio` provides
 #[derive(Serialize, Deserialize)]
@@ -47,9 +44,7 @@ impl EncryptionType for AGE {
 
         writer.write_all(data)?;
         writer.finish()?;
-
-        encrypted.extend_from_slice(IDENTITY_BYTES);
-
+        
         Ok(encrypted)
     }
 
@@ -70,10 +65,5 @@ impl EncryptionType for AGE {
         reader.read_to_end(&mut decrypted)?;
 
         Ok(decrypted)
-    }
-
-    fn is_this_type(encrypted_data: &[u8]) -> bool {
-        encrypted_data.len() >= IDENTITY_BYTES.len()
-            && &encrypted_data[encrypted_data.len() - IDENTITY_BYTES.len()..] == IDENTITY_BYTES
     }
 }

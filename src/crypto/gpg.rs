@@ -1,6 +1,4 @@
 use serde::{Deserialize, Serialize};
-use std::io::Write;
-use std::process::{Command, Stdio};
 
 #[cfg(target_family = "unix")]
 use gpgme::{Context, Data, Protocol};
@@ -12,11 +10,6 @@ use std::collections::VecDeque;
 
 use crate::crypto::EncryptionType;
 use crate::error::{Error, Result};
-use crate::utils;
-
-// Bytes that identify the file as being encrypted using the `gpg` method
-pub const IDENTITY_BYTES: &[u8] = b"-----GPG ENCRYPTED FILE-----";
-
 #[derive(Serialize, Deserialize)]
 pub struct GPG {
     key_fingerprint: String,
@@ -63,11 +56,8 @@ impl EncryptionType for GPG {
             if let Err(e) = ctx.encrypt(Some(&key), data, &mut encrypted_data) {
                 return Err(Error::Crypto(e.to_string()));
             };
-
-            encrypted_data.extend_from_slice(IDENTITY_BYTES);
         }
 
-        // Windows specific code
         #[cfg(target_family = "windows")]
         {
             let mut gpg_process = Command::new("gpg")
@@ -94,14 +84,12 @@ impl EncryptionType for GPG {
             let output = gpg_process.wait_with_output()?;
 
             encrypted_data.extend_from_slice(&output.stdout);
-            encrypted_data.extend_from_slice(IDENTITY_BYTES);
         }
 
         Ok(encrypted_data)
     }
 
     fn decrypt(&self, encrypted_data: &[u8]) -> Result<Vec<u8>> {
-        // Unix specific code
         #[cfg(target_family = "unix")]
         {
             let mut ctx = match Context::from_protocol(Protocol::OpenPgp) {
@@ -126,7 +114,6 @@ impl EncryptionType for GPG {
             Ok(plain)
         }
 
-        // Windows specific code
         #[cfg(target_family = "windows")]
         {
             let mut gpg_process = Command::new("gpg")
@@ -151,76 +138,8 @@ impl EncryptionType for GPG {
             Ok(output.stdout)
         }
     }
-
-    fn is_this_type(encrypted_data: &[u8]) -> bool {
-        encrypted_data.len() >= IDENTITY_BYTES.len()
-            && &encrypted_data[encrypted_data.len() - IDENTITY_BYTES.len()..] == IDENTITY_BYTES
-    }
 }
 
-impl GPG {
-    pub fn is_this_type_fallback(profile_name: &str) -> Result<bool> {
-        let profile_file_path = utils::get_profile_filepath(profile_name)?;
-
-        let mut gpg_process = Command::new("gpg")
-            .arg("--pinentry-mode")
-            .arg("loopback")
-            .arg("--passphrase-fd")
-            .arg("0")
-            .arg("--decrypt")
-            .arg(profile_file_path)
-            .stdin(Stdio::piped())
-            .stdout(Stdio::piped())
-            .stderr(Stdio::piped())
-            .spawn()
-            .map_err(|err| Error::from(err))?;
-
-        {
-            let stdin = gpg_process
-                .stdin
-                .as_mut()
-                .ok_or_else(|| Error::Msg("Failed to open stdin".to_owned()))?;
-            writeln!(stdin, "{}", "passphrase")?; // Pass in a dummy passphrase
-        }
-
-        let output = gpg_process
-            .wait_with_output()
-            .map_err(|err| Error::from(err))?;
-
-        let stderr_output = String::from_utf8_lossy(&output.stderr);
-        let stdout_output = String::from_utf8_lossy(&output.stdout);
-
-        if stderr_output.contains("encrypted with") || stdout_output.contains("encrypted with") {
-            Ok(true)
-        } else {
-            Ok(false)
-        }
-    }
-}
-
-/// Get the GPG keys available on the system
-///
-/// There are two different implementations for Unix and Windows.
-///
-/// The Unix implementation uses the gpgme crate to access the GPG keys on the
-/// system. The Windows implementation uses the gpg command line tool to access
-///
-/// # Returns
-/// - `Result<Vec<(String, String)>>`: Vec of tuples containing a formatted
-///   string of the user id with the email and the key fingerprint
-///
-/// # Example
-///
-/// ```rust
-/// use envio::crypto::gpg::get_gpg_keys;
-///
-/// let keys = get_gpg_keys().unwrap();
-///
-/// for key in keys {
-///    println!("{}: {}", key.0, key.1);
-/// }
-///
-/// ```
 #[cfg(target_family = "unix")]
 pub fn get_gpg_keys() -> Result<Vec<(String, String)>> {
     let mut context = Context::from_protocol(Protocol::OpenPgp).unwrap();
@@ -267,7 +186,6 @@ pub fn get_gpg_keys() -> Result<Vec<(String, String)>> {
     Ok(available_keys)
 }
 
-/// Windows specific implementation of getting the GPG keys on the system
 #[cfg(target_family = "windows")]
 pub fn get_gpg_keys() -> Option<Vec<(String, String)>> {
     let output = Command::new("gpg")
@@ -333,8 +251,6 @@ pub fn get_gpg_keys() -> Option<Vec<(String, String)>> {
     Some(available_keys)
 }
 
-/// Utility function to format the fingerprint.
-/// Windows specific code
 #[cfg(target_family = "windows")]
 fn format_fingerprint<S: AsRef<str>>(fingerprint: S) -> String {
     fingerprint.as_ref().trim().to_uppercase()

@@ -14,10 +14,13 @@ use comfy_table::{Attribute, Cell, Table};
 use envio::{
     crypto::EncryptionType,
     error::{Error, Result},
+    profile::ProfileMetadata,
     EnvVec, Profile,
 };
 
-use crate::utils::{contains_path_separator, download_file, get_configdir, get_cwd};
+use crate::utils::{
+    contains_path_separator, does_profile_exist, download_file, get_configdir, get_cwd,
+};
 
 #[cfg(target_family = "unix")]
 use crate::utils::get_shell_config;
@@ -36,7 +39,7 @@ pub fn create_profile(
     envs: Option<EnvVec>,
     encryption_type: Box<dyn EncryptionType>,
 ) -> Result<()> {
-    if Profile::does_exist(&name) {
+    if does_profile_exist(&name) {
         return Err(Error::ProfileAlreadyExists(name));
     }
 
@@ -45,7 +48,7 @@ pub fn create_profile(
         None => EnvVec::new(),
     };
 
-    let config_dir = get_configdir()?;
+    let config_dir = get_configdir();
     let profile_dir = config_dir.join("profiles");
 
     if !profile_dir.exists() {
@@ -58,7 +61,16 @@ pub fn create_profile(
 
     let profile_file_path = profile_dir.join(name.clone() + ".env");
 
-    Profile::new(name, envs, profile_file_path, encryption_type).push_changes()?;
+    let metadata = ProfileMetadata {
+        name,
+        description: None,
+        file_path: profile_file_path,
+        encryption_type_name: encryption_type.as_string().to_string(),
+        created_at: Local::now(),
+        updated_at: Local::now(),
+    };
+
+    Profile::new(metadata, encryption_type, envs).save()?;
 
     println!("{}: Profile created", "Success".green());
     Ok(())
@@ -108,7 +120,7 @@ pub fn export_envs(
     let mut buffer = String::from("");
 
     if profile.envs.is_empty() {
-        return Err(Error::EmptyProfile(profile.name.to_string()));
+        return Err(Error::EmptyProfile(profile.metadata.name.to_string()));
     }
 
     let mut keys: Vec<_> = profile.envs.keys();
@@ -192,8 +204,8 @@ pub fn list_envs(profile: &Profile, display_comments: bool, display_expired: boo
 /// # Returns
 /// - `Result<()>`: whether the operation was successful
 pub fn delete_profile(name: &str) -> Result<()> {
-    if Profile::does_exist(name) {
-        let configdir = get_configdir()?;
+    if does_profile_exist(name) {
+        let configdir = get_configdir();
         let profile_path = configdir.join("profiles").join(format!("{}.env", name));
 
         match std::fs::remove_file(profile_path) {
@@ -216,7 +228,7 @@ pub fn delete_profile(name: &str) -> Result<()> {
 /// # Returns
 /// - `Result<()>`: whether the operation was successful
 pub fn list_profiles(raw: bool) -> Result<()> {
-    let configdir = get_configdir()?;
+    let configdir = get_configdir();
     let profile_dir = configdir.join("profiles");
 
     if !profile_dir.exists() {
@@ -274,7 +286,7 @@ pub fn list_profiles(raw: bool) -> Result<()> {
 /// - `Result<()>`: whether the operation was successful
 pub fn download_profile(url: String, profile_name: String) -> Result<()> {
     println!("Downloading profile from {}", url);
-    let configdir = get_configdir()?;
+    let configdir = get_configdir();
 
     let location = match configdir
         .join("profiles")
@@ -316,7 +328,7 @@ pub fn import_profile(file_path: String, profile_name: String) -> Result<()> {
         return Err(Error::Msg(format!("File `{}` does not exist", file_path)));
     }
 
-    let configdir = get_configdir()?;
+    let configdir = get_configdir();
 
     let mut file = std::fs::OpenOptions::new()
         .read(true)
@@ -352,7 +364,7 @@ pub fn import_profile(file_path: String, profile_name: String) -> Result<()> {
 // Creates a shell script that can be sourced to set the environment variables
 #[cfg(target_family = "unix")]
 pub fn create_shellscript(profile: &str) -> Result<()> {
-    let configdir = get_configdir()?;
+    let configdir = get_configdir();
     let shellscript_path = configdir.join("setenv.sh");
 
     let mut file = std::fs::OpenOptions::new()
@@ -423,7 +435,7 @@ fi
 /// - `Result<()>`: whether the operation was successful
 #[cfg(target_family = "unix")]
 pub fn load_profile(profile_name: &str) -> Result<()> {
-    if !Profile::does_exist(profile_name) {
+    if !does_profile_exist(profile_name) {
         return Err(Error::ProfileDoesNotExist(profile_name.to_string()));
     }
 
@@ -477,7 +489,7 @@ pub fn unload_profile() -> Result<()> {
     let file = std::fs::OpenOptions::new()
         .write(true)
         .append(false)
-        .open(get_configdir()?.join("setenv.sh"))
+        .open(get_configdir().join("setenv.sh"))
         .unwrap();
 
     file.set_len(0)?;

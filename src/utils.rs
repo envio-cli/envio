@@ -1,78 +1,13 @@
-/// A bunch of utility functions that are used in various places in the codebase.
-/// These functions are not meant to be used by the end user, but rather to be used by the library itself.
-///
-/// The CLI also has its own utility functions, but they are located in the `bin/envio` directory inside the `utils.rs` file.
-/// There might be a few functions that are used in both the CLI and the library, but they are kept separate since the library does not expose these utility functions to the end user. They are only used internally.
-use std::{
-    io::Read,
-    path::{Path, PathBuf},
-};
+use std::path::Path;
 
 use crate::{
     error::{Error, Result},
-    Profile,
+    profile::SerializedProfile,
 };
 
-pub fn contains_path_separator(s: &str) -> bool {
-    s.contains('/') || s.contains('\\')
-}
+pub(crate) fn get_serialized_profile<P: AsRef<Path>>(file_path: P) -> Result<SerializedProfile> {
+    let file_content = std::fs::read(&file_path)?;
 
-pub fn get_profile_filepath(name: &str) -> Result<PathBuf> {
-    match Path::new(name).exists() {
-        true => Ok(PathBuf::from(name)),
-        false => {
-            if !Profile::does_exist(name) {
-                return Err(Error::ProfileDoesNotExist(name.to_string()));
-            }
-
-            Ok(get_configdir()
-                .join("profiles")
-                .join(format!("{}.env", name)))
-        }
-    }
-}
-
-/// Reads the encrypted content of a profile and returns it
-///
-/// # Parameters
-/// - `name`: &str - the name of the profile
-///
-/// `name` can either be the name of the profile or the absolute path to the profile file.
-///
-/// # Returns
-/// - `Result<Vec<u8>>`: the encrypted content of the profile
-pub fn get_profile_content(name: &str) -> Result<Vec<u8>> {
-    let profile_file_path = get_profile_filepath(name)?;
-
-    let mut file = std::fs::OpenOptions::new()
-        .read(true)
-        .open(profile_file_path)?;
-
-    let mut encrypted_contents = Vec::new();
-    file.read_to_end(&mut encrypted_contents).unwrap();
-
-    Ok(encrypted_contents)
-}
-
-pub fn get_configdir() -> PathBuf {
-    let homedir = dirs::home_dir().unwrap();
-    homedir.join(".envio")
-}
-
-pub fn truncate_identity_bytes(encrypted_contents: &[u8]) -> Vec<u8> {
-    let mut truncated_contents = encrypted_contents.to_owned();
-
-    if encrypted_contents.len() < 28 {
-        return truncated_contents;
-    }
-
-    // check if the last 28 bytes are the identity bytes
-    if &truncated_contents[encrypted_contents.len() - 28..] == crate::crypto::age::IDENTITY_BYTES
-        || &truncated_contents[encrypted_contents.len() - 28..]
-            == crate::crypto::gpg::IDENTITY_BYTES
-    {
-        truncated_contents.truncate(encrypted_contents.len() - 28);
-    }
-
-    truncated_contents
+    Ok(serde_json::from_slice(&file_content)
+        .map_err(|e| Error::Deserialization(format!("Failed to parse profile JSON: {}", e)))?)
 }

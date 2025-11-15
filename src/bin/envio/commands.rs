@@ -1,4 +1,3 @@
-/// Implementation of all the subcommands that can be run by the CLI
 use chrono::Local;
 use colored::Colorize;
 use inquire::{
@@ -14,11 +13,11 @@ use url::Url;
 use envio::crypto::create_encryption_type;
 use envio::crypto::gpg::get_gpg_keys;
 use envio::error::{Error, Result};
-use envio::{load_profile, Env, EnvVec, Profile};
+use envio::{get_profile, Env, EnvVec};
 
 use crate::clap_app::Command;
 use crate::cli::{self, check_expired_envs};
-use crate::utils::parse_envs_from_string;
+use crate::utils::{does_profile_exist, get_profile_path, parse_envs_from_string};
 
 /// Get the user's encryption key
 fn get_userkey() -> String {
@@ -70,7 +69,7 @@ impl Command {
                     return Err(Error::ProfileNameEmpty(profile_name.to_string()));
                 }
 
-                if Profile::does_exist(profile_name) {
+                if does_profile_exist(profile_name) {
                     return Err(Error::ProfileExists(profile_name.to_string()));
                 }
 
@@ -308,11 +307,11 @@ impl Command {
                 add_comments,
                 add_expiration_date,
             } => {
-                if !Profile::does_exist(profile_name) {
+                if !does_profile_exist(profile_name) {
                     return Err(Error::ProfileDoesNotExist(profile_name.to_string()));
                 }
 
-                let mut profile = load_profile!(profile_name, get_userkey)?;
+                let mut profile = get_profile(get_profile_path(profile_name), Some(get_userkey))?;
                 check_expired_envs(&profile);
 
                 for env in envs {
@@ -391,7 +390,7 @@ impl Command {
                 }
 
                 println!("{}", "Applying Changes".green());
-                profile.push_changes()?;
+                profile.save()?;
             }
 
             Command::Load { profile_name } => {
@@ -402,11 +401,11 @@ impl Command {
 
                 #[cfg(target_family = "windows")]
                 {
-                    if !Profile::does_exist(profile_name) {
+                    if !does_profile_exist(profile_name) {
                         return Err(Error::ProfileDoesNotExist(profile_name.to_string()));
                     }
 
-                    let profile = load_profile!(profile_name, get_userkey)?;
+                    let profile = get_profile(get_profile_path(profile_name), Some(get_userkey))?;
                     check_expired_envs(&profile);
 
                     if let Err(e) = cli::load_profile(profile) {
@@ -422,11 +421,11 @@ impl Command {
 
             #[cfg(target_family = "windows")]
             Command::Unload { profile_name } => {
-                if !Profile::does_exist(profile_name) {
+                if !does_profile_exist(profile_name) {
                     return Err(Error::ProfileDoesNotExist(profile_name.to_string()));
                 }
 
-                let profile = load_profile!(profile_name, get_userkey)?;
+                let profile = get_profile(get_profile_path(profile_name), Some(get_userkey))?;
                 check_expired_envs(&profile);
 
                 if let Err(e) = cli::unload_profile(profile) {
@@ -441,11 +440,11 @@ impl Command {
                 let program = split_command[0];
                 let args = &split_command[1..];
 
-                if !Profile::does_exist(profile_name) {
+                if !does_profile_exist(profile_name) {
                     return Err(Error::ProfileDoesNotExist(profile_name.to_string()));
                 }
 
-                let profile = load_profile!(profile_name, get_userkey)?;
+                let profile = get_profile(get_profile_path(profile_name), Some(get_userkey))?;
                 check_expired_envs(&profile);
 
                 let mut cmd = std::process::Command::new(program)
@@ -472,12 +471,13 @@ impl Command {
             }
 
             Command::Remove { profile_name, envs } => {
-                if !Profile::does_exist(profile_name) {
+                if !does_profile_exist(profile_name) {
                     return Err(Error::ProfileDoesNotExist(profile_name.to_string()));
                 }
 
                 if envs.is_some() && !envs.as_ref().unwrap().is_empty() {
-                    let mut profile = load_profile!(profile_name, get_userkey)?;
+                    let mut profile =
+                        get_profile(get_profile_path(profile_name), Some(get_userkey))?;
                     check_expired_envs(&profile);
 
                     for env in envs.as_ref().unwrap() {
@@ -485,7 +485,7 @@ impl Command {
                     }
 
                     println!("{}", "Applying Changes".green());
-                    profile.push_changes()?;
+                    profile.save()?;
                 } else {
                     cli::delete_profile(profile_name)?;
                 }
@@ -501,13 +501,16 @@ impl Command {
                 if *profiles {
                     cli::list_profiles(*no_pretty_print)?;
                 } else if profile_name.is_some() && !profile_name.as_ref().unwrap().is_empty() {
-                    if !Profile::does_exist(profile_name.as_ref().unwrap()) {
+                    if !does_profile_exist(profile_name.as_ref().unwrap()) {
                         return Err(Error::ProfileDoesNotExist(
                             profile_name.as_ref().unwrap().to_string(),
                         ));
                     }
 
-                    let profile = load_profile!(profile_name.as_ref().unwrap(), get_userkey)?;
+                    let profile = get_profile(
+                        get_profile_path(profile_name.as_ref().unwrap()),
+                        Some(get_userkey),
+                    )?;
                     check_expired_envs(&profile);
 
                     if *no_pretty_print {
@@ -527,7 +530,7 @@ impl Command {
                 update_comments,
                 update_expiration_date,
             } => {
-                if !Profile::does_exist(profile_name) {
+                if !does_profile_exist(profile_name) {
                     return Err(Error::ProfileDoesNotExist(profile_name.to_string()));
                 }
 
@@ -537,7 +540,7 @@ impl Command {
                     ));
                 }
 
-                let mut profile = load_profile!(profile_name, get_userkey)?;
+                let mut profile = get_profile(get_profile_path(profile_name), Some(get_userkey))?;
                 check_expired_envs(&profile);
 
                 if !*update_values && !*update_comments && !*update_expiration_date {
@@ -625,7 +628,7 @@ impl Command {
                 }
 
                 println!("{}", "Applying Changes".green());
-                profile.push_changes()?;
+                profile.save()?;
             }
 
             Command::Export {
@@ -633,7 +636,7 @@ impl Command {
                 file,
                 envs,
             } => {
-                if !Profile::does_exist(profile_name) {
+                if !does_profile_exist(profile_name) {
                     return Err(Error::ProfileDoesNotExist(profile_name.to_string()));
                 }
 
@@ -643,7 +646,7 @@ impl Command {
                     file_name = file.as_ref().unwrap()
                 }
 
-                let profile = load_profile!(profile_name, get_userkey)?;
+                let profile = get_profile(get_profile_path(profile_name), Some(get_userkey))?;
                 check_expired_envs(&profile);
 
                 if envs.is_some() && envs.as_ref().unwrap().contains(&"select".to_string()) {
@@ -681,7 +684,7 @@ impl Command {
                 file,
                 url,
             } => {
-                if Profile::does_exist(profile_name) {
+                if does_profile_exist(profile_name) {
                     return Err(Error::ProfileExists(profile_name.to_string()));
                 }
 
