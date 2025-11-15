@@ -5,30 +5,43 @@ use thiserror::Error;
 pub enum Error {
     #[error("IO error: {0}")]
     Io(#[from] std::io::Error),
+
     #[error("Serialization error: {0}")]
     Serialization(String),
+
     #[error("Deserialization error: {0}")]
     Deserialization(String),
+
     #[error("Profile `{0}` already exists")]
     ProfileAlreadyExists(String),
+
     #[error("Profile `{0}` does not exist")]
     ProfileDoesNotExist(String),
+
     #[error("Profile `{0}` name is empty")]
     ProfileNameEmpty(String),
+
     #[error("Profile `{0}` already exists")]
     ProfileExists(String),
+
     #[error("Profile `{0}` is empty")]
     EmptyProfile(String),
+
     #[error("Environment variable `{0}` does not exist")]
     EnvDoesNotExist(String),
+
     #[error("Environment variable `{0}` already exists")]
     EnvExists(String),
+
     #[error("Crypto error: {0}")]
     Crypto(String),
+
     #[error("Invalid cipher type: {0}")]
     InvalidCipherType(String),
+
     #[error("Invalid UTF-8: {0}")]
     Utf8Error(#[from] std::str::Utf8Error),
+
     #[error("{0}")]
     Msg(String),
 }
