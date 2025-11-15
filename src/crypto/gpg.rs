@@ -1,10 +1,3 @@
-use serde::{Deserialize, Serialize};
-
-#[cfg(target_family = "unix")]
-use gpgme::{Context, Data, Protocol};
-
-#[cfg(target_family = "windows")]
-use regex::Regex;
 #[cfg(target_family = "windows")]
 use std::collections::VecDeque;
 #[cfg(target_family = "windows")]
@@ -12,8 +5,16 @@ use std::io::Write;
 #[cfg(target_family = "windows")]
 use std::process::{Command, Stdio};
 
-use crate::crypto::{Cipher, CipherKind};
-use crate::error::{Error, Result};
+#[cfg(target_family = "unix")]
+use gpgme::{Context, Data, Protocol};
+#[cfg(target_family = "windows")]
+use regex::Regex;
+use serde::{Deserialize, Serialize};
+
+use crate::{
+    crypto::{Cipher, CipherKind},
+    error::{Error, Result},
+};
 #[derive(Serialize, Deserialize)]
 pub struct GPG {
     key_fingerprint: String,

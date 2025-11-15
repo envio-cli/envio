@@ -1,23 +1,23 @@
+use std::{collections::HashMap, env, io::Read, path::Path};
+
 use chrono::Local;
 use colored::Colorize;
+use envio::{
+    crypto::{create_cipher, gpg::get_gpg_keys, CipherKind},
+    error::{Error, Result},
+    get_profile, Env, EnvVec,
+};
 use inquire::{
     min_length, Confirm, DateSelect, MultiSelect, Password, PasswordDisplayMode, Select, Text,
 };
 use regex::Regex;
-use std::collections::HashMap;
-use std::env;
-use std::io::Read;
-use std::path::Path;
 use url::Url;
 
-use envio::crypto::gpg::get_gpg_keys;
-use envio::crypto::{create_cipher, CipherKind};
-use envio::error::{Error, Result};
-use envio::{get_profile, Env, EnvVec};
-
-use crate::clap_app::Command;
-use crate::cli::{self, check_expired_envs};
-use crate::utils::{does_profile_exist, get_profile_path, parse_envs_from_string};
+use crate::{
+    clap_app::Command,
+    cli::{self, check_expired_envs},
+    utils::{does_profile_exist, get_profile_path, parse_envs_from_string},
+};
 
 /// Get the user's encryption key
 fn get_userkey() -> String {
@@ -37,7 +37,8 @@ fn get_userkey() -> String {
     }
 }
 
-/// Check to see if the user is using a vi based editor so that we can use the vim mode in the inquire crate
+/// Check to see if the user is using a vi based editor so that we can use the vim mode in the
+/// inquire crate
 fn get_vim_mode() -> Result<bool> {
     let env = env::var("VISUAL").unwrap_or_else(|_| env::var("EDITOR").unwrap_or_default());
 
@@ -48,7 +49,8 @@ fn get_vim_mode() -> Result<bool> {
         .and_then(|stem| stem.to_str())
         .ok_or("")?; // Same here
 
-    Ok(Regex::new(r"n?vim?").unwrap().is_match(program_stem)) // unwrap is safe here because we know that the regex will always compile
+    Ok(Regex::new(r"n?vim?").unwrap().is_match(program_stem)) // unwrap is safe here because we know
+                                                              // that the regex will always compile
 }
 
 impl Command {
@@ -198,8 +200,9 @@ impl Command {
                             }
                         }
 
-                        // we add the keys to the options list so that we can use them in the multi select prompt.
-                        // The reason we do not have this in a separate loop is for efficiency reasons
+                        // we add the keys to the options list so that we can use them in the multi
+                        // select prompt. The reason we do not have this in
+                        // a separate loop is for efficiency reasons
                         options.push(env.name.clone());
                     }
 

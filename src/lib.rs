@@ -4,12 +4,15 @@ pub mod error;
 pub mod profile;
 pub mod utils;
 
+use std::path::Path;
+
 pub use env::{Env, EnvVec};
 pub use profile::{Profile, ProfileMetadata};
 
-use crate::crypto::{get_cipher, CipherKind};
-use crate::error::{Error, Result};
-use std::path::Path;
+use crate::{
+    crypto::{get_cipher, CipherKind},
+    error::{Error, Result},
+};
 
 pub fn get_profile<P, F>(file_path: P, get_key: Option<F>) -> Result<Profile>
 where

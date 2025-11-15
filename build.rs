@@ -1,6 +1,7 @@
+use std::{env, fs, path::PathBuf, process};
+
 use clap::CommandFactory;
 use clap_complete::{generate_to, shells::*};
-use std::{env, fs, path::PathBuf, process};
 
 include!("src/bin/envio/clap_app.rs");
 
@@ -32,7 +33,6 @@ fn main() {
     println!("cargo:rustc-env=BUILD_VERSION={}", get_version());
 }
 
-/// Generate manpages for the CLI application
 fn generate_manpages(cmd: clap::Command, out_dir: &str) -> std::io::Result<()> {
     let man = clap_mangen::Man::new(cmd);
     let mut buffer: Vec<u8> = Default::default();
@@ -43,7 +43,6 @@ fn generate_manpages(cmd: clap::Command, out_dir: &str) -> std::io::Result<()> {
     Ok(())
 }
 
-/// Generate completions for the CLI application
 fn generate_completions(
     cmd: &mut clap::Command,
     app_name: &str,
@@ -57,7 +56,6 @@ fn generate_completions(
     Ok(())
 }
 
-/// Get the version of the build
 fn get_version() -> String {
     let mut cmd = process::Command::new("git");
 
@@ -77,7 +75,6 @@ fn get_version() -> String {
     env!("CARGO_PKG_VERSION").to_string()
 }
 
-/// Get the build timestamp
 fn get_buildtimestamp() -> String {
     return chrono::Local::now()
         .naive_local()
@@ -85,7 +82,6 @@ fn get_buildtimestamp() -> String {
         .to_string();
 }
 
-/// Auxilliary function to create a directory
 fn create_dir(dir_name: &str) -> Result<(), std::io::Error> {
     fs::create_dir_all(dir_name)?;
 

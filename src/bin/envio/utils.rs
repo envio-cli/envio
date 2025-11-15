@@ -1,17 +1,18 @@
-use std::fs::File;
-use std::io::Write;
-use std::path::PathBuf;
+use std::{fs::File, io::Write, path::PathBuf};
 
-use envio::error::{Error, Result};
-use envio::{Env, EnvVec};
+use envio::{
+    error::{Error, Result},
+    Env, EnvVec,
+};
 use indicatif::{ProgressBar, ProgressStyle};
 use reqwest::Client;
 
 #[cfg(target_family = "unix")]
 pub fn initalize_config() -> Result<()> {
+    use std::path::Path;
+
     use colored::Colorize;
     use inquire::Text;
-    use std::path::Path;
 
     let configdir = get_configdir();
     let homedir = dirs::home_dir().unwrap();

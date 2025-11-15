@@ -1,12 +1,9 @@
-/// Utility/helper functions specific to the CLI version of envio.
-/// These functions are designed for CLI usage and may not be something used by users interacting with the API directly
+#[cfg(target_family = "windows")]
+use std::process::Command;
 use std::{
     io::{Read, Write},
     path::{Path, PathBuf},
 };
-
-#[cfg(target_family = "windows")]
-use std::process::Command;
 
 use chrono::{Local, NaiveDate};
 use colored::Colorize;
@@ -18,12 +15,11 @@ use envio::{
     EnvVec, Profile,
 };
 
+#[cfg(target_family = "unix")]
+use crate::utils::get_shell_config;
 use crate::utils::{
     contains_path_separator, does_profile_exist, download_file, get_configdir, get_cwd,
 };
-
-#[cfg(target_family = "unix")]
-use crate::utils::get_shell_config;
 
 /// Create a new profile which is stored in the profiles directory
 ///
@@ -218,8 +214,8 @@ pub fn delete_profile(name: &str) -> Result<()> {
 /// List all the stored profiles in the profiles directory
 ///
 /// # Parameters
-/// - `raw` - whether to list the profiles in raw format. If true, the profiles
-///   will be listed without any decorations
+/// - `raw` - whether to list the profiles in raw format. If true, the profiles will be listed
+///   without any decorations
 ///
 /// # Returns
 /// - `Result<()>`: whether the operation was successful

@@ -1,12 +1,16 @@
-use std::path::Path;
-use std::{io::Write, path::PathBuf};
+use std::{
+    io::Write,
+    path::{Path, PathBuf},
+};
 
 use chrono::{DateTime, Local};
 use serde::{Deserialize, Serialize};
 
-use crate::crypto::{Cipher, CipherKind};
-use crate::env::{Env, EnvVec};
-use crate::error::{Error, Result};
+use crate::{
+    crypto::{Cipher, CipherKind},
+    env::{Env, EnvVec},
+    error::{Error, Result},
+};
 
 #[derive(Clone, Serialize, Deserialize)]
 pub struct ProfileMetadata {

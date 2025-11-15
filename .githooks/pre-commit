@@ -1,5 +1,5 @@
 #!/bin/bash
 
 echo "Running cargo fmt"
-cargo fmt
+cargo +nightly fmt
 exit 0

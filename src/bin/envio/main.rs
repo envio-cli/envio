@@ -5,14 +5,12 @@ mod utils;
 mod version;
 
 use clap::Parser;
+use clap_app::ClapApp;
 use colored::Colorize;
 use semver::Version;
-
-use clap_app::ClapApp;
-use version::get_latest_version;
-
 #[cfg(target_family = "unix")]
 use utils::initalize_config;
+use version::get_latest_version;
 
 fn main() {
     color_eyre::install().unwrap();

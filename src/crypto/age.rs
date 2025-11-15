@@ -3,8 +3,10 @@ use std::io::{Read, Write};
 use age::secrecy::Secret;
 use serde::{Deserialize, Serialize};
 
-use crate::crypto::{Cipher, CipherKind};
-use crate::error::{Error, Result};
+use crate::{
+    crypto::{Cipher, CipherKind},
+    error::{Error, Result},
+};
 
 /// Represents the password-based cipher that `envio` provides
 #[derive(Serialize, Deserialize)]

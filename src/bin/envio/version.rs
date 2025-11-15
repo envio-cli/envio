@@ -1,7 +1,9 @@
-use std::fs::{create_dir_all, File};
-use std::io::{BufRead, BufReader, BufWriter};
-use std::path::PathBuf;
-use std::process::Command;
+use std::{
+    fs::{create_dir_all, File},
+    io::{BufRead, BufReader, BufWriter},
+    path::PathBuf,
+    process::Command,
+};
 
 use bincode::{deserialize_from, serialize_into};
 use chrono::{Duration, Utc};
