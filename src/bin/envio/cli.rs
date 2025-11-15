@@ -55,6 +55,7 @@ pub fn create_profile(name: String, envs: Option<EnvVec>, cipher: Box<dyn Cipher
 
     let metadata = ProfileMetadata {
         name,
+        version: env!("BUILD_VERSION").to_string(),
         description: None,
         file_path: profile_file_path,
         cipher_kind: cipher.kind(),

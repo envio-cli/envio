@@ -15,6 +15,7 @@ use crate::{
 #[derive(Clone, Serialize, Deserialize)]
 pub struct ProfileMetadata {
     pub name: String,
+    pub version: String,
     pub description: Option<String>,
     pub file_path: PathBuf,
     pub cipher_kind: CipherKind,
