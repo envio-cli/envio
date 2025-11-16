@@ -12,12 +12,6 @@ _envio() {
             ",$1")
                 cmd="envio"
                 ;;
-            envio,add)
-                cmd="envio__add"
-                ;;
-            envio,create)
-                cmd="envio__create"
-                ;;
             envio,export)
                 cmd="envio__export"
                 ;;
@@ -27,32 +21,26 @@ _envio() {
             envio,import)
                 cmd="envio__import"
                 ;;
-            envio,launch)
-                cmd="envio__launch"
-                ;;
-            envio,list)
-                cmd="envio__list"
-                ;;
             envio,load)
                 cmd="envio__load"
                 ;;
-            envio,remove)
-                cmd="envio__remove"
+            envio,profile)
+                cmd="envio__profile"
+                ;;
+            envio,run)
+                cmd="envio__run"
+                ;;
+            envio,set)
+                cmd="envio__set"
                 ;;
             envio,unload)
                 cmd="envio__unload"
                 ;;
-            envio,update)
-                cmd="envio__update"
+            envio,unset)
+                cmd="envio__unset"
                 ;;
             envio,version)
                 cmd="envio__version"
-                ;;
-            envio__help,add)
-                cmd="envio__help__add"
-                ;;
-            envio__help,create)
-                cmd="envio__help__create"
                 ;;
             envio__help,export)
                 cmd="envio__help__export"
@@ -63,26 +51,68 @@ _envio() {
             envio__help,import)
                 cmd="envio__help__import"
                 ;;
-            envio__help,launch)
-                cmd="envio__help__launch"
-                ;;
-            envio__help,list)
-                cmd="envio__help__list"
-                ;;
             envio__help,load)
                 cmd="envio__help__load"
                 ;;
-            envio__help,remove)
-                cmd="envio__help__remove"
+            envio__help,profile)
+                cmd="envio__help__profile"
+                ;;
+            envio__help,run)
+                cmd="envio__help__run"
+                ;;
+            envio__help,set)
+                cmd="envio__help__set"
                 ;;
             envio__help,unload)
                 cmd="envio__help__unload"
                 ;;
-            envio__help,update)
-                cmd="envio__help__update"
+            envio__help,unset)
+                cmd="envio__help__unset"
                 ;;
             envio__help,version)
                 cmd="envio__help__version"
+                ;;
+            envio__help__profile,create)
+                cmd="envio__help__profile__create"
+                ;;
+            envio__help__profile,delete)
+                cmd="envio__help__profile__delete"
+                ;;
+            envio__help__profile,list)
+                cmd="envio__help__profile__list"
+                ;;
+            envio__help__profile,show)
+                cmd="envio__help__profile__show"
+                ;;
+            envio__profile,create)
+                cmd="envio__profile__create"
+                ;;
+            envio__profile,delete)
+                cmd="envio__profile__delete"
+                ;;
+            envio__profile,help)
+                cmd="envio__profile__help"
+                ;;
+            envio__profile,list)
+                cmd="envio__profile__list"
+                ;;
+            envio__profile,show)
+                cmd="envio__profile__show"
+                ;;
+            envio__profile__help,create)
+                cmd="envio__profile__help__create"
+                ;;
+            envio__profile__help,delete)
+                cmd="envio__profile__help__delete"
+                ;;
+            envio__profile__help,help)
+                cmd="envio__profile__help__help"
+                ;;
+            envio__profile__help,list)
+                cmd="envio__profile__help__list"
+                ;;
+            envio__profile__help,show)
+                cmd="envio__profile__help__show"
                 ;;
             *)
                 ;;
@@ -91,7 +121,7 @@ _envio() {
 
     case "${cmd}" in
         envio)
-            opts="-h --help create add load unload launch remove list update export import version help"
+            opts="-h --help profile set unset load unload run import export version help"
             if [[ ${cur} == -* || ${COMP_CWORD} -eq 1 ]] ; then
                 COMPREPLY=( $(compgen -W "${opts}" -- "${cur}") )
                 return 0
@@ -104,86 +134,26 @@ _envio() {
             COMPREPLY=( $(compgen -W "${opts}" -- "${cur}") )
             return 0
             ;;
-        envio__add)
-            opts="-e -c -x -h --envs --add-comments --add-expiration-date --help <PROFILE_NAME>"
-            if [[ ${cur} == -* || ${COMP_CWORD} -eq 2 ]] ; then
-                COMPREPLY=( $(compgen -W "${opts}" -- "${cur}") )
-                return 0
-            fi
-            case "${prev}" in
-                --envs)
-                    COMPREPLY=($(compgen -f "${cur}"))
-                    return 0
-                    ;;
-                -e)
-                    COMPREPLY=($(compgen -f "${cur}"))
-                    return 0
-                    ;;
-                *)
-                    COMPREPLY=()
-                    ;;
-            esac
-            COMPREPLY=( $(compgen -W "${opts}" -- "${cur}") )
-            return 0
-            ;;
-        envio__create)
-            opts="-f -e -g -c -x -h --file-to-import-envs-from --envs --gpg-key-fingerprint --add-comments --add-expiration-date --help <PROFILE_NAME>"
-            if [[ ${cur} == -* || ${COMP_CWORD} -eq 2 ]] ; then
-                COMPREPLY=( $(compgen -W "${opts}" -- "${cur}") )
-                return 0
-            fi
-            case "${prev}" in
-                --file-to-import-envs-from)
-                    COMPREPLY=($(compgen -f "${cur}"))
-                    return 0
-                    ;;
-                -f)
-                    COMPREPLY=($(compgen -f "${cur}"))
-                    return 0
-                    ;;
-                --envs)
-                    COMPREPLY=($(compgen -f "${cur}"))
-                    return 0
-                    ;;
-                -e)
-                    COMPREPLY=($(compgen -f "${cur}"))
-                    return 0
-                    ;;
-                --gpg-key-fingerprint)
-                    COMPREPLY=($(compgen -f "${cur}"))
-                    return 0
-                    ;;
-                -g)
-                    COMPREPLY=($(compgen -f "${cur}"))
-                    return 0
-                    ;;
-                *)
-                    COMPREPLY=()
-                    ;;
-            esac
-            COMPREPLY=( $(compgen -W "${opts}" -- "${cur}") )
-            return 0
-            ;;
         envio__export)
-            opts="-f -e -h --file-to-export-to --envs --help <PROFILE_NAME>"
+            opts="-t -k -h --to --keys --help <PROFILE_NAME>"
             if [[ ${cur} == -* || ${COMP_CWORD} -eq 2 ]] ; then
                 COMPREPLY=( $(compgen -W "${opts}" -- "${cur}") )
                 return 0
             fi
             case "${prev}" in
-                --file-to-export-to)
+                --to)
                     COMPREPLY=($(compgen -f "${cur}"))
                     return 0
                     ;;
-                -f)
+                -t)
                     COMPREPLY=($(compgen -f "${cur}"))
                     return 0
                     ;;
-                --envs)
+                --keys)
                     COMPREPLY=($(compgen -f "${cur}"))
                     return 0
                     ;;
-                -e)
+                -k)
                     COMPREPLY=($(compgen -f "${cur}"))
                     return 0
                     ;;
@@ -195,36 +165,8 @@ _envio() {
             return 0
             ;;
         envio__help)
-            opts="create add load unload launch remove list update export import version help"
+            opts="profile set unset load unload run import export version help"
             if [[ ${cur} == -* || ${COMP_CWORD} -eq 2 ]] ; then
-                COMPREPLY=( $(compgen -W "${opts}" -- "${cur}") )
-                return 0
-            fi
-            case "${prev}" in
-                *)
-                    COMPREPLY=()
-                    ;;
-            esac
-            COMPREPLY=( $(compgen -W "${opts}" -- "${cur}") )
-            return 0
-            ;;
-        envio__help__add)
-            opts=""
-            if [[ ${cur} == -* || ${COMP_CWORD} -eq 3 ]] ; then
-                COMPREPLY=( $(compgen -W "${opts}" -- "${cur}") )
-                return 0
-            fi
-            case "${prev}" in
-                *)
-                    COMPREPLY=()
-                    ;;
-            esac
-            COMPREPLY=( $(compgen -W "${opts}" -- "${cur}") )
-            return 0
-            ;;
-        envio__help__create)
-            opts=""
-            if [[ ${cur} == -* || ${COMP_CWORD} -eq 3 ]] ; then
                 COMPREPLY=( $(compgen -W "${opts}" -- "${cur}") )
                 return 0
             fi
@@ -278,34 +220,6 @@ _envio() {
             COMPREPLY=( $(compgen -W "${opts}" -- "${cur}") )
             return 0
             ;;
-        envio__help__launch)
-            opts=""
-            if [[ ${cur} == -* || ${COMP_CWORD} -eq 3 ]] ; then
-                COMPREPLY=( $(compgen -W "${opts}" -- "${cur}") )
-                return 0
-            fi
-            case "${prev}" in
-                *)
-                    COMPREPLY=()
-                    ;;
-            esac
-            COMPREPLY=( $(compgen -W "${opts}" -- "${cur}") )
-            return 0
-            ;;
-        envio__help__list)
-            opts=""
-            if [[ ${cur} == -* || ${COMP_CWORD} -eq 3 ]] ; then
-                COMPREPLY=( $(compgen -W "${opts}" -- "${cur}") )
-                return 0
-            fi
-            case "${prev}" in
-                *)
-                    COMPREPLY=()
-                    ;;
-            esac
-            COMPREPLY=( $(compgen -W "${opts}" -- "${cur}") )
-            return 0
-            ;;
         envio__help__load)
             opts=""
             if [[ ${cur} == -* || ${COMP_CWORD} -eq 3 ]] ; then
@@ -320,7 +234,91 @@ _envio() {
             COMPREPLY=( $(compgen -W "${opts}" -- "${cur}") )
             return 0
             ;;
-        envio__help__remove)
+        envio__help__profile)
+            opts="create delete list show"
+            if [[ ${cur} == -* || ${COMP_CWORD} -eq 3 ]] ; then
+                COMPREPLY=( $(compgen -W "${opts}" -- "${cur}") )
+                return 0
+            fi
+            case "${prev}" in
+                *)
+                    COMPREPLY=()
+                    ;;
+            esac
+            COMPREPLY=( $(compgen -W "${opts}" -- "${cur}") )
+            return 0
+            ;;
+        envio__help__profile__create)
+            opts=""
+            if [[ ${cur} == -* || ${COMP_CWORD} -eq 4 ]] ; then
+                COMPREPLY=( $(compgen -W "${opts}" -- "${cur}") )
+                return 0
+            fi
+            case "${prev}" in
+                *)
+                    COMPREPLY=()
+                    ;;
+            esac
+            COMPREPLY=( $(compgen -W "${opts}" -- "${cur}") )
+            return 0
+            ;;
+        envio__help__profile__delete)
+            opts=""
+            if [[ ${cur} == -* || ${COMP_CWORD} -eq 4 ]] ; then
+                COMPREPLY=( $(compgen -W "${opts}" -- "${cur}") )
+                return 0
+            fi
+            case "${prev}" in
+                *)
+                    COMPREPLY=()
+                    ;;
+            esac
+            COMPREPLY=( $(compgen -W "${opts}" -- "${cur}") )
+            return 0
+            ;;
+        envio__help__profile__list)
+            opts=""
+            if [[ ${cur} == -* || ${COMP_CWORD} -eq 4 ]] ; then
+                COMPREPLY=( $(compgen -W "${opts}" -- "${cur}") )
+                return 0
+            fi
+            case "${prev}" in
+                *)
+                    COMPREPLY=()
+                    ;;
+            esac
+            COMPREPLY=( $(compgen -W "${opts}" -- "${cur}") )
+            return 0
+            ;;
+        envio__help__profile__show)
+            opts=""
+            if [[ ${cur} == -* || ${COMP_CWORD} -eq 4 ]] ; then
+                COMPREPLY=( $(compgen -W "${opts}" -- "${cur}") )
+                return 0
+            fi
+            case "${prev}" in
+                *)
+                    COMPREPLY=()
+                    ;;
+            esac
+            COMPREPLY=( $(compgen -W "${opts}" -- "${cur}") )
+            return 0
+            ;;
+        envio__help__run)
+            opts=""
+            if [[ ${cur} == -* || ${COMP_CWORD} -eq 3 ]] ; then
+                COMPREPLY=( $(compgen -W "${opts}" -- "${cur}") )
+                return 0
+            fi
+            case "${prev}" in
+                *)
+                    COMPREPLY=()
+                    ;;
+            esac
+            COMPREPLY=( $(compgen -W "${opts}" -- "${cur}") )
+            return 0
+            ;;
+        envio__help__set)
             opts=""
             if [[ ${cur} == -* || ${COMP_CWORD} -eq 3 ]] ; then
                 COMPREPLY=( $(compgen -W "${opts}" -- "${cur}") )
@@ -348,7 +346,7 @@ _envio() {
             COMPREPLY=( $(compgen -W "${opts}" -- "${cur}") )
             return 0
             ;;
-        envio__help__update)
+        envio__help__unset)
             opts=""
             if [[ ${cur} == -* || ${COMP_CWORD} -eq 3 ]] ; then
                 COMPREPLY=( $(compgen -W "${opts}" -- "${cur}") )
@@ -377,59 +375,7 @@ _envio() {
             return 0
             ;;
         envio__import)
-            opts="-f -u -h --file-to-import-from --url --help <PROFILE_NAME>"
-            if [[ ${cur} == -* || ${COMP_CWORD} -eq 2 ]] ; then
-                COMPREPLY=( $(compgen -W "${opts}" -- "${cur}") )
-                return 0
-            fi
-            case "${prev}" in
-                --file-to-import-from)
-                    COMPREPLY=($(compgen -f "${cur}"))
-                    return 0
-                    ;;
-                -f)
-                    COMPREPLY=($(compgen -f "${cur}"))
-                    return 0
-                    ;;
-                --url)
-                    COMPREPLY=($(compgen -f "${cur}"))
-                    return 0
-                    ;;
-                -u)
-                    COMPREPLY=($(compgen -f "${cur}"))
-                    return 0
-                    ;;
-                *)
-                    COMPREPLY=()
-                    ;;
-            esac
-            COMPREPLY=( $(compgen -W "${opts}" -- "${cur}") )
-            return 0
-            ;;
-        envio__launch)
-            opts="-c -h --command --help <PROFILE_NAME> [COMMAND]..."
-            if [[ ${cur} == -* || ${COMP_CWORD} -eq 2 ]] ; then
-                COMPREPLY=( $(compgen -W "${opts}" -- "${cur}") )
-                return 0
-            fi
-            case "${prev}" in
-                --command)
-                    COMPREPLY=($(compgen -f "${cur}"))
-                    return 0
-                    ;;
-                -c)
-                    COMPREPLY=($(compgen -f "${cur}"))
-                    return 0
-                    ;;
-                *)
-                    COMPREPLY=()
-                    ;;
-            esac
-            COMPREPLY=( $(compgen -W "${opts}" -- "${cur}") )
-            return 0
-            ;;
-        envio__list)
-            opts="-p -n -v -c -x -h --profiles --profile-name --no-pretty-print --display-comments --display-expiration-date --help"
+            opts="-n -h --profile-name --help <SOURCE>"
             if [[ ${cur} == -* || ${COMP_CWORD} -eq 2 ]] ; then
                 COMPREPLY=( $(compgen -W "${opts}" -- "${cur}") )
                 return 0
@@ -464,14 +410,36 @@ _envio() {
             COMPREPLY=( $(compgen -W "${opts}" -- "${cur}") )
             return 0
             ;;
-        envio__remove)
-            opts="-e -h --envs-to-remove --help <PROFILE_NAME>"
+        envio__profile)
+            opts="-h --help create delete list show help"
             if [[ ${cur} == -* || ${COMP_CWORD} -eq 2 ]] ; then
                 COMPREPLY=( $(compgen -W "${opts}" -- "${cur}") )
                 return 0
             fi
             case "${prev}" in
-                --envs-to-remove)
+                *)
+                    COMPREPLY=()
+                    ;;
+            esac
+            COMPREPLY=( $(compgen -W "${opts}" -- "${cur}") )
+            return 0
+            ;;
+        envio__profile__create)
+            opts="-f -e -g -c -x -h --from-file --envs --gpg-key --add-comments --add-expiration-date --help <PROFILE_NAME>"
+            if [[ ${cur} == -* || ${COMP_CWORD} -eq 3 ]] ; then
+                COMPREPLY=( $(compgen -W "${opts}" -- "${cur}") )
+                return 0
+            fi
+            case "${prev}" in
+                --from-file)
+                    COMPREPLY=($(compgen -f "${cur}"))
+                    return 0
+                    ;;
+                -f)
+                    COMPREPLY=($(compgen -f "${cur}"))
+                    return 0
+                    ;;
+                --envs)
                     COMPREPLY=($(compgen -f "${cur}"))
                     return 0
                     ;;
@@ -479,6 +447,168 @@ _envio() {
                     COMPREPLY=($(compgen -f "${cur}"))
                     return 0
                     ;;
+                --gpg-key)
+                    COMPREPLY=($(compgen -f "${cur}"))
+                    return 0
+                    ;;
+                -g)
+                    COMPREPLY=($(compgen -f "${cur}"))
+                    return 0
+                    ;;
+                *)
+                    COMPREPLY=()
+                    ;;
+            esac
+            COMPREPLY=( $(compgen -W "${opts}" -- "${cur}") )
+            return 0
+            ;;
+        envio__profile__delete)
+            opts="-h --help <PROFILE_NAME>"
+            if [[ ${cur} == -* || ${COMP_CWORD} -eq 3 ]] ; then
+                COMPREPLY=( $(compgen -W "${opts}" -- "${cur}") )
+                return 0
+            fi
+            case "${prev}" in
+                *)
+                    COMPREPLY=()
+                    ;;
+            esac
+            COMPREPLY=( $(compgen -W "${opts}" -- "${cur}") )
+            return 0
+            ;;
+        envio__profile__help)
+            opts="create delete list show help"
+            if [[ ${cur} == -* || ${COMP_CWORD} -eq 3 ]] ; then
+                COMPREPLY=( $(compgen -W "${opts}" -- "${cur}") )
+                return 0
+            fi
+            case "${prev}" in
+                *)
+                    COMPREPLY=()
+                    ;;
+            esac
+            COMPREPLY=( $(compgen -W "${opts}" -- "${cur}") )
+            return 0
+            ;;
+        envio__profile__help__create)
+            opts=""
+            if [[ ${cur} == -* || ${COMP_CWORD} -eq 4 ]] ; then
+                COMPREPLY=( $(compgen -W "${opts}" -- "${cur}") )
+                return 0
+            fi
+            case "${prev}" in
+                *)
+                    COMPREPLY=()
+                    ;;
+            esac
+            COMPREPLY=( $(compgen -W "${opts}" -- "${cur}") )
+            return 0
+            ;;
+        envio__profile__help__delete)
+            opts=""
+            if [[ ${cur} == -* || ${COMP_CWORD} -eq 4 ]] ; then
+                COMPREPLY=( $(compgen -W "${opts}" -- "${cur}") )
+                return 0
+            fi
+            case "${prev}" in
+                *)
+                    COMPREPLY=()
+                    ;;
+            esac
+            COMPREPLY=( $(compgen -W "${opts}" -- "${cur}") )
+            return 0
+            ;;
+        envio__profile__help__help)
+            opts=""
+            if [[ ${cur} == -* || ${COMP_CWORD} -eq 4 ]] ; then
+                COMPREPLY=( $(compgen -W "${opts}" -- "${cur}") )
+                return 0
+            fi
+            case "${prev}" in
+                *)
+                    COMPREPLY=()
+                    ;;
+            esac
+            COMPREPLY=( $(compgen -W "${opts}" -- "${cur}") )
+            return 0
+            ;;
+        envio__profile__help__list)
+            opts=""
+            if [[ ${cur} == -* || ${COMP_CWORD} -eq 4 ]] ; then
+                COMPREPLY=( $(compgen -W "${opts}" -- "${cur}") )
+                return 0
+            fi
+            case "${prev}" in
+                *)
+                    COMPREPLY=()
+                    ;;
+            esac
+            COMPREPLY=( $(compgen -W "${opts}" -- "${cur}") )
+            return 0
+            ;;
+        envio__profile__help__show)
+            opts=""
+            if [[ ${cur} == -* || ${COMP_CWORD} -eq 4 ]] ; then
+                COMPREPLY=( $(compgen -W "${opts}" -- "${cur}") )
+                return 0
+            fi
+            case "${prev}" in
+                *)
+                    COMPREPLY=()
+                    ;;
+            esac
+            COMPREPLY=( $(compgen -W "${opts}" -- "${cur}") )
+            return 0
+            ;;
+        envio__profile__list)
+            opts="-v -h --no-pretty-print --help"
+            if [[ ${cur} == -* || ${COMP_CWORD} -eq 3 ]] ; then
+                COMPREPLY=( $(compgen -W "${opts}" -- "${cur}") )
+                return 0
+            fi
+            case "${prev}" in
+                *)
+                    COMPREPLY=()
+                    ;;
+            esac
+            COMPREPLY=( $(compgen -W "${opts}" -- "${cur}") )
+            return 0
+            ;;
+        envio__profile__show)
+            opts="-v -c -x -h --no-pretty-print --display-comments --display-expiration-date --help <PROFILE_NAME>"
+            if [[ ${cur} == -* || ${COMP_CWORD} -eq 3 ]] ; then
+                COMPREPLY=( $(compgen -W "${opts}" -- "${cur}") )
+                return 0
+            fi
+            case "${prev}" in
+                *)
+                    COMPREPLY=()
+                    ;;
+            esac
+            COMPREPLY=( $(compgen -W "${opts}" -- "${cur}") )
+            return 0
+            ;;
+        envio__run)
+            opts="-h --help <PROFILE_NAME> <COMMAND>..."
+            if [[ ${cur} == -* || ${COMP_CWORD} -eq 2 ]] ; then
+                COMPREPLY=( $(compgen -W "${opts}" -- "${cur}") )
+                return 0
+            fi
+            case "${prev}" in
+                *)
+                    COMPREPLY=()
+                    ;;
+            esac
+            COMPREPLY=( $(compgen -W "${opts}" -- "${cur}") )
+            return 0
+            ;;
+        envio__set)
+            opts="-c -x -h --comments --expiration-date --help <PROFILE_NAME> <ENVS>..."
+            if [[ ${cur} == -* || ${COMP_CWORD} -eq 2 ]] ; then
+                COMPREPLY=( $(compgen -W "${opts}" -- "${cur}") )
+                return 0
+            fi
+            case "${prev}" in
                 *)
                     COMPREPLY=()
                     ;;
@@ -500,21 +630,13 @@ _envio() {
             COMPREPLY=( $(compgen -W "${opts}" -- "${cur}") )
             return 0
             ;;
-        envio__update)
-            opts="-e -v -c -x -h --envs --update-values --update-comments --update-expiration-date --help <PROFILE_NAME>"
+        envio__unset)
+            opts="-h --help <PROFILE_NAME> <KEYS>..."
             if [[ ${cur} == -* || ${COMP_CWORD} -eq 2 ]] ; then
                 COMPREPLY=( $(compgen -W "${opts}" -- "${cur}") )
                 return 0
             fi
             case "${prev}" in
-                --envs)
-                    COMPREPLY=($(compgen -f "${cur}"))
-                    return 0
-                    ;;
-                -e)
-                    COMPREPLY=($(compgen -f "${cur}"))
-                    return 0
-                    ;;
                 *)
                     COMPREPLY=()
                     ;;

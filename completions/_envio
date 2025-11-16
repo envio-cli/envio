@@ -26,14 +26,28 @@ _envio() {
         (( CURRENT += 1 ))
         curcontext="${curcontext%:*:*}:envio-command-$line[1]:"
         case $line[1] in
+            (profile)
+_arguments "${_arguments_options[@]}" \
+'-h[Print help]' \
+'--help[Print help]' \
+":: :_envio__profile_commands" \
+"*::: :->profile" \
+&& ret=0
+
+    case $state in
+    (profile)
+        words=($line[1] "${words[@]}")
+        (( CURRENT += 1 ))
+        curcontext="${curcontext%:*:*}:envio-profile-command-$line[1]:"
+        case $line[1] in
             (create)
 _arguments "${_arguments_options[@]}" \
 '-f+[]:ENVS_FILE: ' \
-'--file-to-import-envs-from=[]:ENVS_FILE: ' \
+'--from-file=[]:ENVS_FILE: ' \
 '*-e+[]:ENVS: ' \
 '*--envs=[]:ENVS: ' \
 '-g+[]:GPG: ' \
-'--gpg-key-fingerprint=[]:GPG: ' \
+'--gpg-key=[]:GPG: ' \
 '-c[]' \
 '--add-comments[]' \
 '-x[]' \
@@ -43,17 +57,92 @@ _arguments "${_arguments_options[@]}" \
 ':profile_name:' \
 && ret=0
 ;;
-(add)
+(delete)
 _arguments "${_arguments_options[@]}" \
-'*-e+[]:ENVS: ' \
-'*--envs=[]:ENVS: ' \
-'-c[]' \
-'--add-comments[]' \
-'-x[]' \
-'--add-expiration-date[]' \
 '-h[Print help]' \
 '--help[Print help]' \
 ':profile_name:' \
+&& ret=0
+;;
+(list)
+_arguments "${_arguments_options[@]}" \
+'-v[]' \
+'--no-pretty-print[]' \
+'-h[Print help]' \
+'--help[Print help]' \
+&& ret=0
+;;
+(show)
+_arguments "${_arguments_options[@]}" \
+'-v[]' \
+'--no-pretty-print[]' \
+'-c[]' \
+'--display-comments[]' \
+'-x[]' \
+'--display-expiration-date[]' \
+'-h[Print help]' \
+'--help[Print help]' \
+':profile_name:' \
+&& ret=0
+;;
+(help)
+_arguments "${_arguments_options[@]}" \
+":: :_envio__profile__help_commands" \
+"*::: :->help" \
+&& ret=0
+
+    case $state in
+    (help)
+        words=($line[1] "${words[@]}")
+        (( CURRENT += 1 ))
+        curcontext="${curcontext%:*:*}:envio-profile-help-command-$line[1]:"
+        case $line[1] in
+            (create)
+_arguments "${_arguments_options[@]}" \
+&& ret=0
+;;
+(delete)
+_arguments "${_arguments_options[@]}" \
+&& ret=0
+;;
+(list)
+_arguments "${_arguments_options[@]}" \
+&& ret=0
+;;
+(show)
+_arguments "${_arguments_options[@]}" \
+&& ret=0
+;;
+(help)
+_arguments "${_arguments_options[@]}" \
+&& ret=0
+;;
+        esac
+    ;;
+esac
+;;
+        esac
+    ;;
+esac
+;;
+(set)
+_arguments "${_arguments_options[@]}" \
+'-c[]' \
+'--comments[]' \
+'-x[]' \
+'--expiration-date[]' \
+'-h[Print help]' \
+'--help[Print help]' \
+':profile_name:' \
+'*::envs:' \
+&& ret=0
+;;
+(unset)
+_arguments "${_arguments_options[@]}" \
+'-h[Print help]' \
+'--help[Print help]' \
+':profile_name:' \
+'*::keys:' \
 && ret=0
 ;;
 (load)
@@ -69,73 +158,29 @@ _arguments "${_arguments_options[@]}" \
 '--help[Print help]' \
 && ret=0
 ;;
-(launch)
+(run)
 _arguments "${_arguments_options[@]}" \
-'-c+[]:STRING_COMMAND: ' \
-'--command=[]:STRING_COMMAND: ' \
 '-h[Print help]' \
 '--help[Print help]' \
 ':profile_name:' \
-'*::COMMAND:' \
-&& ret=0
-;;
-(remove)
-_arguments "${_arguments_options[@]}" \
-'*-e+[]:ENVS: ' \
-'*--envs-to-remove=[]:ENVS: ' \
-'-h[Print help]' \
-'--help[Print help]' \
-':profile_name:' \
-&& ret=0
-;;
-(list)
-_arguments "${_arguments_options[@]}" \
-'-n+[]:PROFILE_NAME: ' \
-'--profile-name=[]:PROFILE_NAME: ' \
-'-p[]' \
-'--profiles[]' \
-'-v[]' \
-'--no-pretty-print[]' \
-'-c[]' \
-'--display-comments[]' \
-'-x[]' \
-'--display-expiration-date[]' \
-'-h[Print help]' \
-'--help[Print help]' \
-&& ret=0
-;;
-(update)
-_arguments "${_arguments_options[@]}" \
-'*-e+[]:ENVS: ' \
-'*--envs=[]:ENVS: ' \
-'-v[]' \
-'--update-values[]' \
-'-c[]' \
-'--update-comments[]' \
-'-x[]' \
-'--update-expiration-date[]' \
-'-h[Print help]' \
-'--help[Print help]' \
-':profile_name:' \
-&& ret=0
-;;
-(export)
-_arguments "${_arguments_options[@]}" \
-'-f+[]:FILE: ' \
-'--file-to-export-to=[]:FILE: ' \
-'*-e+[]:ENVS: ' \
-'*--envs=[]:ENVS: ' \
-'-h[Print help]' \
-'--help[Print help]' \
-':profile_name:' \
+'*::command:' \
 && ret=0
 ;;
 (import)
 _arguments "${_arguments_options[@]}" \
-'-f+[]:FILE: ' \
-'--file-to-import-from=[]:FILE: ' \
-'-u+[]:URL: ' \
-'--url=[]:URL: ' \
+'-n+[]:PROFILE_NAME: ' \
+'--profile-name=[]:PROFILE_NAME: ' \
+'-h[Print help]' \
+'--help[Print help]' \
+':source:' \
+&& ret=0
+;;
+(export)
+_arguments "${_arguments_options[@]}" \
+'-t+[]:FILE: ' \
+'--to=[]:FILE: ' \
+'*-k+[]:KEYS: ' \
+'*--keys=[]:KEYS: ' \
 '-h[Print help]' \
 '--help[Print help]' \
 ':profile_name:' \
@@ -161,11 +206,43 @@ _arguments "${_arguments_options[@]}" \
         (( CURRENT += 1 ))
         curcontext="${curcontext%:*:*}:envio-help-command-$line[1]:"
         case $line[1] in
+            (profile)
+_arguments "${_arguments_options[@]}" \
+":: :_envio__help__profile_commands" \
+"*::: :->profile" \
+&& ret=0
+
+    case $state in
+    (profile)
+        words=($line[1] "${words[@]}")
+        (( CURRENT += 1 ))
+        curcontext="${curcontext%:*:*}:envio-help-profile-command-$line[1]:"
+        case $line[1] in
             (create)
 _arguments "${_arguments_options[@]}" \
 && ret=0
 ;;
-(add)
+(delete)
+_arguments "${_arguments_options[@]}" \
+&& ret=0
+;;
+(list)
+_arguments "${_arguments_options[@]}" \
+&& ret=0
+;;
+(show)
+_arguments "${_arguments_options[@]}" \
+&& ret=0
+;;
+        esac
+    ;;
+esac
+;;
+(set)
+_arguments "${_arguments_options[@]}" \
+&& ret=0
+;;
+(unset)
 _arguments "${_arguments_options[@]}" \
 && ret=0
 ;;
@@ -177,27 +254,15 @@ _arguments "${_arguments_options[@]}" \
 _arguments "${_arguments_options[@]}" \
 && ret=0
 ;;
-(launch)
-_arguments "${_arguments_options[@]}" \
-&& ret=0
-;;
-(remove)
-_arguments "${_arguments_options[@]}" \
-&& ret=0
-;;
-(list)
-_arguments "${_arguments_options[@]}" \
-&& ret=0
-;;
-(update)
-_arguments "${_arguments_options[@]}" \
-&& ret=0
-;;
-(export)
+(run)
 _arguments "${_arguments_options[@]}" \
 && ret=0
 ;;
 (import)
+_arguments "${_arguments_options[@]}" \
+&& ret=0
+;;
+(export)
 _arguments "${_arguments_options[@]}" \
 && ret=0
 ;;
@@ -221,40 +286,48 @@ esac
 (( $+functions[_envio_commands] )) ||
 _envio_commands() {
     local commands; commands=(
-'create:Create a new profile' \
-'add:Add envionment variables to a profile' \
+'profile:' \
+'set:Set or update environment variables in a profile' \
+'unset:Remove an environment variable from a profile' \
 'load:Load all environment variables in a profile for use in your terminal sessions' \
 'unload:Unload a profile' \
-'launch:Run a command with the environment variables from a profile' \
-'remove:Remove a environment variable from a profile' \
-'list:List all the environment variables in a profile or all the profiles currenty stored' \
-'update:Update environment variables in a profile' \
-'export:Export a profile to a file if no file is specified it will be exported to a file named .env' \
-'import:Download a profile over the internet and import it into the system or import a locally stored profile into your current envio installation' \
+'run:Run a command with the environment variables from a profile' \
+'import:Import a profile from a file, URL, or .env file' \
+'export:Export a profile to a file' \
 'version:Print the version' \
 'help:Print this message or the help of the given subcommand(s)' \
     )
     _describe -t commands 'envio commands' commands "$@"
 }
-(( $+functions[_envio__add_commands] )) ||
-_envio__add_commands() {
+(( $+functions[_envio__help__profile__create_commands] )) ||
+_envio__help__profile__create_commands() {
     local commands; commands=()
-    _describe -t commands 'envio add commands' commands "$@"
+    _describe -t commands 'envio help profile create commands' commands "$@"
 }
-(( $+functions[_envio__help__add_commands] )) ||
-_envio__help__add_commands() {
+(( $+functions[_envio__profile__create_commands] )) ||
+_envio__profile__create_commands() {
     local commands; commands=()
-    _describe -t commands 'envio help add commands' commands "$@"
+    _describe -t commands 'envio profile create commands' commands "$@"
 }
-(( $+functions[_envio__create_commands] )) ||
-_envio__create_commands() {
+(( $+functions[_envio__profile__help__create_commands] )) ||
+_envio__profile__help__create_commands() {
     local commands; commands=()
-    _describe -t commands 'envio create commands' commands "$@"
+    _describe -t commands 'envio profile help create commands' commands "$@"
 }
-(( $+functions[_envio__help__create_commands] )) ||
-_envio__help__create_commands() {
+(( $+functions[_envio__help__profile__delete_commands] )) ||
+_envio__help__profile__delete_commands() {
     local commands; commands=()
-    _describe -t commands 'envio help create commands' commands "$@"
+    _describe -t commands 'envio help profile delete commands' commands "$@"
+}
+(( $+functions[_envio__profile__delete_commands] )) ||
+_envio__profile__delete_commands() {
+    local commands; commands=()
+    _describe -t commands 'envio profile delete commands' commands "$@"
+}
+(( $+functions[_envio__profile__help__delete_commands] )) ||
+_envio__profile__help__delete_commands() {
+    local commands; commands=()
+    _describe -t commands 'envio profile help delete commands' commands "$@"
 }
 (( $+functions[_envio__export_commands] )) ||
 _envio__export_commands() {
@@ -269,16 +342,14 @@ _envio__help__export_commands() {
 (( $+functions[_envio__help_commands] )) ||
 _envio__help_commands() {
     local commands; commands=(
-'create:Create a new profile' \
-'add:Add envionment variables to a profile' \
+'profile:' \
+'set:Set or update environment variables in a profile' \
+'unset:Remove an environment variable from a profile' \
 'load:Load all environment variables in a profile for use in your terminal sessions' \
 'unload:Unload a profile' \
-'launch:Run a command with the environment variables from a profile' \
-'remove:Remove a environment variable from a profile' \
-'list:List all the environment variables in a profile or all the profiles currenty stored' \
-'update:Update environment variables in a profile' \
-'export:Export a profile to a file if no file is specified it will be exported to a file named .env' \
-'import:Download a profile over the internet and import it into the system or import a locally stored profile into your current envio installation' \
+'run:Run a command with the environment variables from a profile' \
+'import:Import a profile from a file, URL, or .env file' \
+'export:Export a profile to a file' \
 'version:Print the version' \
 'help:Print this message or the help of the given subcommand(s)' \
     )
@@ -288,6 +359,22 @@ _envio__help_commands() {
 _envio__help__help_commands() {
     local commands; commands=()
     _describe -t commands 'envio help help commands' commands "$@"
+}
+(( $+functions[_envio__profile__help_commands] )) ||
+_envio__profile__help_commands() {
+    local commands; commands=(
+'create:Create a new profile' \
+'delete:Delete a profile' \
+'list:List all profiles' \
+'show:Show environment variables in a profile' \
+'help:Print this message or the help of the given subcommand(s)' \
+    )
+    _describe -t commands 'envio profile help commands' commands "$@"
+}
+(( $+functions[_envio__profile__help__help_commands] )) ||
+_envio__profile__help__help_commands() {
+    local commands; commands=()
+    _describe -t commands 'envio profile help help commands' commands "$@"
 }
 (( $+functions[_envio__help__import_commands] )) ||
 _envio__help__import_commands() {
@@ -299,25 +386,20 @@ _envio__import_commands() {
     local commands; commands=()
     _describe -t commands 'envio import commands' commands "$@"
 }
-(( $+functions[_envio__help__launch_commands] )) ||
-_envio__help__launch_commands() {
+(( $+functions[_envio__help__profile__list_commands] )) ||
+_envio__help__profile__list_commands() {
     local commands; commands=()
-    _describe -t commands 'envio help launch commands' commands "$@"
+    _describe -t commands 'envio help profile list commands' commands "$@"
 }
-(( $+functions[_envio__launch_commands] )) ||
-_envio__launch_commands() {
+(( $+functions[_envio__profile__help__list_commands] )) ||
+_envio__profile__help__list_commands() {
     local commands; commands=()
-    _describe -t commands 'envio launch commands' commands "$@"
+    _describe -t commands 'envio profile help list commands' commands "$@"
 }
-(( $+functions[_envio__help__list_commands] )) ||
-_envio__help__list_commands() {
+(( $+functions[_envio__profile__list_commands] )) ||
+_envio__profile__list_commands() {
     local commands; commands=()
-    _describe -t commands 'envio help list commands' commands "$@"
-}
-(( $+functions[_envio__list_commands] )) ||
-_envio__list_commands() {
-    local commands; commands=()
-    _describe -t commands 'envio list commands' commands "$@"
+    _describe -t commands 'envio profile list commands' commands "$@"
 }
 (( $+functions[_envio__help__load_commands] )) ||
 _envio__help__load_commands() {
@@ -329,15 +411,61 @@ _envio__load_commands() {
     local commands; commands=()
     _describe -t commands 'envio load commands' commands "$@"
 }
-(( $+functions[_envio__help__remove_commands] )) ||
-_envio__help__remove_commands() {
-    local commands; commands=()
-    _describe -t commands 'envio help remove commands' commands "$@"
+(( $+functions[_envio__help__profile_commands] )) ||
+_envio__help__profile_commands() {
+    local commands; commands=(
+'create:Create a new profile' \
+'delete:Delete a profile' \
+'list:List all profiles' \
+'show:Show environment variables in a profile' \
+    )
+    _describe -t commands 'envio help profile commands' commands "$@"
 }
-(( $+functions[_envio__remove_commands] )) ||
-_envio__remove_commands() {
+(( $+functions[_envio__profile_commands] )) ||
+_envio__profile_commands() {
+    local commands; commands=(
+'create:Create a new profile' \
+'delete:Delete a profile' \
+'list:List all profiles' \
+'show:Show environment variables in a profile' \
+'help:Print this message or the help of the given subcommand(s)' \
+    )
+    _describe -t commands 'envio profile commands' commands "$@"
+}
+(( $+functions[_envio__help__run_commands] )) ||
+_envio__help__run_commands() {
     local commands; commands=()
-    _describe -t commands 'envio remove commands' commands "$@"
+    _describe -t commands 'envio help run commands' commands "$@"
+}
+(( $+functions[_envio__run_commands] )) ||
+_envio__run_commands() {
+    local commands; commands=()
+    _describe -t commands 'envio run commands' commands "$@"
+}
+(( $+functions[_envio__help__set_commands] )) ||
+_envio__help__set_commands() {
+    local commands; commands=()
+    _describe -t commands 'envio help set commands' commands "$@"
+}
+(( $+functions[_envio__set_commands] )) ||
+_envio__set_commands() {
+    local commands; commands=()
+    _describe -t commands 'envio set commands' commands "$@"
+}
+(( $+functions[_envio__help__profile__show_commands] )) ||
+_envio__help__profile__show_commands() {
+    local commands; commands=()
+    _describe -t commands 'envio help profile show commands' commands "$@"
+}
+(( $+functions[_envio__profile__help__show_commands] )) ||
+_envio__profile__help__show_commands() {
+    local commands; commands=()
+    _describe -t commands 'envio profile help show commands' commands "$@"
+}
+(( $+functions[_envio__profile__show_commands] )) ||
+_envio__profile__show_commands() {
+    local commands; commands=()
+    _describe -t commands 'envio profile show commands' commands "$@"
 }
 (( $+functions[_envio__help__unload_commands] )) ||
 _envio__help__unload_commands() {
@@ -349,15 +477,15 @@ _envio__unload_commands() {
     local commands; commands=()
     _describe -t commands 'envio unload commands' commands "$@"
 }
-(( $+functions[_envio__help__update_commands] )) ||
-_envio__help__update_commands() {
+(( $+functions[_envio__help__unset_commands] )) ||
+_envio__help__unset_commands() {
     local commands; commands=()
-    _describe -t commands 'envio help update commands' commands "$@"
+    _describe -t commands 'envio help unset commands' commands "$@"
 }
-(( $+functions[_envio__update_commands] )) ||
-_envio__update_commands() {
+(( $+functions[_envio__unset_commands] )) ||
+_envio__unset_commands() {
     local commands; commands=()
-    _describe -t commands 'envio update commands' commands "$@"
+    _describe -t commands 'envio unset commands' commands "$@"
 }
 (( $+functions[_envio__help__version_commands] )) ||
 _envio__help__version_commands() {
