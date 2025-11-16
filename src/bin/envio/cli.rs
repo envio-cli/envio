@@ -389,7 +389,7 @@ done <<< "$ENV_VARS"
     file.write_all(shellscript.as_bytes())?;
     file.flush()?;
     file.sync_all()?;
-    
+
     Ok(())
 }
 

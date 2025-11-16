@@ -1,7 +1,4 @@
-use std::{
-    io::Write,
-    path::{Path, PathBuf},
-};
+use std::path::{Path, PathBuf};
 
 use chrono::{DateTime, Local};
 use serde::{Deserialize, Serialize};
@@ -47,13 +44,11 @@ impl Profile {
     pub fn from_file<P: AsRef<Path>>(file_path: P, cipher: Box<dyn Cipher>) -> Result<Profile> {
         let file_content = std::fs::read(&file_path)?;
 
-        let serialized_profile: SerializedProfile = serde_json::from_slice(&file_content)
-            .map_err(|e| Error::Deserialization(format!("Failed to parse profile JSON: {}", e)))?;
+        let serialized_profile: SerializedProfile = serde_json::from_slice(&file_content)?;
 
         let decrypted_envs_bytes = cipher.decrypt(&serialized_profile.content)?;
 
-        let envs: EnvVec = bincode::deserialize(&decrypted_envs_bytes)
-            .map_err(|e| Error::Deserialization(format!("Failed to deserialize envs: {}", e)))?;
+        let envs: EnvVec = bincode::deserialize(&decrypted_envs_bytes)?;
 
         Ok(Profile {
             metadata: serialized_profile.metadata,
@@ -109,7 +104,7 @@ impl Profile {
     }
 
     pub fn save(&mut self) -> Result<()> {
-        let mut file = std::fs::OpenOptions::new()
+        let file = std::fs::OpenOptions::new()
             .write(true)
             .append(false)
             .create(true)
@@ -117,12 +112,7 @@ impl Profile {
 
         file.set_len(0)?;
 
-        let serialized_envs = match bincode::serialize(&self.envs) {
-            Ok(data) => data,
-            Err(e) => {
-                return Err(Error::Serialization(e.to_string()));
-            }
-        };
+        let serialized_envs = bincode::serialize(&self.envs)?;
 
         let encrypted_envs = match self.cipher.encrypt(&serialized_envs) {
             Ok(data) => data,
@@ -131,14 +121,12 @@ impl Profile {
             }
         };
 
-        let serialized_profile = serde_json::json!(SerializedProfile {
+        let serialized_profile = SerializedProfile {
             metadata: self.metadata.clone(),
             content: encrypted_envs,
-        });
+        };
 
-        file.write_all(serialized_profile.to_string().as_bytes())?;
-        file.flush()?;
-        file.sync_all()?;
+        serde_json::to_writer_pretty(&file, &serialized_profile)?;
 
         Ok(())
     }
