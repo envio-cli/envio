@@ -15,7 +15,7 @@ use url::Url;
 
 use crate::{
     clap_app::Command,
-    cli::{self, check_expired_envs},
+    ops::{self, check_expired_envs},
     utils::{does_profile_exist, get_profile_path, parse_envs_from_string},
 };
 
@@ -301,7 +301,7 @@ impl Command {
                     }
                 }
 
-                cli::create_profile(profile_name.to_string(), envs_vec, cipher)?;
+                ops::create_profile(profile_name.to_string(), envs_vec, cipher)?;
             }
 
             Command::Add {
@@ -399,7 +399,7 @@ impl Command {
             Command::Load { profile_name } => {
                 #[cfg(target_family = "unix")]
                 {
-                    cli::load_profile(profile_name)?;
+                    ops::load_profile(profile_name)?;
                 }
 
                 #[cfg(target_family = "windows")]
@@ -411,7 +411,7 @@ impl Command {
                     let profile = get_profile(get_profile_path(profile_name), Some(get_userkey))?;
                     check_expired_envs(&profile);
 
-                    if let Err(e) = cli::load_profile(profile) {
+                    if let Err(e) = ops::load_profile(profile) {
                         return Err(e);
                     }
                 }
@@ -419,7 +419,7 @@ impl Command {
 
             #[cfg(target_family = "unix")]
             Command::Unload => {
-                cli::unload_profile()?;
+                ops::unload_profile()?;
             }
 
             #[cfg(target_family = "windows")]
@@ -431,7 +431,7 @@ impl Command {
                 let profile = get_profile(get_profile_path(profile_name), Some(get_userkey))?;
                 check_expired_envs(&profile);
 
-                if let Err(e) = cli::unload_profile(profile) {
+                if let Err(e) = ops::unload_profile(profile) {
                     return Err(e);
                 }
             }
@@ -490,7 +490,7 @@ impl Command {
                     println!("{}", "Applying Changes".green());
                     profile.save()?;
                 } else {
-                    cli::delete_profile(profile_name)?;
+                    ops::delete_profile(profile_name)?;
                 }
             }
 
@@ -502,7 +502,7 @@ impl Command {
                 display_expiration_date,
             } => {
                 if *profiles {
-                    cli::list_profiles(*no_pretty_print)?;
+                    ops::list_profiles(*no_pretty_print)?;
                 } else if profile_name.is_some() && !profile_name.as_ref().unwrap().is_empty() {
                     if !does_profile_exist(profile_name.as_ref().unwrap()) {
                         return Err(Error::ProfileDoesNotExist(
@@ -521,7 +521,7 @@ impl Command {
                             println!("{}={}", env.name, env.value);
                         }
                     } else {
-                        cli::list_envs(&profile, *display_comments, *display_expiration_date);
+                        ops::list_envs(&profile, *display_comments, *display_expiration_date);
                     }
                 }
             }
@@ -663,7 +663,7 @@ impl Command {
                         return Err(Error::Msg(e.to_string()));
                     }
 
-                    cli::export_envs(
+                    ops::export_envs(
                         &profile,
                         file_name,
                         &Some(
@@ -679,7 +679,7 @@ impl Command {
                     return Ok(());
                 }
 
-                cli::export_envs(&profile, file_name, envs)?;
+                ops::export_envs(&profile, file_name, envs)?;
             }
 
             Command::Import {
@@ -692,7 +692,7 @@ impl Command {
                 }
 
                 if url.is_some() && Url::parse(url.as_ref().unwrap()).is_ok() {
-                    cli::download_profile(
+                    ops::download_profile(
                         url.as_ref().unwrap().to_string(),
                         profile_name.to_string(),
                     )?;
@@ -701,7 +701,7 @@ impl Command {
                 }
 
                 if file.is_some() {
-                    cli::import_profile(
+                    ops::import_profile(
                         file.as_ref().unwrap().to_string(),
                         profile_name.to_string(),
                     )?;
