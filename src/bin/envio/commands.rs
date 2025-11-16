@@ -30,7 +30,7 @@ fn get_userkey() -> String {
         .prompt();
 
     if let Err(e) = prompt {
-        println!("{}: {}", "Error".red(), e);
+        eprintln!("{}: {}", "Error".red(), e);
         std::process::exit(1);
     } else {
         prompt.unwrap()

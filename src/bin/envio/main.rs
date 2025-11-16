@@ -1,6 +1,6 @@
 mod clap_app;
-mod ops;
 mod commands;
+mod ops;
 mod utils;
 mod version;
 
@@ -20,7 +20,7 @@ fn main() {
     let current_version = if let Ok(val) = Version::parse(env!("BUILD_VERSION")) {
         val
     } else {
-        println!("{}: Failed to parse current version", "Error".red());
+        eprintln!("{}: Failed to parse current version", "Error".red());
         "0.0.0".parse().unwrap()
     };
 
@@ -37,11 +37,11 @@ fn main() {
 
     #[cfg(target_family = "unix")]
     if let Err(e) = initalize_config() {
-        println!("{}: {}", "Error".red(), e);
+        eprintln!("{}: {}", "Error".red(), e);
     }
 
     if let Err(e) = args.command.run() {
-        println!("{}: {}", "Error".red(), e);
+        eprintln!("{}: {}", "Error".red(), e);
         std::process::exit(1);
     }
 }
