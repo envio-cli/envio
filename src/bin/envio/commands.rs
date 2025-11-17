@@ -124,7 +124,7 @@ impl Command {
                         gpg_key = gpg.as_ref().unwrap().to_string();
                     }
 
-                    cipher = create_cipher(gpg_key, CipherKind::Gpg)?;
+                    cipher = create_cipher(CipherKind::Gpg, Some(&gpg_key))?;
                 } else {
                     let prompt = Password::new("Enter your encryption key:")
                         .with_display_toggle_enabled()
@@ -143,7 +143,7 @@ impl Command {
                         prompt.unwrap()
                     };
 
-                    cipher = create_cipher(user_key, CipherKind::Age)?;
+                    cipher = create_cipher(CipherKind::Age, Some(&user_key))?;
                 }
 
                 let mut envs_vec;

@@ -10,7 +10,7 @@ pub use env::{Env, EnvVec};
 pub use profile::{Profile, ProfileMetadata};
 
 use crate::{
-    crypto::{get_cipher, CipherKind},
+    crypto::{get_profile_cipher, CipherKind},
     error::{Error, Result},
 };
 
@@ -19,7 +19,7 @@ where
     P: AsRef<Path>,
     F: FnOnce() -> String,
 {
-    let mut cipher = get_cipher(&file_path)?;
+    let mut cipher = get_profile_cipher(&file_path)?;
 
     if cipher.kind() == CipherKind::Age {
         if let Some(key_provider) = get_key {

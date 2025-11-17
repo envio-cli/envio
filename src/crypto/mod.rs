@@ -1,16 +1,18 @@
 pub mod age;
 pub mod gpg;
 
-// Re-export the cipher types so that users don't have to use envio::crypto::type::TYPE
 use std::path::Path;
 
+// re-export the cipher types
 pub use age::AGE;
 pub use gpg::GPG;
+
 use serde::{Deserialize, Serialize};
+use strum_macros::{Display, EnumIter};
 
 use crate::{error::Result, utils};
 
-#[derive(Clone, PartialEq, Serialize, Deserialize)]
+#[derive(Clone, PartialEq, Serialize, Deserialize, Display, EnumIter)]
 #[serde(rename_all = "lowercase")]
 pub enum CipherKind {
     Age,
@@ -29,17 +31,18 @@ pub trait Cipher {
     fn kind(&self) -> CipherKind;
 }
 
-pub fn create_cipher(key: String, cipher_kind: CipherKind) -> Result<Box<dyn Cipher>> {
+pub fn create_cipher(cipher_kind: CipherKind, key: Option<&str>) -> Result<Box<dyn Cipher>> {
     match cipher_kind {
-        CipherKind::Age => Ok(Box::new(AGE::new(key))),
-        CipherKind::Gpg => Ok(Box::new(GPG::new(key))),
+        CipherKind::Age => Ok(Box::new(AGE::new(key.unwrap_or_default().into()))),
+        CipherKind::Gpg => Ok(Box::new(GPG::new(key.unwrap_or_default().into()))),
     }
 }
 
-pub fn get_cipher<P: AsRef<Path>>(profile_filepath: P) -> Result<Box<dyn Cipher>> {
+pub fn get_profile_cipher<P: AsRef<Path>>(profile_filepath: P) -> Result<Box<dyn Cipher>> {
     let serialized_profile = utils::get_serialized_profile(profile_filepath)?;
 
-    let cipher = create_cipher(String::new(), serialized_profile.metadata.cipher_kind)?;
-
-    Ok(cipher)
+    Ok(create_cipher(
+        serialized_profile.metadata.cipher_kind,
+        None,
+    )?)
 }
