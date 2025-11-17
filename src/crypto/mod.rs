@@ -7,15 +7,17 @@ use std::path::Path;
 pub use age::AGE;
 pub use gpg::GPG;
 use serde::{Deserialize, Serialize};
-use strum_macros::{Display, EnumIter};
+use strum_macros::{Display, EnumIter, EnumString};
 
 use crate::{error::Result, utils};
 
-#[derive(Clone, PartialEq, Serialize, Deserialize, Display, EnumIter)]
+#[derive(Clone, PartialEq, Serialize, Deserialize, Display, EnumIter, EnumString)]
 #[serde(rename_all = "lowercase")]
 pub enum CipherKind {
-    Age,
-    Gpg,
+    #[strum(ascii_case_insensitive, to_string = "age")]
+    AGE,
+    #[strum(ascii_case_insensitive, to_string = "gpg")]
+    GPG,
 }
 
 pub trait Cipher {
@@ -32,8 +34,8 @@ pub trait Cipher {
 
 pub fn create_cipher(cipher_kind: CipherKind, key: Option<&str>) -> Result<Box<dyn Cipher>> {
     match cipher_kind {
-        CipherKind::Age => Ok(Box::new(AGE::new(key.unwrap_or_default().into()))),
-        CipherKind::Gpg => Ok(Box::new(GPG::new(key.unwrap_or_default().into()))),
+        CipherKind::AGE => Ok(Box::new(AGE::new(key.unwrap_or_default().into()))),
+        CipherKind::GPG => Ok(Box::new(GPG::new(key.unwrap_or_default().into()))),
     }
 }
 

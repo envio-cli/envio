@@ -21,7 +21,7 @@ where
 {
     let mut cipher = get_profile_cipher(&file_path)?;
 
-    if cipher.kind() == CipherKind::Age {
+    if cipher.kind() == CipherKind::AGE {
         if let Some(key_provider) = get_key {
             cipher.set_key(key_provider());
         } else {

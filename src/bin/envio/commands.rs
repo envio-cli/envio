@@ -11,6 +11,7 @@ use inquire::{
     min_length, Confirm, DateSelect, MultiSelect, Password, PasswordDisplayMode, Select, Text,
 };
 use regex::Regex;
+use strum::IntoEnumIterator;
 use url::Url;
 
 use crate::{
@@ -40,13 +41,12 @@ fn get_userkey() -> String {
 /// inquire crate
 fn get_vim_mode() -> Result<bool> {
     let env = env::var("VISUAL").unwrap_or_else(|_| env::var("EDITOR").unwrap_or_default());
-
-    let program = env.split_whitespace().next().ok_or("")?; // Throw an error if the program is empty, we don't really care about the error message
+    let program = env.split_whitespace().next().ok_or("")?;
 
     let program_stem = Path::new(program)
         .file_stem()
         .and_then(|stem| stem.to_str())
-        .ok_or("")?; // Same here
+        .ok_or("")?;
 
     Ok(Regex::new(r"n?vim?").unwrap().is_match(program_stem)) // unwrap is safe here because we know
                                                               // that the regex will always compile
@@ -61,9 +61,9 @@ impl Command {
                 profile_name,
                 envs,
                 envs_file,
-                gpg,
-                add_comments,
-                add_expiration_date,
+                cipher_kind,
+                comments,
+                expires,
             }) => {
                 if profile_name.is_empty() {
                     return Err(Error::ProfileNameEmpty(profile_name.to_string()));
@@ -73,11 +73,28 @@ impl Command {
                     return Err(Error::ProfileExists(profile_name.to_string()));
                 }
 
-                let gpg_key;
-                let cipher;
+                let selected_cipher_kind = if let Some(kind) = cipher_kind {
+                    kind.parse::<CipherKind>()
+                        .map_err(|e| Error::Msg(e.to_string()))?
+                } else {
+                    let cipher_options: Vec<String> =
+                        CipherKind::iter().map(|k| k.to_string()).collect();
 
-                if gpg.is_some() {
-                    if gpg.as_ref().unwrap() == "select" {
+                    let ans = Select::new("Select the encryption method:", cipher_options.clone())
+                        .with_vim_mode(vim_mode)
+                        .prompt();
+
+                    if let Err(e) = ans {
+                        return Err(Error::Msg(e.to_string()));
+                    }
+
+                    ans.unwrap()
+                        .parse::<CipherKind>()
+                        .map_err(|e| Error::Msg(e.to_string()))?
+                };
+
+                let key = match selected_cipher_kind {
+                    CipherKind::GPG => {
                         let available_keys;
 
                         #[cfg(target_family = "unix")]
@@ -93,10 +110,10 @@ impl Command {
                                     return Err(Error::Crypto("No GPG keys found".to_string()));
                                 }
                             };
+                        }
 
-                            if available_keys.len() == 0 {
-                                return Err(Error::Crypto("No GPG keys found".to_string()));
-                            }
+                        if available_keys.is_empty() {
+                            return Err(Error::Crypto("No GPG keys found".to_string()));
                         }
 
                         let ans = Select::new(
@@ -110,41 +127,32 @@ impl Command {
                             return Err(Error::Msg(e.to_string()));
                         }
 
-                        gpg_key = available_keys
-                            .iter()
-                            .find_map(|(k, f)| {
-                                if k == ans.as_ref().unwrap() {
-                                    Some(f.clone())
-                                } else {
-                                    None
-                                }
-                            })
-                            .unwrap();
-                    } else {
-                        gpg_key = gpg.as_ref().unwrap().to_string();
+                        Some(ans.unwrap())
                     }
 
-                    cipher = create_cipher(CipherKind::Gpg, Some(&gpg_key))?;
-                } else {
-                    let prompt = Password::new("Enter your encryption key:")
-                        .with_display_toggle_enabled()
-                        .with_display_mode(PasswordDisplayMode::Masked)
-                        .with_validator(min_length!(8))
-                        .with_formatter(&|_| String::from("Input received"))
-                        .with_help_message(
-                            "Remember this key, you will need it to decrypt your profile later",
-                        )
-                        .with_custom_confirmation_error_message("The keys don7't match.")
-                        .prompt();
+                    CipherKind::AGE => {
+                        let prompt = Password::new("Enter your encryption key:")
+                            .with_display_toggle_enabled()
+                            .with_display_mode(PasswordDisplayMode::Masked)
+                            .with_validator(min_length!(8))
+                            .with_formatter(&|_| String::from("Input received"))
+                            .with_help_message(
+                                "Remember this key, you will need it to decrypt your profile later",
+                            )
+                            .with_custom_confirmation_error_message("The keys don't match")
+                            .prompt();
 
-                    let user_key = if let Err(e) = prompt {
-                        return Err(Error::Msg(e.to_string()));
-                    } else {
-                        prompt.unwrap()
-                    };
+                        if let Err(e) = prompt {
+                            return Err(Error::Msg(e.to_string()));
+                        }
 
-                    cipher = create_cipher(CipherKind::Age, Some(&user_key))?;
-                }
+                        Some(prompt.unwrap())
+                    }
+
+                    _ => None,
+                };
+
+                let cipher = create_cipher(selected_cipher_kind, key.as_deref())?;
 
                 let mut envs_vec;
 
@@ -272,7 +280,7 @@ impl Command {
                 }
 
                 for env in envs_vec.as_mut().unwrap() {
-                    if *add_comments {
+                    if *comments {
                         let prompt =
                             Text::new(&format!("Enter a comment for '{}':", env.name)).prompt();
 
@@ -283,7 +291,7 @@ impl Command {
                         }
                     }
 
-                    if *add_expiration_date {
+                    if *expires {
                         let prompt = DateSelect::new(&format!(
                             "Select an expiration date for '{}':",
                             env.name
@@ -306,7 +314,7 @@ impl Command {
                 profile_name,
                 envs,
                 comments,
-                expiration_date,
+                expires,
             } => {
                 if !does_profile_exist(profile_name) {
                     return Err(Error::ProfileDoesNotExist(profile_name.to_string()));
@@ -377,7 +385,7 @@ impl Command {
                         }
                     }
 
-                    if *expiration_date {
+                    if *expires {
                         let prompt = DateSelect::new(&format!(
                             "Select an expiration date for '{}':",
                             env.name
@@ -508,8 +516,8 @@ impl Command {
             Command::Profile(ProfileCommand::Show {
                 profile_name,
                 no_pretty_print,
-                display_comments,
-                display_expiration_date,
+                show_comments,
+                show_expiration,
             }) => {
                 if !does_profile_exist(profile_name) {
                     return Err(Error::ProfileDoesNotExist(profile_name.to_string()));
@@ -523,7 +531,7 @@ impl Command {
                         println!("{}={}", env.name, env.value);
                     }
                 } else {
-                    ops::list_envs(&profile, *display_comments, *display_expiration_date);
+                    ops::list_envs(&profile, *show_comments, *show_expiration);
                 }
             }
 

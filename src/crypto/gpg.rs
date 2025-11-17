@@ -34,7 +34,7 @@ impl Cipher for GPG {
     }
 
     fn kind(&self) -> CipherKind {
-        CipherKind::Gpg
+        CipherKind::GPG
     }
 
     fn encrypt(&self, data: &[u8]) -> Result<Vec<u8>> {

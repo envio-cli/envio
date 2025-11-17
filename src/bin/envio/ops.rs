@@ -21,15 +21,6 @@ use crate::utils::{
     contains_path_separator, does_profile_exist, download_file, get_configdir, get_cwd,
 };
 
-/// Create a new profile which is stored in the profiles directory
-///
-/// # Parameters
-/// - `name` - the name of the profile
-/// - `envs` - the environment variables of the profile
-/// - `cipher` - the cipher type of the profile
-///
-/// # Returns
-/// - `Result<()>`: whether the operation was successful
 pub fn create_profile(name: String, envs: Option<EnvVec>, cipher: Box<dyn Cipher>) -> Result<()> {
     if does_profile_exist(&name) {
         return Err(Error::ProfileAlreadyExists(name));
@@ -83,15 +74,6 @@ pub fn check_expired_envs(profile: &Profile) {
     }
 }
 
-/// Export all the environment variables of the profile to a file in plain text
-///
-/// # Parameters
-/// - `profile` - the profile to export ([Profile] object)
-/// - `file_name` - the name of the file to export to
-/// - `envs_selected` - the environment variables to export
-///
-/// # Returns
-/// - `Result<()>`: whether the operation was successful
 pub fn export_envs(
     profile: &Profile,
     file_name: &str,
@@ -141,11 +123,7 @@ pub fn export_envs(
     Ok(())
 }
 
-/// List the environment variables stored in a profile
-///
-/// # Parameters
-/// - `profile` - the profile to list the environment variables of ([Profile] object)
-pub fn list_envs(profile: &Profile, display_comments: bool, display_expired: bool) {
+pub fn list_envs(profile: &Profile, show_comments: bool, show_expiration: bool) {
     let mut table = Table::new();
 
     let mut header = vec![
@@ -153,11 +131,11 @@ pub fn list_envs(profile: &Profile, display_comments: bool, display_expired: boo
         Cell::new("Value").add_attribute(Attribute::Bold),
     ];
 
-    if display_comments {
+    if show_comments {
         header.push(Cell::new("Comment").add_attribute(Attribute::Bold));
     }
 
-    if display_expired {
+    if show_expiration {
         header.push(Cell::new("Expiration Date").add_attribute(Attribute::Bold));
     }
 
@@ -167,7 +145,7 @@ pub fn list_envs(profile: &Profile, display_comments: bool, display_expired: boo
     for env in &profile.envs {
         row = vec![env.name.clone(), env.value.clone()];
 
-        if display_comments {
+        if show_comments {
             if let Some(comment) = &env.comment {
                 row.push(comment.clone());
             } else {
@@ -175,7 +153,7 @@ pub fn list_envs(profile: &Profile, display_comments: bool, display_expired: boo
             }
         }
 
-        if display_expired {
+        if show_expiration {
             if let Some(date) = &env.expiration_date {
                 row.push(date.to_string());
             } else {
@@ -189,13 +167,6 @@ pub fn list_envs(profile: &Profile, display_comments: bool, display_expired: boo
     println!("{table}");
 }
 
-/// Delete a profile from the profiles directory
-///
-/// # Parameters
-/// - `name` - the name of the profile to delete
-///
-/// # Returns
-/// - `Result<()>`: whether the operation was successful
 pub fn delete_profile(name: &str) -> Result<()> {
     if does_profile_exist(name) {
         let configdir = get_configdir();
@@ -212,14 +183,6 @@ pub fn delete_profile(name: &str) -> Result<()> {
     Ok(())
 }
 
-/// List all the stored profiles in the profiles directory
-///
-/// # Parameters
-/// - `raw` - whether to list the profiles in raw format. If true, the profiles will be listed
-///   without any decorations
-///
-/// # Returns
-/// - `Result<()>`: whether the operation was successful
 pub fn list_profiles(raw: bool) -> Result<()> {
     let configdir = get_configdir();
     let profile_dir = configdir.join("profiles");
@@ -269,14 +232,6 @@ pub fn list_profiles(raw: bool) -> Result<()> {
     Ok(())
 }
 
-/// Download a profile from a URL and store it in the profiles directory
-///
-/// # Parameters
-/// - `url` - the URL to download the profile from
-/// - `profile_name` - the name of the profile to store the downloaded profile as
-///
-/// # Returns
-/// - `Result<()>`: whether the operation was successful
 pub fn download_profile(url: String, profile_name: String) -> Result<()> {
     println!("Downloading profile from {}", url);
     let configdir = get_configdir();
@@ -308,14 +263,6 @@ pub fn download_profile(url: String, profile_name: String) -> Result<()> {
     Ok(())
 }
 
-/// Import a profile stored somewhere on the system but not in the profiles directory
-///
-/// # Parameters
-/// - `file_path` - the path to the profile file
-/// - `profile_name` - the name of the profile to store the imported profile as
-///
-/// # Returns
-/// - `Result<()>`: whether the operation was successful
 pub fn import_profile(file_path: String, profile_name: String) -> Result<()> {
     if !Path::new(&file_path).exists() {
         return Err(Error::Msg(format!("File `{}` does not exist", file_path)));
@@ -393,13 +340,6 @@ done <<< "$ENV_VARS"
     Ok(())
 }
 
-/// Load the environment variables of the profile into the current session
-///
-/// # Parameters
-/// - `profile_name` - the name of the profile to load
-///
-/// # Returns
-/// - `Result<()>`: whether the operation was successful
 #[cfg(target_family = "unix")]
 pub fn load_profile(profile_name: &str) -> Result<()> {
     if !does_profile_exist(profile_name) {
@@ -422,7 +362,6 @@ pub fn load_profile(profile_name: &str) -> Result<()> {
     Ok(())
 }
 
-/// Windows implementation of the load_profile function
 #[cfg(target_family = "windows")]
 pub fn load_profile(profile: Profile) -> envio::error::Result<()> {
     for env in profile.envs {
@@ -447,10 +386,6 @@ pub fn load_profile(profile: Profile) -> envio::error::Result<()> {
     Ok(())
 }
 
-/// Unload the environment variables of the profile from the current session
-///
-/// # Returns
-/// - `Result<()>`: whether the operation was successful
 #[cfg(target_family = "unix")]
 pub fn unload_profile() -> Result<()> {
     let file = std::fs::OpenOptions::new()
@@ -465,7 +400,6 @@ pub fn unload_profile() -> Result<()> {
     Ok(())
 }
 
-/// Windows implementation of the unload_profile function
 #[cfg(target_family = "windows")]
 pub fn unload_profile(profile: Profile) -> Result<()> {
     for env in profile.envs.keys() {

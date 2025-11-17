@@ -28,7 +28,7 @@ impl Cipher for AGE {
     }
 
     fn kind(&self) -> CipherKind {
-        CipherKind::Age
+        CipherKind::AGE
     }
 
     fn encrypt(&self, data: &[u8]) -> Result<Vec<u8>> {
