@@ -134,7 +134,7 @@ _arguments "${_arguments_options[@]}" \
 '--profile-name=[name for the imported profile]:PROFILE_NAME: ' \
 '-h[Print help]' \
 '--help[Print help]' \
-':source -- source file, url, or .env file path:' \
+':source -- source file or url:' \
 && ret=0
 ;;
 (export)
@@ -170,7 +170,7 @@ _envio_commands() {
 'load:load environment variables from a profile for use in the current terminal session' \
 'unload:unload a profile from the current terminal session' \
 'run:run a command with profile environment variables' \
-'import:import a profile from a file, url, or .env file' \
+'import:import a profile from a file or url' \
 'export:export a profile to a file' \
 'version:print version information' \
     )

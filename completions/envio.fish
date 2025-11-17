@@ -5,7 +5,7 @@ complete -c envio -n "__fish_use_subcommand" -f -a "unset" -d 'remove environmen
 complete -c envio -n "__fish_use_subcommand" -f -a "load" -d 'load environment variables from a profile for use in the current terminal session'
 complete -c envio -n "__fish_use_subcommand" -f -a "unload" -d 'unload a profile from the current terminal session'
 complete -c envio -n "__fish_use_subcommand" -f -a "run" -d 'run a command with profile environment variables'
-complete -c envio -n "__fish_use_subcommand" -f -a "import" -d 'import a profile from a file, url, or .env file'
+complete -c envio -n "__fish_use_subcommand" -f -a "import" -d 'import a profile from a file or url'
 complete -c envio -n "__fish_use_subcommand" -f -a "export" -d 'export a profile to a file'
 complete -c envio -n "__fish_use_subcommand" -f -a "version" -d 'print version information'
 complete -c envio -n "__fish_seen_subcommand_from profile; and not __fish_seen_subcommand_from create; and not __fish_seen_subcommand_from delete; and not __fish_seen_subcommand_from list; and not __fish_seen_subcommand_from show" -s h -l help -d 'Print help'

@@ -1,4 +1,4 @@
-use std::{collections::HashMap, env, io::Read, path::Path};
+use std::{collections::HashMap, io::Read, path::Path};
 
 use chrono::Local;
 use colored::Colorize;
@@ -7,63 +7,46 @@ use envio::{
     error::{Error, Result},
     get_profile, Env, EnvVec,
 };
-use inquire::{
-    min_length, Confirm, DateSelect, MultiSelect, Password, PasswordDisplayMode, Select, Text,
-};
-use regex::Regex;
 use strum::IntoEnumIterator;
 use url::Url;
 
 use crate::{
-    clap_app::{Command, ProfileCommand},
+    clap_app::{ClapApp, Command, ProfileCommand},
     ops::{self, check_expired_envs},
+    prompts::{
+        confirm_prompt, date_prompt, multi_select_prompt, password_prompt, select_prompt,
+        text_prompt, ConfirmPromptOptions, DatePromptOptions, MultiSelectPromptOptions,
+        PasswordPromptOptions, SelectPromptOptions, TextPromptOptions,
+    },
     utils::{does_profile_exist, get_profile_path, parse_envs_from_string},
 };
 
 fn get_userkey() -> String {
-    println!("{}", "Loading Profile".green());
-    let prompt = Password::new("Enter your encryption key:")
-        .with_display_toggle_enabled()
-        .with_display_mode(PasswordDisplayMode::Masked)
-        .with_help_message("OH NO! you forgot your key! just kidding... or did you?")
-        .without_confirmation()
-        .prompt();
-
-    if let Err(e) = prompt {
-        eprintln!("{}: {}", "Error".red(), e);
-        std::process::exit(1);
-    } else {
-        prompt.unwrap()
+    match password_prompt(PasswordPromptOptions {
+        title: "Enter your encryption key:".to_string(),
+        help_message: Some("OH NO! you forgot your key! just kidding... or did you?".to_string()),
+        min_length: None,
+        with_confirmation: false,
+        confirmation_error_message: None,
+    }) {
+        Ok(key) => key,
+        Err(e) => {
+            eprintln!("{}: {}", "Error".red(), e);
+            std::process::exit(1);
+        }
     }
 }
 
-/// Check to see if the user is using a vi based editor so that we can use the vim mode in the
-/// inquire crate
-fn get_vim_mode() -> Result<bool> {
-    let env = env::var("VISUAL").unwrap_or_else(|_| env::var("EDITOR").unwrap_or_default());
-    let program = env.split_whitespace().next().ok_or("")?;
-
-    let program_stem = Path::new(program)
-        .file_stem()
-        .and_then(|stem| stem.to_str())
-        .ok_or("")?;
-
-    Ok(Regex::new(r"n?vim?").unwrap().is_match(program_stem)) // unwrap is safe here because we know
-                                                              // that the regex will always compile
-}
-
-impl Command {
+impl ClapApp {
     pub fn run(&self) -> Result<()> {
-        let vim_mode = get_vim_mode().unwrap_or(false);
-
-        match self {
+        match &self.command {
             Command::Profile(ProfileCommand::Create {
                 profile_name,
                 envs,
                 envs_file,
                 cipher_kind,
-                comments,
-                expires,
+                comments: add_comments,
+                expires: add_expires,
             }) => {
                 if profile_name.is_empty() {
                     return Err(Error::ProfileNameEmpty(profile_name.to_string()));
@@ -80,17 +63,12 @@ impl Command {
                     let cipher_options: Vec<String> =
                         CipherKind::iter().map(|k| k.to_string()).collect();
 
-                    let ans = Select::new("Select the encryption method:", cipher_options.clone())
-                        .with_vim_mode(vim_mode)
-                        .prompt();
-
-                    if let Err(e) = ans {
-                        return Err(Error::Msg(e.to_string()));
-                    }
-
-                    ans.unwrap()
-                        .parse::<CipherKind>()
-                        .map_err(|e| Error::Msg(e.to_string()))?
+                    select_prompt(SelectPromptOptions {
+                        title: "Select the encryption method:".to_string(),
+                        options: cipher_options,
+                    })?
+                    .parse::<CipherKind>()
+                    .unwrap() // always safe
                 };
 
                 let key = match selected_cipher_kind {
@@ -116,38 +94,22 @@ impl Command {
                             return Err(Error::Crypto("No GPG keys found".to_string()));
                         }
 
-                        let ans = Select::new(
-                            "Select the GPG key you want to use for encryption:",
-                            available_keys.iter().map(|(s, _)| s.clone()).collect(),
-                        )
-                        .with_vim_mode(vim_mode)
-                        .prompt();
-
-                        if let Err(e) = ans {
-                            return Err(Error::Msg(e.to_string()));
-                        }
-
-                        Some(ans.unwrap())
+                        Some(select_prompt(SelectPromptOptions {
+                            title: "Select the GPG key you want to use for encryption:".to_string(),
+                            options: available_keys.iter().map(|(s, _)| s.clone()).collect(),
+                        })?)
                     }
 
-                    CipherKind::AGE => {
-                        let prompt = Password::new("Enter your encryption key:")
-                            .with_display_toggle_enabled()
-                            .with_display_mode(PasswordDisplayMode::Masked)
-                            .with_validator(min_length!(8))
-                            .with_formatter(&|_| String::from("Input received"))
-                            .with_help_message(
-                                "Remember this key, you will need it to decrypt your profile later",
-                            )
-                            .with_custom_confirmation_error_message("The keys don't match")
-                            .prompt();
-
-                        if let Err(e) = prompt {
-                            return Err(Error::Msg(e.to_string()));
-                        }
-
-                        Some(prompt.unwrap())
-                    }
+                    CipherKind::AGE => Some(password_prompt(PasswordPromptOptions {
+                        title: "Enter your encryption key:".to_string(),
+                        help_message: Some(
+                            "Remember this key, you will need it to decrypt your profile later"
+                                .to_string(),
+                        ),
+                        min_length: Some(8),
+                        with_confirmation: true,
+                        confirmation_error_message: Some("The keys don't match".to_string()),
+                    })?),
 
                     _ => None,
                 };
@@ -178,31 +140,25 @@ impl Command {
 
                     for env in envs_vec.clone().unwrap() {
                         if env.value.is_empty() {
-                            let prompt = Confirm::new(&format!(
-                                "Would you like to assign a value to key: {} ?",
-                                env.name
-                            ))
-                            .with_default(false)
-                            .with_help_message(
-                                "If you do not want to assign a value to this key, press enter",
-                            )
-                            .prompt();
-
-                            if let Err(e) = prompt {
-                                return Err(Error::Msg(e.to_string()));
-                            } else if prompt.unwrap() {
-                                let prompt =
-                                    Text::new(&format!("Enter the value for {}:", env.name))
-                                        .prompt();
-
-                                if let Err(e) = prompt {
-                                    return Err(Error::Msg(e.to_string()));
-                                } else {
-                                    envs_vec.as_mut().unwrap().push(Env::from_key_value(
-                                        env.name.clone(),
-                                        prompt.unwrap(),
-                                    ));
-                                }
+                            if confirm_prompt(ConfirmPromptOptions {
+                                title: format!(
+                                    "Would you like to assign a value to key: {} ?",
+                                    env.name
+                                ),
+                                help_message: Some(
+                                    "If you do not want to assign a value to this key, press enter"
+                                        .to_string(),
+                                ),
+                                default: false,
+                            })? {
+                                let value = text_prompt(TextPromptOptions {
+                                    title: format!("Enter the value for {}:", env.name),
+                                    default: None,
+                                })?;
+                                envs_vec
+                                    .as_mut()
+                                    .unwrap()
+                                    .push(Env::from_key_value(env.name.clone(), value));
                             }
                         }
 
@@ -213,23 +169,17 @@ impl Command {
                     }
 
                     let default_options = (0..options.len()).collect::<Vec<usize>>();
+                    let selected_keys = multi_select_prompt(MultiSelectPromptOptions {
+                        title:
+                            "Select the environment variables you want to keep in your new profile:"
+                                .to_string(),
+                        options: options.clone(),
+                        default_indices: Some(default_options),
+                    })?;
 
-                    let prompt = MultiSelect::new("Select the environment variables you want to keep in your new profile:", options.clone())
-                        .with_default(&default_options)
-                        .with_vim_mode(vim_mode)
-                        .with_help_message("↑↓ to move, space to select/unselect one, → to all, ← to none, type to filter, enter to confirm")
-                        .prompt();
-
-                    if let Err(e) = prompt {
-                        return Err(Error::Msg(e.to_string()));
-                    } else {
-                        // remove the keys that were not selected
-                        let selected_keys = prompt.unwrap();
-
-                        for key in options {
-                            if !selected_keys.contains(&key) {
-                                envs_vec.as_mut().unwrap().remove(&key);
-                            }
+                    for key in options {
+                        if !selected_keys.contains(&key) {
+                            envs_vec.as_mut().unwrap().remove(&key);
                         }
                     }
                 } else if envs.is_some() {
@@ -261,49 +211,32 @@ impl Command {
                             continue;
                         }
 
-                        let value;
-
-                        let prompt = Text::new(&format!("Enter the value for {}:", env)).prompt();
-
-                        if let Err(e) = prompt {
-                            return Err(Error::Msg(e.to_string()));
-                        } else {
-                            value = prompt.unwrap();
-                            envs_vec
-                                .as_mut()
-                                .unwrap()
-                                .push(Env::from_key_value(env.to_string(), value));
-                        }
+                        let value = text_prompt(TextPromptOptions {
+                            title: format!("Enter the value for {}:", env),
+                            default: None,
+                        })?;
+                        envs_vec
+                            .as_mut()
+                            .unwrap()
+                            .push(Env::from_key_value(env.to_string(), value));
                     }
                 } else {
-                    envs_vec = Some(EnvVec::new()); // The user created a profile without any envs
+                    envs_vec = Some(EnvVec::new()); // the user created a profile without any envs
                 }
 
                 for env in envs_vec.as_mut().unwrap() {
-                    if *comments {
-                        let prompt =
-                            Text::new(&format!("Enter a comment for '{}':", env.name)).prompt();
-
-                        if let Err(e) = prompt {
-                            return Err(Error::Msg(e.to_string()));
-                        } else {
-                            env.comment = Some(prompt.unwrap());
-                        }
+                    if *add_comments {
+                        env.comment = Some(text_prompt(TextPromptOptions {
+                            title: format!("Enter a comment for '{}':", env.name),
+                            default: None,
+                        })?);
                     }
 
-                    if *expires {
-                        let prompt = DateSelect::new(&format!(
-                            "Select an expiration date for '{}':",
-                            env.name
-                        ))
-                        .with_default(Local::now().date_naive())
-                        .prompt();
-
-                        if let Err(e) = prompt {
-                            return Err(Error::Msg(e.to_string()));
-                        } else {
-                            env.expiration_date = Some(prompt.unwrap());
-                        }
+                    if *add_expires {
+                        env.expiration_date = Some(date_prompt(DatePromptOptions {
+                            title: format!("Select an expiration date for '{}':", env.name),
+                            default: Some(Local::now().date_naive()),
+                        })?);
                     }
                 }
 
@@ -313,8 +246,8 @@ impl Command {
             Command::Set {
                 profile_name,
                 envs,
-                comments,
-                expires,
+                comments: add_comments,
+                expires: add_expires,
             } => {
                 if !does_profile_exist(profile_name) {
                     return Err(Error::ProfileDoesNotExist(profile_name.to_string()));
@@ -350,17 +283,18 @@ impl Command {
                         continue;
                     }
 
-                    let prompt = Text::new(&format!(
-                        "Enter the {} value for {}:",
-                        if profile.envs.contains_key(env) {
-                            "new"
-                        } else {
-                            ""
-                        },
-                        env
-                    ))
-                    .prompt()
-                    .map_err(|e| Error::Msg(e.to_string()))?;
+                    let prompt = text_prompt(TextPromptOptions {
+                        title: format!(
+                            "Enter the {} value for {}:",
+                            if profile.envs.contains_key(env) {
+                                "new"
+                            } else {
+                                ""
+                            },
+                            env
+                        ),
+                        default: None,
+                    })?;
 
                     if profile.envs.contains_key(env) {
                         profile.edit_env(env.to_string(), prompt)?;
@@ -374,30 +308,18 @@ impl Command {
                         continue;
                     }
 
-                    if *comments {
-                        let prompt =
-                            Text::new(&format!("Enter a comment for '{}':", env.name)).prompt();
-
-                        if let Err(e) = prompt {
-                            return Err(Error::Msg(e.to_string()));
-                        } else {
-                            env.comment = Some(prompt.unwrap());
-                        }
+                    if *add_comments {
+                        env.comment = Some(text_prompt(TextPromptOptions {
+                            title: format!("Enter a comment for '{}':", env.name),
+                            default: None,
+                        })?);
                     }
 
-                    if *expires {
-                        let prompt = DateSelect::new(&format!(
-                            "Select an expiration date for '{}':",
-                            env.name
-                        ))
-                        .with_default(Local::now().date_naive())
-                        .prompt();
-
-                        if let Err(e) = prompt {
-                            return Err(Error::Msg(e.to_string()));
-                        } else {
-                            env.expiration_date = Some(prompt.unwrap());
-                        }
+                    if *add_expires {
+                        env.expiration_date = Some(date_prompt(DatePromptOptions {
+                            title: format!("Select an expiration date for '{}':", env.name),
+                            default: Some(Local::now().date_naive()),
+                        })?);
                     }
                 }
 
@@ -556,24 +478,14 @@ impl Command {
                 let envs_selected = if keys.is_some() {
                     let keys_vec = keys.as_ref().unwrap();
                     if keys_vec.contains(&"select".to_string()) {
-                        let prompt = MultiSelect::new("Select the environment variables you want to export:", profile.envs.keys())
-                            .with_default(&(0..profile.envs.len()).collect::<Vec<usize>>())
-                            .with_vim_mode(vim_mode)
-                            .with_help_message("↑↓ to move, space to select/unselect one, → to all, ← to none, type to filter, enter to confirm")
-                            .prompt();
-
-                        if let Err(e) = prompt {
-                            return Err(Error::Msg(e.to_string()));
-                        }
-
-                        Some(
-                            prompt
-                                .unwrap()
-                                .iter()
-                                .cloned()
-                                .map(|s| s.to_owned())
-                                .collect(),
-                        )
+                        let keys = profile.envs.keys();
+                        let default_indices: Vec<usize> = (0..keys.len()).collect();
+                        Some(multi_select_prompt(MultiSelectPromptOptions {
+                            title: "Select the environment variables you want to export:"
+                                .to_string(),
+                            options: keys,
+                            default_indices: Some(default_indices),
+                        })?)
                     } else {
                         Some(keys_vec.clone())
                     }
@@ -618,14 +530,13 @@ impl Command {
             }
 
             Command::Version { verbose } => {
+                println!("{} {}", "Version".green(), env!("BUILD_VERSION"));
+
                 if *verbose {
-                    println!("{} {}", "Version".green(), env!("BUILD_VERSION"));
                     println!("{} {}", "Build Timestamp".green(), env!("BUILD_TIMESTAMP"));
                     println!("{} {}", "Author".green(), env!("CARGO_PKG_AUTHORS"));
                     println!("{} {}", "License".green(), env!("CARGO_PKG_LICENSE"));
                     println!("{} {}", "Repository".green(), env!("CARGO_PKG_REPOSITORY"));
-                } else {
-                    println!("{} {}", "Version".green(), env!("BUILD_VERSION"));
                 }
             }
         }

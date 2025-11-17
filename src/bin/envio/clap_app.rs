@@ -91,11 +91,11 @@ pub enum Command {
 
     #[command(
         name = "import",
-        about = "import a profile from a file, url, or .env file",
+        about = "import a profile from a file or url",
         override_usage = "envio import <SOURCE> [OPTIONS]"
     )]
     Import {
-        #[arg(required = true, help = "source file, url, or .env file path")]
+        #[arg(required = true, help = "source file or url")]
         source: String,
         #[arg(
             long = "profile-name",
@@ -137,7 +137,7 @@ pub enum Command {
             help = "show verbose version information"
         )]
         verbose: bool,
-    }
+    },
 }
 
 #[derive(clap::Subcommand, Debug)]

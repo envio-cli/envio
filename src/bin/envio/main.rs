@@ -1,6 +1,7 @@
 mod clap_app;
 mod commands;
 mod ops;
+mod prompts;
 mod utils;
 mod version;
 
@@ -33,15 +34,14 @@ fn main() {
         );
     }
 
-    let args = ClapApp::parse();
+    let app = ClapApp::parse();
 
     #[cfg(target_family = "unix")]
     if let Err(e) = initalize_config() {
         eprintln!("{}: {}", "Error".red(), e);
     }
 
-    if let Err(e) = args.command.run() {
+    if let Err(e) = app.run() {
         eprintln!("{}: {}", "Error".red(), e);
-        std::process::exit(1);
     }
 }

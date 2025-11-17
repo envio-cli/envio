@@ -29,7 +29,7 @@ Register-ArgumentCompleter -Native -CommandName 'envio' -ScriptBlock {
             [CompletionResult]::new('load', 'load', [CompletionResultType]::ParameterValue, 'load environment variables from a profile for use in the current terminal session')
             [CompletionResult]::new('unload', 'unload', [CompletionResultType]::ParameterValue, 'unload a profile from the current terminal session')
             [CompletionResult]::new('run', 'run', [CompletionResultType]::ParameterValue, 'run a command with profile environment variables')
-            [CompletionResult]::new('import', 'import', [CompletionResultType]::ParameterValue, 'import a profile from a file, url, or .env file')
+            [CompletionResult]::new('import', 'import', [CompletionResultType]::ParameterValue, 'import a profile from a file or url')
             [CompletionResult]::new('export', 'export', [CompletionResultType]::ParameterValue, 'export a profile to a file')
             [CompletionResult]::new('version', 'version', [CompletionResultType]::ParameterValue, 'print version information')
             break
