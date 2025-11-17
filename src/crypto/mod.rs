@@ -6,7 +6,6 @@ use std::path::Path;
 // re-export the cipher types
 pub use age::AGE;
 pub use gpg::GPG;
-
 use serde::{Deserialize, Serialize};
 use strum_macros::{Display, EnumIter};
 
