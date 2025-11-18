@@ -30,7 +30,7 @@ pub enum Command {
         comments: bool,
         #[arg(
             long = "expires",
-            short = 'd',
+            short = 'x',
             help = "add expiration dates to the provided environment variables"
         )]
         expires: bool,
@@ -174,7 +174,7 @@ pub enum ProfileCommand {
         comments: bool,
         #[arg(
             long = "expires",
-            short = 'd',
+            short = 'x',
             help = "add expiration dates to the provided environment variables"
         )]
         expires: bool,
@@ -211,13 +211,13 @@ pub enum ProfileCommand {
         #[arg(
             long = "show-comments",
             short = 'c',
-            help = "display comments for environment variables"
+            help = "display comments"
         )]
         show_comments: bool,
         #[arg(
             long = "show-expiration",
-            short = 'd',
-            help = "display expiration dates for environment variables"
+            short = 'x',
+            help = "display expiration dates"
         )]
         show_expiration: bool,
         #[arg(long = "no-pretty-print", help = "disable pretty printing")]

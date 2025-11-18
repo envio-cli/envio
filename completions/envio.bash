@@ -152,7 +152,7 @@ _envio() {
             return 0
             ;;
         envio__profile__create)
-            opts="-f -e -k -c -d -h --from-file --envs --cipher-kind --comments --expires --help <PROFILE_NAME>"
+            opts="-f -e -k -c -x -h --from-file --envs --cipher-kind --comments --expires --help <PROFILE_NAME>"
             if [[ ${cur} == -* || ${COMP_CWORD} -eq 3 ]] ; then
                 COMPREPLY=( $(compgen -W "${opts}" -- "${cur}") )
                 return 0
@@ -218,7 +218,7 @@ _envio() {
             return 0
             ;;
         envio__profile__show)
-            opts="-c -d -h --show-comments --show-expiration --no-pretty-print --help <PROFILE_NAME>"
+            opts="-c -x -h --show-comments --show-expiration --no-pretty-print --help <PROFILE_NAME>"
             if [[ ${cur} == -* || ${COMP_CWORD} -eq 3 ]] ; then
                 COMPREPLY=( $(compgen -W "${opts}" -- "${cur}") )
                 return 0
@@ -246,7 +246,7 @@ _envio() {
             return 0
             ;;
         envio__set)
-            opts="-c -d -h --comments --expires --help <PROFILE_NAME> <ENVS>..."
+            opts="-c -x -h --comments --expires --help <PROFILE_NAME> <ENVS>..."
             if [[ ${cur} == -* || ${COMP_CWORD} -eq 2 ]] ; then
                 COMPREPLY=( $(compgen -W "${opts}" -- "${cur}") )
                 return 0

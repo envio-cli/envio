@@ -50,7 +50,7 @@ _arguments "${_arguments_options[@]}" \
 '--cipher-kind=[encryption cipher to use]:CIPHER_KIND: ' \
 '-c[add comments to the provided environment variables]' \
 '--comments[add comments to the provided environment variables]' \
-'-d[add expiration dates to the provided environment variables]' \
+'-x[add expiration dates to the provided environment variables]' \
 '--expires[add expiration dates to the provided environment variables]' \
 '-h[Print help]' \
 '--help[Print help]' \
@@ -73,10 +73,10 @@ _arguments "${_arguments_options[@]}" \
 ;;
 (show)
 _arguments "${_arguments_options[@]}" \
-'-c[display comments for environment variables]' \
-'--show-comments[display comments for environment variables]' \
-'-d[display expiration dates for environment variables]' \
-'--show-expiration[display expiration dates for environment variables]' \
+'-c[display comments]' \
+'--show-comments[display comments]' \
+'-x[display expiration dates]' \
+'--show-expiration[display expiration dates]' \
 '--no-pretty-print[disable pretty printing]' \
 '-h[Print help]' \
 '--help[Print help]' \
@@ -91,7 +91,7 @@ esac
 _arguments "${_arguments_options[@]}" \
 '-c[add comments to the provided environment variables]' \
 '--comments[add comments to the provided environment variables]' \
-'-d[add expiration dates to the provided environment variables]' \
+'-x[add expiration dates to the provided environment variables]' \
 '--expires[add expiration dates to the provided environment variables]' \
 '-h[Print help]' \
 '--help[Print help]' \

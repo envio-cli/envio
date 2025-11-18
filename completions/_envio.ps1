@@ -52,7 +52,7 @@ Register-ArgumentCompleter -Native -CommandName 'envio' -ScriptBlock {
             [CompletionResult]::new('--cipher-kind', 'cipher-kind', [CompletionResultType]::ParameterName, 'encryption cipher to use')
             [CompletionResult]::new('-c', 'c', [CompletionResultType]::ParameterName, 'add comments to the provided environment variables')
             [CompletionResult]::new('--comments', 'comments', [CompletionResultType]::ParameterName, 'add comments to the provided environment variables')
-            [CompletionResult]::new('-d', 'd', [CompletionResultType]::ParameterName, 'add expiration dates to the provided environment variables')
+            [CompletionResult]::new('-x', 'x', [CompletionResultType]::ParameterName, 'add expiration dates to the provided environment variables')
             [CompletionResult]::new('--expires', 'expires', [CompletionResultType]::ParameterName, 'add expiration dates to the provided environment variables')
             [CompletionResult]::new('-h', 'h', [CompletionResultType]::ParameterName, 'Print help')
             [CompletionResult]::new('--help', 'help', [CompletionResultType]::ParameterName, 'Print help')
@@ -70,10 +70,10 @@ Register-ArgumentCompleter -Native -CommandName 'envio' -ScriptBlock {
             break
         }
         'envio;profile;show' {
-            [CompletionResult]::new('-c', 'c', [CompletionResultType]::ParameterName, 'display comments for environment variables')
-            [CompletionResult]::new('--show-comments', 'show-comments', [CompletionResultType]::ParameterName, 'display comments for environment variables')
-            [CompletionResult]::new('-d', 'd', [CompletionResultType]::ParameterName, 'display expiration dates for environment variables')
-            [CompletionResult]::new('--show-expiration', 'show-expiration', [CompletionResultType]::ParameterName, 'display expiration dates for environment variables')
+            [CompletionResult]::new('-c', 'c', [CompletionResultType]::ParameterName, 'display comments')
+            [CompletionResult]::new('--show-comments', 'show-comments', [CompletionResultType]::ParameterName, 'display comments')
+            [CompletionResult]::new('-x', 'x', [CompletionResultType]::ParameterName, 'display expiration dates')
+            [CompletionResult]::new('--show-expiration', 'show-expiration', [CompletionResultType]::ParameterName, 'display expiration dates')
             [CompletionResult]::new('--no-pretty-print', 'no-pretty-print', [CompletionResultType]::ParameterName, 'disable pretty printing')
             [CompletionResult]::new('-h', 'h', [CompletionResultType]::ParameterName, 'Print help')
             [CompletionResult]::new('--help', 'help', [CompletionResultType]::ParameterName, 'Print help')
@@ -82,7 +82,7 @@ Register-ArgumentCompleter -Native -CommandName 'envio' -ScriptBlock {
         'envio;set' {
             [CompletionResult]::new('-c', 'c', [CompletionResultType]::ParameterName, 'add comments to the provided environment variables')
             [CompletionResult]::new('--comments', 'comments', [CompletionResultType]::ParameterName, 'add comments to the provided environment variables')
-            [CompletionResult]::new('-d', 'd', [CompletionResultType]::ParameterName, 'add expiration dates to the provided environment variables')
+            [CompletionResult]::new('-x', 'x', [CompletionResultType]::ParameterName, 'add expiration dates to the provided environment variables')
             [CompletionResult]::new('--expires', 'expires', [CompletionResultType]::ParameterName, 'add expiration dates to the provided environment variables')
             [CompletionResult]::new('-h', 'h', [CompletionResultType]::ParameterName, 'Print help')
             [CompletionResult]::new('--help', 'help', [CompletionResultType]::ParameterName, 'Print help')
