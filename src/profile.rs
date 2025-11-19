@@ -27,7 +27,7 @@ pub struct Profile {
 }
 
 #[derive(Serialize, Deserialize)]
-pub(crate) struct SerializedProfile {
+pub struct SerializedProfile {
     pub metadata: ProfileMetadata,
     pub content: Vec<u8>,
 }
@@ -117,9 +117,11 @@ impl Profile {
         let encrypted_envs = match self.cipher.encrypt(&serialized_envs) {
             Ok(data) => data,
             Err(e) => {
-                return Err(Error::Crypto(e.to_string()));
+                return Err(Error::Cipher(e.to_string()));
             }
         };
+
+        self.metadata.updated_at = Local::now();
 
         let serialized_profile = SerializedProfile {
             metadata: self.metadata.clone(),

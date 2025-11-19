@@ -8,7 +8,7 @@ use crate::{
     error::{Error, Result},
 };
 
-/// Represents the password-based cipher that `envio` provides
+/// represents the password-based cipher that `envio` provides
 #[derive(Serialize, Deserialize)]
 pub struct AGE {
     key: String,
@@ -28,7 +28,7 @@ impl Cipher for AGE {
     }
 
     fn kind(&self) -> CipherKind {
-        CipherKind::Age
+        CipherKind::AGE
     }
 
     fn encrypt(&self, data: &[u8]) -> Result<Vec<u8>> {
@@ -38,7 +38,7 @@ impl Cipher for AGE {
         let mut writer = match encryptor.wrap_output(&mut encrypted) {
             Ok(writer) => writer,
             Err(e) => {
-                return Err(Error::Crypto(e.to_string()));
+                return Err(Error::Cipher(e.to_string()));
             }
         };
 
@@ -58,7 +58,7 @@ impl Cipher for AGE {
         let mut reader = match decryptor.decrypt(&Secret::new(self.key.to_owned()), None) {
             Ok(reader) => reader,
             Err(e) => {
-                return Err(Error::Crypto(e.to_string()));
+                return Err(Error::Cipher(e.to_string()));
             }
         };
 

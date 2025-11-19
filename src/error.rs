@@ -3,60 +3,26 @@ use thiserror::Error;
 #[derive(Error, Debug)]
 #[non_exhaustive]
 pub enum Error {
-    #[error("IO error: {0}")]
+    #[error(transparent)]
     Io(#[from] std::io::Error),
 
-    #[error("Bincode error: {0}")]
+    #[error(transparent)]
     Bincode(#[from] bincode::Error),
 
-    #[error("JSON error: {0}")]
+    #[error(transparent)]
     Json(#[from] serde_json::Error),
 
-    #[error("Profile `{0}` already exists")]
-    ProfileAlreadyExists(String),
-
-    #[error("Profile `{0}` does not exist")]
-    ProfileDoesNotExist(String),
-
-    #[error("Profile `{0}` name is empty")]
-    ProfileNameEmpty(String),
-
-    #[error("Profile `{0}` already exists")]
-    ProfileExists(String),
-
-    #[error("Profile `{0}` is empty")]
-    EmptyProfile(String),
-
-    #[error("Environment variable `{0}` does not exist")]
+    #[error("environment variable `{0}` does not exist")]
     EnvDoesNotExist(String),
 
-    #[error("Environment variable `{0}` already exists")]
-    EnvExists(String),
+    #[error("{0}")]
+    Cipher(String),
 
-    #[error("Crypto error: {0}")]
-    Crypto(String),
-
-    #[error("Invalid cipher type: {0}")]
-    InvalidCipherType(String),
-
-    #[error("Invalid UTF-8: {0}")]
+    #[error(transparent)]
     Utf8Error(#[from] std::str::Utf8Error),
 
     #[error("{0}")]
     Msg(String),
 }
 
-impl From<&'static str> for Error {
-    fn from(s: &'static str) -> Self {
-        Error::Msg(s.to_owned())
-    }
-}
-
-impl From<String> for Error {
-    fn from(s: String) -> Self {
-        Error::Msg(s)
-    }
-}
-
-/// A type alias for `Result<T, envio::error::Error>`.
 pub type Result<T> = std::result::Result<T, Error>;

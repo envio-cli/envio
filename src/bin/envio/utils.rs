@@ -1,14 +1,13 @@
 use std::{fs::File, io::Write, path::PathBuf};
 
-use envio::{
-    error::{Error, Result},
-    Env, EnvVec,
-};
+use envio::{profile::SerializedProfile, Env, EnvVec};
 use indicatif::{ProgressBar, ProgressStyle};
 use reqwest::Client;
 
+use crate::error::{AppError, AppResult};
+
 #[cfg(target_family = "unix")]
-pub fn initalize_config() -> Result<()> {
+pub fn initalize_config() -> AppResult<()> {
     use std::path::Path;
 
     use colored::Colorize;
@@ -36,19 +35,13 @@ pub fn initalize_config() -> Result<()> {
             let input = Text::new(
                 "Shell config file not found, please enter the path to your shell config file:",
             )
-            .prompt();
+            .prompt()?;
 
-            file_path = if let Ok(val) = input {
-                PathBuf::from(val)
-            } else {
-                return Err(Error::Msg(
-                    "Failed to get shell config file path".to_string(),
-                ));
-            };
+            file_path = PathBuf::from(input);
 
             if !file_path.exists() {
-                return Err(Error::Msg(
-                    "Specified shell config file does not exist".to_string(),
+                return Err(AppError::Msg(
+                    "specified shell config file does not exist".to_string(),
                 ));
             }
         }
@@ -102,30 +95,27 @@ pub fn get_cwd() -> PathBuf {
     std::env::current_dir().unwrap()
 }
 
-pub fn does_profile_exist(profile_name: &str) -> bool {
-    let profile_path = get_profile_path(profile_name);
+pub fn get_profile_path(profile_name: &str) -> AppResult<PathBuf> {
+    let path = get_configdir()
+        .join("profiles")
+        .join(format!("{}.env", profile_name));
 
-    if profile_path.exists() {
-        return true;
+    if !path.exists() {
+        return Err(AppError::ProfileDoesNotExist(profile_name.to_string()));
     }
 
-    false
+    Ok(path)
 }
 
-pub fn get_profile_path(profile_name: &str) -> PathBuf {
-    get_configdir()
-        .join("profiles")
-        .join(format!("{}.env", profile_name))
+pub fn get_profile_description(profile_name: &str) -> AppResult<Option<String>> {
+    let path = get_profile_path(profile_name)?;
+
+    let serialized_profile: SerializedProfile = serde_json::from_slice(&std::fs::read(path)?)?;
+
+    Ok(serialized_profile.metadata.description)
 }
 
-/// Parse environment variables from a string
-///
-/// # Parameters
-/// - `buffer`: &str - the buffer to parse
-///
-/// # Returns
-/// - `Result<HashMap<String, String>>`: the parsed environment variables
-pub fn parse_envs_from_string(buffer: &str) -> Result<EnvVec> {
+pub fn parse_envs_from_string(buffer: &str) -> AppResult<EnvVec> {
     let mut envs_vec = EnvVec::new();
 
     for buf in buffer.lines() {
@@ -139,7 +129,7 @@ pub fn parse_envs_from_string(buffer: &str) -> Result<EnvVec> {
         let mut value = split.next();
 
         if key.is_none() {
-            return Err(Error::Msg("Can not parse key from buffer".to_string()));
+            return Err(AppError::Msg("can not parse key from buffer".to_string()));
         }
 
         if value.is_none() {
@@ -155,26 +145,15 @@ pub fn parse_envs_from_string(buffer: &str) -> Result<EnvVec> {
     Ok(envs_vec)
 }
 
-/// Download a file from a url with a progress bar
-///
-/// # Parameters
-/// - `url`: &str - the url to download the file from
-/// - `file_name`: &str - the name of the file to save the downloaded file to
-///
-/// # Returns
-/// - `Result<()>`: an empty result
-pub async fn download_file(url: &str, file_name: &str) -> Result<()> {
+pub async fn download_file(url: &str, file_name: &str) -> AppResult<()> {
     let client = Client::new();
-    let mut resp = if let Err(e) = client.get(url).send().await {
-        return Err(Error::Msg(e.to_string()));
-    } else {
-        client.get(url).send().await.unwrap()
-    };
+
+    let mut resp = client.get(url).send().await?;
 
     let mut file = File::create(file_name)?;
 
     let mut content_length = if resp.content_length().is_none() {
-        return Err(Error::Msg("Content length is not available".to_string()));
+        return Err(AppError::Msg("content length is not available".to_string()));
     } else {
         resp.content_length().unwrap()
     };
@@ -186,7 +165,7 @@ pub async fn download_file(url: &str, file_name: &str) -> Result<()> {
         .unwrap()
         .progress_chars("#>-"));
 
-    while let Some(chunk) = resp.chunk().await.unwrap() {
+    while let Some(chunk) = resp.chunk().await? {
         let chunk_size = chunk.len();
         file.write_all(&chunk)?;
 
@@ -198,19 +177,12 @@ pub async fn download_file(url: &str, file_name: &str) -> Result<()> {
     Ok(())
 }
 
-/// Unix specific code
-/// Returns the shell that is being used
-///
-/// # Returns
-/// - `Result<&'static str>`: the shell that is being used
 #[cfg(target_family = "unix")]
-pub fn get_shell_config() -> Result<&'static str> {
-    // Gets your default shell
-    // This is used to determine which shell config file to edit
+pub fn get_shell_config() -> AppResult<&'static str> {
     let shell_env_value = if let Ok(e) = std::env::var("SHELL") {
         e
     } else {
-        return Err(Error::Msg("Failed to get shell".to_string()));
+        return Err(AppError::Msg("failed to get shell".to_string()));
     };
 
     let shell_as_vec = shell_env_value.split('/').collect::<Vec<&str>>();

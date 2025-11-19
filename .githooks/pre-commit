@@ -2,4 +2,7 @@
 
 echo "Running cargo fmt"
 cargo +nightly fmt
+
+git add .
+
 exit 0

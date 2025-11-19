@@ -34,7 +34,7 @@ impl Cipher for GPG {
     }
 
     fn kind(&self) -> CipherKind {
-        CipherKind::Gpg
+        CipherKind::GPG
     }
 
     fn encrypt(&self, data: &[u8]) -> Result<Vec<u8>> {
@@ -45,19 +45,19 @@ impl Cipher for GPG {
             let mut ctx = match Context::from_protocol(Protocol::OpenPgp) {
                 Ok(ctx) => ctx,
                 Err(e) => {
-                    return Err(Error::Crypto(e.to_string()));
+                    return Err(Error::Cipher(e.to_string()));
                 }
             };
 
             let key = match ctx.get_key(&self.key_fingerprint) {
                 Ok(key) => key,
                 Err(e) => {
-                    return Err(Error::Crypto(e.to_string()));
+                    return Err(Error::Cipher(e.to_string()));
                 }
             };
 
             if let Err(e) = ctx.encrypt(Some(&key), data, &mut encrypted_data) {
-                return Err(Error::Crypto(e.to_string()));
+                return Err(Error::Cipher(e.to_string()));
             };
         }
 
@@ -76,7 +76,7 @@ impl Cipher for GPG {
                 None => {
                     return Err(Error::Io(std::io::Error::new(
                         std::io::ErrorKind::Other,
-                        "Failed to open stdin",
+                        "failed to open stdin",
                     )));
                 }
             };
@@ -98,20 +98,20 @@ impl Cipher for GPG {
             let mut ctx = match Context::from_protocol(Protocol::OpenPgp) {
                 Ok(ctx) => ctx,
                 Err(e) => {
-                    return Err(Error::Crypto(e.to_string()));
+                    return Err(Error::Cipher(e.to_string()));
                 }
             };
 
             let mut cipher = match Data::from_bytes(encrypted_data) {
                 Ok(cipher) => cipher,
                 Err(e) => {
-                    return Err(Error::Crypto(e.to_string()));
+                    return Err(Error::Cipher(e.to_string()));
                 }
             };
 
             let mut plain = Vec::new();
             if let Err(e) = ctx.decrypt_and_verify(&mut cipher, &mut plain) {
-                return Err(Error::Crypto(e.to_string()));
+                return Err(Error::Cipher(e.to_string()));
             };
 
             Ok(plain)
@@ -130,7 +130,7 @@ impl Cipher for GPG {
             let stdin = match gpg_process.stdin.as_mut() {
                 Some(stdin) => stdin,
                 None => {
-                    return Err(Error::Msg("Failed to open stdin".to_string()));
+                    return Err(Error::Msg("failed to open stdin".to_string()));
                 }
             };
 
@@ -151,7 +151,7 @@ pub fn get_gpg_keys() -> Result<Vec<(String, String)>> {
     let keys = match context.keys() {
         Ok(keys) => keys,
         Err(e) => {
-            return Err(Error::Crypto(e.to_string()));
+            return Err(Error::Cipher(e.to_string()));
         }
     };
 
@@ -161,7 +161,7 @@ pub fn get_gpg_keys() -> Result<Vec<(String, String)>> {
                 Ok(name) => name,
                 Err(e) => {
                     if e.is_none() {
-                        return Err(Error::Crypto("Failed to get name from user id".to_string()));
+                        return Err(Error::Cipher("Failed to get name from user id".to_string()));
                     }
 
                     return Err(Error::Utf8Error(e.unwrap()));

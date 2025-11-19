@@ -23,42 +23,74 @@ Register-ArgumentCompleter -Native -CommandName 'envio' -ScriptBlock {
         'envio' {
             [CompletionResult]::new('-h', 'h', [CompletionResultType]::ParameterName, 'Print help')
             [CompletionResult]::new('--help', 'help', [CompletionResultType]::ParameterName, 'Print help')
-            [CompletionResult]::new('create', 'create', [CompletionResultType]::ParameterValue, 'Create a new profile')
-            [CompletionResult]::new('add', 'add', [CompletionResultType]::ParameterValue, 'Add envionment variables to a profile')
-            [CompletionResult]::new('load', 'load', [CompletionResultType]::ParameterValue, 'Load all environment variables in a profile for use in your terminal sessions')
-            [CompletionResult]::new('unload', 'unload', [CompletionResultType]::ParameterValue, 'Unload a profile')
-            [CompletionResult]::new('launch', 'launch', [CompletionResultType]::ParameterValue, 'Run a command with the environment variables from a profile')
-            [CompletionResult]::new('remove', 'remove', [CompletionResultType]::ParameterValue, 'Remove a environment variable from a profile')
-            [CompletionResult]::new('list', 'list', [CompletionResultType]::ParameterValue, 'List all the environment variables in a profile or all the profiles currenty stored')
-            [CompletionResult]::new('update', 'update', [CompletionResultType]::ParameterValue, 'Update environment variables in a profile')
-            [CompletionResult]::new('export', 'export', [CompletionResultType]::ParameterValue, 'Export a profile to a file if no file is specified it will be exported to a file named .env')
-            [CompletionResult]::new('import', 'import', [CompletionResultType]::ParameterValue, 'Download a profile over the internet and import it into the system or import a locally stored profile into your current envio installation')
-            [CompletionResult]::new('version', 'version', [CompletionResultType]::ParameterValue, 'Print the version')
-            [CompletionResult]::new('help', 'help', [CompletionResultType]::ParameterValue, 'Print this message or the help of the given subcommand(s)')
+            [CompletionResult]::new('profile', 'profile', [CompletionResultType]::ParameterValue, 'manage profiles')
+            [CompletionResult]::new('set', 'set', [CompletionResultType]::ParameterValue, 'set or update environment variables in a profile')
+            [CompletionResult]::new('unset', 'unset', [CompletionResultType]::ParameterValue, 'remove environment variables from a profile')
+            [CompletionResult]::new('load', 'load', [CompletionResultType]::ParameterValue, 'load environment variables from a profile for use in the current terminal session')
+            [CompletionResult]::new('unload', 'unload', [CompletionResultType]::ParameterValue, 'unload a profile from the current terminal session')
+            [CompletionResult]::new('run', 'run', [CompletionResultType]::ParameterValue, 'run a command with profile environment variables')
+            [CompletionResult]::new('import', 'import', [CompletionResultType]::ParameterValue, 'import a profile from a file or url')
+            [CompletionResult]::new('export', 'export', [CompletionResultType]::ParameterValue, 'export a profile to a file')
+            [CompletionResult]::new('version', 'version', [CompletionResultType]::ParameterValue, 'print version information')
             break
         }
-        'envio;create' {
-            [CompletionResult]::new('-f', 'f', [CompletionResultType]::ParameterName, 'f')
-            [CompletionResult]::new('--file-to-import-envs-from', 'file-to-import-envs-from', [CompletionResultType]::ParameterName, 'file-to-import-envs-from')
-            [CompletionResult]::new('-e', 'e', [CompletionResultType]::ParameterName, 'e')
-            [CompletionResult]::new('--envs', 'envs', [CompletionResultType]::ParameterName, 'envs')
-            [CompletionResult]::new('-g', 'g', [CompletionResultType]::ParameterName, 'g')
-            [CompletionResult]::new('--gpg-key-fingerprint', 'gpg-key-fingerprint', [CompletionResultType]::ParameterName, 'gpg-key-fingerprint')
-            [CompletionResult]::new('-c', 'c', [CompletionResultType]::ParameterName, 'c')
-            [CompletionResult]::new('--add-comments', 'add-comments', [CompletionResultType]::ParameterName, 'add-comments')
-            [CompletionResult]::new('-x', 'x', [CompletionResultType]::ParameterName, 'x')
-            [CompletionResult]::new('--add-expiration-date', 'add-expiration-date', [CompletionResultType]::ParameterName, 'add-expiration-date')
+        'envio;profile' {
+            [CompletionResult]::new('-h', 'h', [CompletionResultType]::ParameterName, 'Print help')
+            [CompletionResult]::new('--help', 'help', [CompletionResultType]::ParameterName, 'Print help')
+            [CompletionResult]::new('new', 'new', [CompletionResultType]::ParameterValue, 'create a new profile')
+            [CompletionResult]::new('delete', 'delete', [CompletionResultType]::ParameterValue, 'delete a profile')
+            [CompletionResult]::new('list', 'list', [CompletionResultType]::ParameterValue, 'list all profiles')
+            [CompletionResult]::new('show', 'show', [CompletionResultType]::ParameterValue, 'show environment variables in a profile')
+            break
+        }
+        'envio;profile;new' {
+            [CompletionResult]::new('-d', 'd', [CompletionResultType]::ParameterName, 'description of the profile')
+            [CompletionResult]::new('--description', 'description', [CompletionResultType]::ParameterName, 'description of the profile')
+            [CompletionResult]::new('-f', 'f', [CompletionResultType]::ParameterName, 'file path to load environment variables from')
+            [CompletionResult]::new('--from-file', 'from-file', [CompletionResultType]::ParameterName, 'file path to load environment variables from')
+            [CompletionResult]::new('-e', 'e', [CompletionResultType]::ParameterName, 'environment variables to add (format: KEY=VALUE or only provide KEY and the value will be prompted for)')
+            [CompletionResult]::new('--envs', 'envs', [CompletionResultType]::ParameterName, 'environment variables to add (format: KEY=VALUE or only provide KEY and the value will be prompted for)')
+            [CompletionResult]::new('-k', 'k', [CompletionResultType]::ParameterName, 'encryption cipher to use')
+            [CompletionResult]::new('--cipher-kind', 'cipher-kind', [CompletionResultType]::ParameterName, 'encryption cipher to use')
+            [CompletionResult]::new('-c', 'c', [CompletionResultType]::ParameterName, 'add comments to the provided environment variables')
+            [CompletionResult]::new('--comments', 'comments', [CompletionResultType]::ParameterName, 'add comments to the provided environment variables')
+            [CompletionResult]::new('-x', 'x', [CompletionResultType]::ParameterName, 'add expiration dates to the provided environment variables')
+            [CompletionResult]::new('--expires', 'expires', [CompletionResultType]::ParameterName, 'add expiration dates to the provided environment variables')
             [CompletionResult]::new('-h', 'h', [CompletionResultType]::ParameterName, 'Print help')
             [CompletionResult]::new('--help', 'help', [CompletionResultType]::ParameterName, 'Print help')
             break
         }
-        'envio;add' {
-            [CompletionResult]::new('-e', 'e', [CompletionResultType]::ParameterName, 'e')
-            [CompletionResult]::new('--envs', 'envs', [CompletionResultType]::ParameterName, 'envs')
-            [CompletionResult]::new('-c', 'c', [CompletionResultType]::ParameterName, 'c')
-            [CompletionResult]::new('--add-comments', 'add-comments', [CompletionResultType]::ParameterName, 'add-comments')
-            [CompletionResult]::new('-x', 'x', [CompletionResultType]::ParameterName, 'x')
-            [CompletionResult]::new('--add-expiration-date', 'add-expiration-date', [CompletionResultType]::ParameterName, 'add-expiration-date')
+        'envio;profile;delete' {
+            [CompletionResult]::new('-h', 'h', [CompletionResultType]::ParameterName, 'Print help')
+            [CompletionResult]::new('--help', 'help', [CompletionResultType]::ParameterName, 'Print help')
+            break
+        }
+        'envio;profile;list' {
+            [CompletionResult]::new('--no-pretty-print', 'no-pretty-print', [CompletionResultType]::ParameterName, 'disable pretty printing')
+            [CompletionResult]::new('-h', 'h', [CompletionResultType]::ParameterName, 'Print help')
+            [CompletionResult]::new('--help', 'help', [CompletionResultType]::ParameterName, 'Print help')
+            break
+        }
+        'envio;profile;show' {
+            [CompletionResult]::new('-c', 'c', [CompletionResultType]::ParameterName, 'display comments')
+            [CompletionResult]::new('--show-comments', 'show-comments', [CompletionResultType]::ParameterName, 'display comments')
+            [CompletionResult]::new('-x', 'x', [CompletionResultType]::ParameterName, 'display expiration dates')
+            [CompletionResult]::new('--show-expiration', 'show-expiration', [CompletionResultType]::ParameterName, 'display expiration dates')
+            [CompletionResult]::new('--no-pretty-print', 'no-pretty-print', [CompletionResultType]::ParameterName, 'disable pretty printing')
+            [CompletionResult]::new('-h', 'h', [CompletionResultType]::ParameterName, 'Print help')
+            [CompletionResult]::new('--help', 'help', [CompletionResultType]::ParameterName, 'Print help')
+            break
+        }
+        'envio;set' {
+            [CompletionResult]::new('-c', 'c', [CompletionResultType]::ParameterName, 'add comments to the provided environment variables')
+            [CompletionResult]::new('--comments', 'comments', [CompletionResultType]::ParameterName, 'add comments to the provided environment variables')
+            [CompletionResult]::new('-x', 'x', [CompletionResultType]::ParameterName, 'add expiration dates to the provided environment variables')
+            [CompletionResult]::new('--expires', 'expires', [CompletionResultType]::ParameterName, 'add expiration dates to the provided environment variables')
+            [CompletionResult]::new('-h', 'h', [CompletionResultType]::ParameterName, 'Print help')
+            [CompletionResult]::new('--help', 'help', [CompletionResultType]::ParameterName, 'Print help')
+            break
+        }
+        'envio;unset' {
             [CompletionResult]::new('-h', 'h', [CompletionResultType]::ParameterName, 'Print help')
             [CompletionResult]::new('--help', 'help', [CompletionResultType]::ParameterName, 'Print help')
             break
@@ -73,122 +105,32 @@ Register-ArgumentCompleter -Native -CommandName 'envio' -ScriptBlock {
             [CompletionResult]::new('--help', 'help', [CompletionResultType]::ParameterName, 'Print help')
             break
         }
-        'envio;launch' {
-            [CompletionResult]::new('-c', 'c', [CompletionResultType]::ParameterName, 'c')
-            [CompletionResult]::new('--command', 'command', [CompletionResultType]::ParameterName, 'command')
-            [CompletionResult]::new('-h', 'h', [CompletionResultType]::ParameterName, 'Print help')
-            [CompletionResult]::new('--help', 'help', [CompletionResultType]::ParameterName, 'Print help')
-            break
-        }
-        'envio;remove' {
-            [CompletionResult]::new('-e', 'e', [CompletionResultType]::ParameterName, 'e')
-            [CompletionResult]::new('--envs-to-remove', 'envs-to-remove', [CompletionResultType]::ParameterName, 'envs-to-remove')
-            [CompletionResult]::new('-h', 'h', [CompletionResultType]::ParameterName, 'Print help')
-            [CompletionResult]::new('--help', 'help', [CompletionResultType]::ParameterName, 'Print help')
-            break
-        }
-        'envio;list' {
-            [CompletionResult]::new('-n', 'n', [CompletionResultType]::ParameterName, 'n')
-            [CompletionResult]::new('--profile-name', 'profile-name', [CompletionResultType]::ParameterName, 'profile-name')
-            [CompletionResult]::new('-p', 'p', [CompletionResultType]::ParameterName, 'p')
-            [CompletionResult]::new('--profiles', 'profiles', [CompletionResultType]::ParameterName, 'profiles')
-            [CompletionResult]::new('-v', 'v', [CompletionResultType]::ParameterName, 'v')
-            [CompletionResult]::new('--no-pretty-print', 'no-pretty-print', [CompletionResultType]::ParameterName, 'no-pretty-print')
-            [CompletionResult]::new('-c', 'c', [CompletionResultType]::ParameterName, 'c')
-            [CompletionResult]::new('--display-comments', 'display-comments', [CompletionResultType]::ParameterName, 'display-comments')
-            [CompletionResult]::new('-x', 'x', [CompletionResultType]::ParameterName, 'x')
-            [CompletionResult]::new('--display-expiration-date', 'display-expiration-date', [CompletionResultType]::ParameterName, 'display-expiration-date')
-            [CompletionResult]::new('-h', 'h', [CompletionResultType]::ParameterName, 'Print help')
-            [CompletionResult]::new('--help', 'help', [CompletionResultType]::ParameterName, 'Print help')
-            break
-        }
-        'envio;update' {
-            [CompletionResult]::new('-e', 'e', [CompletionResultType]::ParameterName, 'e')
-            [CompletionResult]::new('--envs', 'envs', [CompletionResultType]::ParameterName, 'envs')
-            [CompletionResult]::new('-v', 'v', [CompletionResultType]::ParameterName, 'v')
-            [CompletionResult]::new('--update-values', 'update-values', [CompletionResultType]::ParameterName, 'update-values')
-            [CompletionResult]::new('-c', 'c', [CompletionResultType]::ParameterName, 'c')
-            [CompletionResult]::new('--update-comments', 'update-comments', [CompletionResultType]::ParameterName, 'update-comments')
-            [CompletionResult]::new('-x', 'x', [CompletionResultType]::ParameterName, 'x')
-            [CompletionResult]::new('--update-expiration-date', 'update-expiration-date', [CompletionResultType]::ParameterName, 'update-expiration-date')
-            [CompletionResult]::new('-h', 'h', [CompletionResultType]::ParameterName, 'Print help')
-            [CompletionResult]::new('--help', 'help', [CompletionResultType]::ParameterName, 'Print help')
-            break
-        }
-        'envio;export' {
-            [CompletionResult]::new('-f', 'f', [CompletionResultType]::ParameterName, 'f')
-            [CompletionResult]::new('--file-to-export-to', 'file-to-export-to', [CompletionResultType]::ParameterName, 'file-to-export-to')
-            [CompletionResult]::new('-e', 'e', [CompletionResultType]::ParameterName, 'e')
-            [CompletionResult]::new('--envs', 'envs', [CompletionResultType]::ParameterName, 'envs')
+        'envio;run' {
             [CompletionResult]::new('-h', 'h', [CompletionResultType]::ParameterName, 'Print help')
             [CompletionResult]::new('--help', 'help', [CompletionResultType]::ParameterName, 'Print help')
             break
         }
         'envio;import' {
-            [CompletionResult]::new('-f', 'f', [CompletionResultType]::ParameterName, 'f')
-            [CompletionResult]::new('--file-to-import-from', 'file-to-import-from', [CompletionResultType]::ParameterName, 'file-to-import-from')
-            [CompletionResult]::new('-u', 'u', [CompletionResultType]::ParameterName, 'u')
-            [CompletionResult]::new('--url', 'url', [CompletionResultType]::ParameterName, 'url')
+            [CompletionResult]::new('-n', 'n', [CompletionResultType]::ParameterName, 'name for the imported profile')
+            [CompletionResult]::new('--profile-name', 'profile-name', [CompletionResultType]::ParameterName, 'name for the imported profile')
+            [CompletionResult]::new('-h', 'h', [CompletionResultType]::ParameterName, 'Print help')
+            [CompletionResult]::new('--help', 'help', [CompletionResultType]::ParameterName, 'Print help')
+            break
+        }
+        'envio;export' {
+            [CompletionResult]::new('-o', 'o', [CompletionResultType]::ParameterName, 'output file path (default: .env)')
+            [CompletionResult]::new('--output-file-path', 'output-file-path', [CompletionResultType]::ParameterName, 'output file path (default: .env)')
+            [CompletionResult]::new('-k', 'k', [CompletionResultType]::ParameterName, 'comma-separated list of keys to export (type ''select'' to choose interactively)')
+            [CompletionResult]::new('--keys', 'keys', [CompletionResultType]::ParameterName, 'comma-separated list of keys to export (type ''select'' to choose interactively)')
             [CompletionResult]::new('-h', 'h', [CompletionResultType]::ParameterName, 'Print help')
             [CompletionResult]::new('--help', 'help', [CompletionResultType]::ParameterName, 'Print help')
             break
         }
         'envio;version' {
-            [CompletionResult]::new('-v', 'v', [CompletionResultType]::ParameterName, 'v')
-            [CompletionResult]::new('--verbose', 'verbose', [CompletionResultType]::ParameterName, 'verbose')
+            [CompletionResult]::new('-v', 'v', [CompletionResultType]::ParameterName, 'show verbose version information')
+            [CompletionResult]::new('--verbose', 'verbose', [CompletionResultType]::ParameterName, 'show verbose version information')
             [CompletionResult]::new('-h', 'h', [CompletionResultType]::ParameterName, 'Print help')
             [CompletionResult]::new('--help', 'help', [CompletionResultType]::ParameterName, 'Print help')
-            break
-        }
-        'envio;help' {
-            [CompletionResult]::new('create', 'create', [CompletionResultType]::ParameterValue, 'Create a new profile')
-            [CompletionResult]::new('add', 'add', [CompletionResultType]::ParameterValue, 'Add envionment variables to a profile')
-            [CompletionResult]::new('load', 'load', [CompletionResultType]::ParameterValue, 'Load all environment variables in a profile for use in your terminal sessions')
-            [CompletionResult]::new('unload', 'unload', [CompletionResultType]::ParameterValue, 'Unload a profile')
-            [CompletionResult]::new('launch', 'launch', [CompletionResultType]::ParameterValue, 'Run a command with the environment variables from a profile')
-            [CompletionResult]::new('remove', 'remove', [CompletionResultType]::ParameterValue, 'Remove a environment variable from a profile')
-            [CompletionResult]::new('list', 'list', [CompletionResultType]::ParameterValue, 'List all the environment variables in a profile or all the profiles currenty stored')
-            [CompletionResult]::new('update', 'update', [CompletionResultType]::ParameterValue, 'Update environment variables in a profile')
-            [CompletionResult]::new('export', 'export', [CompletionResultType]::ParameterValue, 'Export a profile to a file if no file is specified it will be exported to a file named .env')
-            [CompletionResult]::new('import', 'import', [CompletionResultType]::ParameterValue, 'Download a profile over the internet and import it into the system or import a locally stored profile into your current envio installation')
-            [CompletionResult]::new('version', 'version', [CompletionResultType]::ParameterValue, 'Print the version')
-            [CompletionResult]::new('help', 'help', [CompletionResultType]::ParameterValue, 'Print this message or the help of the given subcommand(s)')
-            break
-        }
-        'envio;help;create' {
-            break
-        }
-        'envio;help;add' {
-            break
-        }
-        'envio;help;load' {
-            break
-        }
-        'envio;help;unload' {
-            break
-        }
-        'envio;help;launch' {
-            break
-        }
-        'envio;help;remove' {
-            break
-        }
-        'envio;help;list' {
-            break
-        }
-        'envio;help;update' {
-            break
-        }
-        'envio;help;export' {
-            break
-        }
-        'envio;help;import' {
-            break
-        }
-        'envio;help;version' {
-            break
-        }
-        'envio;help;help' {
             break
         }
     })

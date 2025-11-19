@@ -1,85 +1,67 @@
-use std::{collections::HashMap, env, io::Read, path::Path};
+use std::{collections::HashMap, io::Read, path::Path};
 
 use chrono::Local;
 use colored::Colorize;
 use envio::{
     crypto::{create_cipher, gpg::get_gpg_keys, CipherKind},
-    error::{Error, Result},
     get_profile, Env, EnvVec,
 };
-use inquire::{
-    min_length, Confirm, DateSelect, MultiSelect, Password, PasswordDisplayMode, Select, Text,
-};
-use regex::Regex;
+use strum::IntoEnumIterator;
 use url::Url;
 
 use crate::{
-    clap_app::Command,
-    ops::{self, check_expired_envs},
-    utils::{does_profile_exist, get_profile_path, parse_envs_from_string},
+    clap_app::{ClapApp, Command, ProfileCommand},
+    error::{AppError, AppResult},
+    ops,
+    output::error,
+    prompts, utils,
 };
 
-/// Get the user's encryption key
 fn get_userkey() -> String {
-    println!("{}", "Loading Profile".green());
-    let prompt = Password::new("Enter your encryption key:")
-        .with_display_toggle_enabled()
-        .with_display_mode(PasswordDisplayMode::Masked)
-        .with_help_message("OH NO! you forgot your key! just kidding... or did you?")
-        .without_confirmation()
-        .prompt();
-
-    if let Err(e) = prompt {
-        eprintln!("{}: {}", "Error".red(), e);
-        std::process::exit(1);
-    } else {
-        prompt.unwrap()
+    match prompts::password_prompt(prompts::PasswordPromptOptions {
+        title: "Enter your encryption key:".to_string(),
+        help_message: Some("OH NO! you forgot your key! just kidding... or did you?".to_string()),
+        min_length: None,
+        with_confirmation: false,
+        confirmation_error_message: None,
+    }) {
+        Ok(key) => key,
+        Err(e) => {
+            error(e);
+            std::process::exit(1);
+        }
     }
 }
 
-/// Check to see if the user is using a vi based editor so that we can use the vim mode in the
-/// inquire crate
-fn get_vim_mode() -> Result<bool> {
-    let env = env::var("VISUAL").unwrap_or_else(|_| env::var("EDITOR").unwrap_or_default());
-
-    let program = env.split_whitespace().next().ok_or("")?; // Throw an error if the program is empty, we don't really care about the error message
-
-    let program_stem = Path::new(program)
-        .file_stem()
-        .and_then(|stem| stem.to_str())
-        .ok_or("")?; // Same here
-
-    Ok(Regex::new(r"n?vim?").unwrap().is_match(program_stem)) // unwrap is safe here because we know
-                                                              // that the regex will always compile
-}
-
-impl Command {
-    /// Run the subcommand that was passed to the CLI
-    pub fn run(&self) -> Result<()> {
-        let vim_mode = get_vim_mode().unwrap_or(false);
-
-        match self {
-            Command::Create {
+impl ClapApp {
+    pub fn run(&self) -> AppResult<()> {
+        match &self.command {
+            Command::Profile(ProfileCommand::New {
                 profile_name,
+                description,
                 envs,
                 envs_file,
-                gpg,
-                add_comments,
-                add_expiration_date,
-            } => {
-                if profile_name.is_empty() {
-                    return Err(Error::ProfileNameEmpty(profile_name.to_string()));
-                }
+                cipher_kind,
+                comments: add_comments,
+                expires: add_expires,
+            }) => {
+                let selected_cipher_kind = if let Some(kind) = cipher_kind {
+                    kind.parse::<CipherKind>()
+                        .map_err(|e| AppError::Msg(e.to_string()))?
+                } else {
+                    let cipher_options: Vec<String> =
+                        CipherKind::iter().map(|k| k.to_string()).collect();
 
-                if does_profile_exist(profile_name) {
-                    return Err(Error::ProfileExists(profile_name.to_string()));
-                }
+                    prompts::select_prompt(prompts::SelectPromptOptions {
+                        title: "Select the encryption method:".to_string(),
+                        options: cipher_options,
+                    })?
+                    .parse::<CipherKind>()
+                    .unwrap() // always safe
+                };
 
-                let gpg_key;
-                let cipher;
-
-                if gpg.is_some() {
-                    if gpg.as_ref().unwrap() == "select" {
+                let key = match selected_cipher_kind {
+                    CipherKind::GPG => {
                         let available_keys;
 
                         #[cfg(target_family = "unix")]
@@ -92,61 +74,38 @@ impl Command {
                             available_keys = match get_gpg_keys() {
                                 Some(keys) => keys,
                                 None => {
-                                    return Err(Error::Crypto("No GPG keys found".to_string()));
+                                    return Err(AppError::Msg("No GPG keys found".to_string()));
                                 }
                             };
-
-                            if available_keys.len() == 0 {
-                                return Err(Error::Crypto("No GPG keys found".to_string()));
-                            }
                         }
 
-                        let ans = Select::new(
-                            "Select the GPG key you want to use for encryption:",
-                            available_keys.iter().map(|(s, _)| s.clone()).collect(),
-                        )
-                        .with_vim_mode(vim_mode)
-                        .prompt();
-
-                        if let Err(e) = ans {
-                            return Err(Error::Msg(e.to_string()));
+                        if available_keys.is_empty() {
+                            return Err(AppError::Msg("No GPG keys found".to_string()));
                         }
 
-                        gpg_key = available_keys
-                            .iter()
-                            .find_map(|(k, f)| {
-                                if k == ans.as_ref().unwrap() {
-                                    Some(f.clone())
-                                } else {
-                                    None
-                                }
-                            })
-                            .unwrap();
-                    } else {
-                        gpg_key = gpg.as_ref().unwrap().to_string();
+                        Some(prompts::select_prompt(prompts::SelectPromptOptions {
+                            title: "Select the GPG key you want to use for encryption:".to_string(),
+                            options: available_keys.iter().map(|(s, _)| s.clone()).collect(),
+                        })?)
                     }
 
-                    cipher = create_cipher(gpg_key, CipherKind::Gpg)?;
-                } else {
-                    let prompt = Password::new("Enter your encryption key:")
-                        .with_display_toggle_enabled()
-                        .with_display_mode(PasswordDisplayMode::Masked)
-                        .with_validator(min_length!(8))
-                        .with_formatter(&|_| String::from("Input received"))
-                        .with_help_message(
-                            "Remember this key, you will need it to decrypt your profile later",
-                        )
-                        .with_custom_confirmation_error_message("The keys don7't match.")
-                        .prompt();
+                    CipherKind::AGE => {
+                        Some(prompts::password_prompt(prompts::PasswordPromptOptions {
+                            title: "Enter your encryption key:".to_string(),
+                            help_message: Some(
+                                "Remember this key, you will need it to decrypt your profile later"
+                                    .to_string(),
+                            ),
+                            min_length: Some(8),
+                            with_confirmation: true,
+                            confirmation_error_message: Some("The keys don't match".to_string()),
+                        })?)
+                    }
 
-                    let user_key = if let Err(e) = prompt {
-                        return Err(Error::Msg(e.to_string()));
-                    } else {
-                        prompt.unwrap()
-                    };
+                    _ => None,
+                };
 
-                    cipher = create_cipher(user_key, CipherKind::Age)?;
-                }
+                let cipher = create_cipher(selected_cipher_kind, key.as_deref())?;
 
                 let mut envs_vec;
 
@@ -154,7 +113,7 @@ impl Command {
                     let file = envs_file.as_ref().unwrap();
 
                     if !Path::new(file).exists() {
-                        return Err(Error::Msg(format!("File '{}' does not exist", file)));
+                        return Err(AppError::Msg(format!("File '{}' does not exist", file)));
                     }
 
                     let mut file = std::fs::OpenOptions::new().read(true).open(file).unwrap();
@@ -162,41 +121,35 @@ impl Command {
                     let mut buffer = String::new();
                     file.read_to_string(&mut buffer).unwrap();
 
-                    envs_vec = Some(parse_envs_from_string(&buffer)?);
+                    envs_vec = Some(utils::parse_envs_from_string(&buffer)?);
 
                     if envs_vec.is_none() {
-                        return Err(Error::Msg("Unable to parse envs from file".to_string()));
+                        return Err(AppError::Msg("Unable to parse envs from file".to_string()));
                     }
 
                     let mut options = vec![];
 
                     for env in envs_vec.clone().unwrap() {
                         if env.value.is_empty() {
-                            let prompt = Confirm::new(&format!(
-                                "Would you like to assign a value to key: {} ?",
-                                env.name
-                            ))
-                            .with_default(false)
-                            .with_help_message(
-                                "If you do not want to assign a value to this key, press enter",
-                            )
-                            .prompt();
-
-                            if let Err(e) = prompt {
-                                return Err(Error::Msg(e.to_string()));
-                            } else if prompt.unwrap() {
-                                let prompt =
-                                    Text::new(&format!("Enter the value for {}:", env.name))
-                                        .prompt();
-
-                                if let Err(e) = prompt {
-                                    return Err(Error::Msg(e.to_string()));
-                                } else {
-                                    envs_vec.as_mut().unwrap().push(Env::from_key_value(
-                                        env.name.clone(),
-                                        prompt.unwrap(),
-                                    ));
-                                }
+                            if prompts::confirm_prompt(prompts::ConfirmPromptOptions {
+                                title: format!(
+                                    "Would you like to assign a value to key: {} ?",
+                                    env.name
+                                ),
+                                help_message: Some(
+                                    "If you do not want to assign a value to this key, press enter"
+                                        .to_string(),
+                                ),
+                                default: false,
+                            })? {
+                                let value = prompts::text_prompt(prompts::TextPromptOptions {
+                                    title: format!("Enter the value for {}:", env.name),
+                                    default: None,
+                                })?;
+                                envs_vec
+                                    .as_mut()
+                                    .unwrap()
+                                    .push(Env::from_key_value(env.name.clone(), value));
                             }
                         }
 
@@ -207,23 +160,17 @@ impl Command {
                     }
 
                     let default_options = (0..options.len()).collect::<Vec<usize>>();
+                    let selected_keys = prompts::multi_select_prompt(prompts::MultiSelectPromptOptions {
+                        title:
+                            "Select the environment variables you want to keep in your new profile:"
+                                .to_string(),
+                        options: options.clone(),
+                        default_indices: Some(default_options),
+                    })?;
 
-                    let prompt = MultiSelect::new("Select the environment variables you want to keep in your new profile:", options.clone())
-                        .with_default(&default_options)
-                        .with_vim_mode(vim_mode)
-                        .with_help_message("↑↓ to move, space to select/unselect one, → to all, ← to none, type to filter, enter to confirm")
-                        .prompt();
-
-                    if let Err(e) = prompt {
-                        return Err(Error::Msg(e.to_string()));
-                    } else {
-                        // remove the keys that were not selected
-                        let selected_keys = prompt.unwrap();
-
-                        for key in options {
-                            if !selected_keys.contains(&key) {
-                                envs_vec.as_mut().unwrap().remove(&key);
-                            }
+                    for key in options {
+                        if !selected_keys.contains(&key) {
+                            envs_vec.as_mut().unwrap().remove(&key);
                         }
                     }
                 } else if envs.is_some() {
@@ -240,13 +187,13 @@ impl Command {
                                         value.to_string(),
                                     ));
                                 } else {
-                                    return Err(Error::Msg(format!(
+                                    return Err(AppError::Msg(format!(
                                         "Unable to parse value for key '{}'",
                                         key
                                     )));
                                 }
                             } else {
-                                return Err(Error::Msg(format!(
+                                return Err(AppError::Msg(format!(
                                     "Unable to parse key-value pair from '{}'",
                                     env
                                 )));
@@ -255,87 +202,74 @@ impl Command {
                             continue;
                         }
 
-                        let value;
-
-                        let prompt = Text::new(&format!("Enter the value for {}:", env)).prompt();
-
-                        if let Err(e) = prompt {
-                            return Err(Error::Msg(e.to_string()));
-                        } else {
-                            value = prompt.unwrap();
-                            envs_vec
-                                .as_mut()
-                                .unwrap()
-                                .push(Env::from_key_value(env.to_string(), value));
-                        }
+                        let value = prompts::text_prompt(prompts::TextPromptOptions {
+                            title: format!("Enter the value for {}:", env),
+                            default: None,
+                        })?;
+                        envs_vec
+                            .as_mut()
+                            .unwrap()
+                            .push(Env::from_key_value(env.to_string(), value));
                     }
                 } else {
-                    envs_vec = Some(EnvVec::new()); // The user created a profile without any envs
+                    envs_vec = Some(EnvVec::new()); // the user created a profile without any envs
                 }
 
                 for env in envs_vec.as_mut().unwrap() {
                     if *add_comments {
-                        let prompt =
-                            Text::new(&format!("Enter a comment for '{}':", env.name)).prompt();
-
-                        if let Err(e) = prompt {
-                            return Err(Error::Msg(e.to_string()));
-                        } else {
-                            env.comment = Some(prompt.unwrap());
-                        }
+                        env.comment = Some(prompts::text_prompt(prompts::TextPromptOptions {
+                            title: format!("Enter a comment for '{}':", env.name),
+                            default: None,
+                        })?);
                     }
 
-                    if *add_expiration_date {
-                        let prompt = DateSelect::new(&format!(
-                            "Select an expiration date for '{}':",
-                            env.name
-                        ))
-                        .with_default(Local::now().date_naive())
-                        .prompt();
-
-                        if let Err(e) = prompt {
-                            return Err(Error::Msg(e.to_string()));
-                        } else {
-                            env.expiration_date = Some(prompt.unwrap());
-                        }
+                    if *add_expires {
+                        env.expiration_date =
+                            Some(prompts::date_prompt(prompts::DatePromptOptions {
+                                title: format!("Select an expiration date for '{}':", env.name),
+                                default: Some(Local::now().date_naive()),
+                            })?);
                     }
                 }
 
-                ops::create_profile(profile_name.to_string(), envs_vec, cipher)?;
+                ops::create_profile(
+                    profile_name.to_string(),
+                    description.clone(),
+                    envs_vec,
+                    cipher,
+                )?;
             }
 
-            Command::Add {
+            Command::Set {
                 profile_name,
                 envs,
-                add_comments,
-                add_expiration_date,
+                comments: add_comments,
+                expires: add_expires,
             } => {
-                if !does_profile_exist(profile_name) {
-                    return Err(Error::ProfileDoesNotExist(profile_name.to_string()));
-                }
+                let mut profile =
+                    get_profile(utils::get_profile_path(profile_name)?, Some(get_userkey))?;
 
-                let mut profile = get_profile(get_profile_path(profile_name), Some(get_userkey))?;
-                check_expired_envs(&profile);
+                ops::check_expired_envs(&profile);
 
                 for env in envs {
-                    if (*env).contains('=') {
+                    if env.contains('=') {
                         let mut parts = env.splitn(2, '=');
 
                         if let Some(key) = parts.next() {
-                            if profile.envs.contains_key(key) {
-                                return Err(Error::EnvExists(key.to_string()));
-                            }
-
                             if let Some(value) = parts.next() {
-                                profile.insert_env(key.to_string(), value.to_string())
+                                if profile.envs.contains_key(key) {
+                                    profile.edit_env(key.to_string(), value.to_string())?;
+                                } else {
+                                    profile.insert_env(key.to_string(), value.to_string());
+                                }
                             } else {
-                                return Err(Error::Msg(format!(
+                                return Err(AppError::Msg(format!(
                                     "Unable to parse value for key '{}'",
                                     key
                                 )));
                             }
                         } else {
-                            return Err(Error::Msg(format!(
+                            return Err(AppError::Msg(format!(
                                 "Unable to parse key-value pair from '{}'",
                                 env
                             )));
@@ -344,19 +278,23 @@ impl Command {
                         continue;
                     }
 
+                    let prompt = prompts::text_prompt(prompts::TextPromptOptions {
+                        title: format!(
+                            "Enter the {}value for {}:",
+                            if profile.envs.contains_key(env) {
+                                "new "
+                            } else {
+                                ""
+                            },
+                            env
+                        ),
+                        default: None,
+                    })?;
+
                     if profile.envs.contains_key(env) {
-                        return Err(Error::EnvExists(env.to_string()));
-                    }
-
-                    let value;
-
-                    let prompt = Text::new(&format!("Enter the value for {}:", env)).prompt();
-
-                    if let Err(e) = prompt {
-                        return Err(Error::Msg(e.to_string()));
+                        profile.edit_env(env.to_string(), prompt)?;
                     } else {
-                        value = prompt.unwrap();
-                        profile.insert_env(env.to_string(), value)
+                        profile.insert_env(env.to_string(), prompt);
                     }
                 }
 
@@ -366,30 +304,33 @@ impl Command {
                     }
 
                     if *add_comments {
-                        let prompt =
-                            Text::new(&format!("Enter a comment for '{}':", env.name)).prompt();
-
-                        if let Err(e) = prompt {
-                            return Err(Error::Msg(e.to_string()));
-                        } else {
-                            env.comment = Some(prompt.unwrap());
-                        }
+                        env.comment = Some(prompts::text_prompt(prompts::TextPromptOptions {
+                            title: format!("Enter a comment for '{}':", env.name),
+                            default: None,
+                        })?);
                     }
 
-                    if *add_expiration_date {
-                        let prompt = DateSelect::new(&format!(
-                            "Select an expiration date for '{}':",
-                            env.name
-                        ))
-                        .with_default(Local::now().date_naive())
-                        .prompt();
-
-                        if let Err(e) = prompt {
-                            return Err(Error::Msg(e.to_string()));
-                        } else {
-                            env.expiration_date = Some(prompt.unwrap());
-                        }
+                    if *add_expires {
+                        env.expiration_date =
+                            Some(prompts::date_prompt(prompts::DatePromptOptions {
+                                title: format!("Select an expiration date for '{}':", env.name),
+                                default: Some(Local::now().date_naive()),
+                            })?);
                     }
+                }
+
+                println!("{}", "Applying Changes".green());
+                profile.save()?;
+            }
+
+            Command::Unset { profile_name, keys } => {
+                let mut profile =
+                    get_profile(utils::get_profile_path(profile_name)?, Some(get_userkey))?;
+
+                ops::check_expired_envs(&profile);
+
+                for key in keys {
+                    profile.remove_env(&key)?;
                 }
 
                 println!("{}", "Applying Changes".green());
@@ -404,16 +345,10 @@ impl Command {
 
                 #[cfg(target_family = "windows")]
                 {
-                    if !does_profile_exist(profile_name) {
-                        return Err(Error::ProfileDoesNotExist(profile_name.to_string()));
-                    }
+                    let profile =
+                        get_profile(utils::get_profile_path(profile_name)?, Some(get_userkey))?;
 
-                    let profile = get_profile(get_profile_path(profile_name), Some(get_userkey))?;
-                    check_expired_envs(&profile);
-
-                    if let Err(e) = ops::load_profile(profile) {
-                        return Err(e);
-                    }
+                    ops::load_profile(profile)?;
                 }
             }
 
@@ -424,31 +359,26 @@ impl Command {
 
             #[cfg(target_family = "windows")]
             Command::Unload { profile_name } => {
-                if !does_profile_exist(profile_name) {
-                    return Err(Error::ProfileDoesNotExist(profile_name.to_string()));
-                }
+                let profile =
+                    get_profile(utils::get_profile_path(profile_name)?, Some(get_userkey))?;
 
-                let profile = get_profile(get_profile_path(profile_name), Some(get_userkey))?;
-                check_expired_envs(&profile);
-
-                if let Err(e) = ops::unload_profile(profile) {
-                    return Err(e);
-                }
+                ops::unload_profile(profile)?;
             }
-            Command::Launch {
+
+            Command::Run {
                 profile_name,
                 command,
             } => {
-                let split_command = command.value();
-                let program = split_command[0];
-                let args = &split_command[1..];
-
-                if !does_profile_exist(profile_name) {
-                    return Err(Error::ProfileDoesNotExist(profile_name.to_string()));
+                if command.is_empty() {
+                    return Err(AppError::Msg("Command cannot be empty".to_string()));
                 }
 
-                let profile = get_profile(get_profile_path(profile_name), Some(get_userkey))?;
-                check_expired_envs(&profile);
+                let program = &command[0];
+                let args = &command[1..];
+
+                let profile =
+                    get_profile(utils::get_profile_path(profile_name)?, Some(get_userkey))?;
+                ops::check_expired_envs(&profile);
 
                 let mut cmd = std::process::Command::new(program)
                     .envs::<HashMap<String, String>, _, _>(profile.envs.into())
@@ -460,268 +390,122 @@ impl Command {
 
                 let status = match cmd.wait() {
                     Ok(s) => s,
-                    Err(e) => return Err(Error::Msg(format!("Failed to execute command: {}", e))),
+                    Err(e) => {
+                        return Err(AppError::Msg(format!("Failed to execute command: {}", e)))
+                    }
                 };
 
                 match status.code() {
                     Some(code) => std::process::exit(code),
                     None => {
-                        return Err(Error::Msg(
+                        return Err(AppError::Msg(
                             "The child process was terminated by a signal".to_string(),
                         ))
                     }
                 }
             }
 
-            Command::Remove { profile_name, envs } => {
-                if !does_profile_exist(profile_name) {
-                    return Err(Error::ProfileDoesNotExist(profile_name.to_string()));
-                }
-
-                if envs.is_some() && !envs.as_ref().unwrap().is_empty() {
-                    let mut profile =
-                        get_profile(get_profile_path(profile_name), Some(get_userkey))?;
-                    check_expired_envs(&profile);
-
-                    for env in envs.as_ref().unwrap() {
-                        profile.remove_env(env)?;
-                    }
-
-                    println!("{}", "Applying Changes".green());
-                    profile.save()?;
-                } else {
-                    ops::delete_profile(profile_name)?;
-                }
+            Command::Profile(ProfileCommand::Delete { profile_name }) => {
+                ops::delete_profile(profile_name)?;
             }
 
-            Command::List {
-                profiles,
+            Command::Profile(ProfileCommand::List { no_pretty_print }) => {
+                ops::list_profiles(*no_pretty_print)?;
+            }
+
+            Command::Profile(ProfileCommand::Show {
                 profile_name,
                 no_pretty_print,
-                display_comments,
-                display_expiration_date,
-            } => {
-                if *profiles {
-                    ops::list_profiles(*no_pretty_print)?;
-                } else if profile_name.is_some() && !profile_name.as_ref().unwrap().is_empty() {
-                    if !does_profile_exist(profile_name.as_ref().unwrap()) {
-                        return Err(Error::ProfileDoesNotExist(
-                            profile_name.as_ref().unwrap().to_string(),
-                        ));
+                show_comments,
+                show_expiration,
+            }) => {
+                let profile =
+                    get_profile(utils::get_profile_path(profile_name)?, Some(get_userkey))?;
+                ops::check_expired_envs(&profile);
+
+                if *no_pretty_print {
+                    for env in profile.envs {
+                        println!("{}={}", env.name, env.value);
                     }
-
-                    let profile = get_profile(
-                        get_profile_path(profile_name.as_ref().unwrap()),
-                        Some(get_userkey),
-                    )?;
-                    check_expired_envs(&profile);
-
-                    if *no_pretty_print {
-                        for env in profile.envs {
-                            println!("{}={}", env.name, env.value);
-                        }
-                    } else {
-                        ops::list_envs(&profile, *display_comments, *display_expiration_date);
-                    }
+                } else {
+                    ops::list_envs(&profile, *show_comments, *show_expiration);
                 }
-            }
-
-            Command::Update {
-                profile_name,
-                envs,
-                update_values,
-                update_comments,
-                update_expiration_date,
-            } => {
-                if !does_profile_exist(profile_name) {
-                    return Err(Error::ProfileDoesNotExist(profile_name.to_string()));
-                }
-
-                if envs.is_empty() {
-                    return Err(Error::Msg(
-                        "You must provide at least one environment variable to update".to_string(),
-                    ));
-                }
-
-                let mut profile = get_profile(get_profile_path(profile_name), Some(get_userkey))?;
-                check_expired_envs(&profile);
-
-                if !*update_values && !*update_comments && !*update_expiration_date {
-                    return Err(Error::Msg(
-                        "You must provide at least one flag to update".to_string(),
-                    ));
-                }
-
-                if *update_values {
-                    for env in envs {
-                        if (*env).contains('=') {
-                            let mut parts = env.splitn(2, '=');
-
-                            if let Some(key) = parts.next() {
-                                if !profile.envs.contains_key(key) {
-                                    return Err(Error::EnvDoesNotExist(key.to_string()));
-                                }
-
-                                if let Some(value) = parts.next() {
-                                    profile.edit_env(key.to_string(), value.to_string())?
-                                } else {
-                                    return Err(Error::Msg(format!(
-                                        "Unable to parse value for key '{}'",
-                                        key
-                                    )));
-                                }
-                            } else {
-                                return Err(Error::Msg(format!(
-                                    "Unable to parse key-value pair from '{}'",
-                                    env
-                                )));
-                            }
-
-                            continue;
-                        }
-
-                        if !profile.envs.contains_key(env) {
-                            return Err(Error::EnvDoesNotExist(env.to_string()));
-                        }
-
-                        let new_value;
-
-                        let prompt =
-                            Text::new(&format!("Enter the new value for {}:", env)).prompt();
-
-                        if let Err(e) = prompt {
-                            return Err(Error::Msg(e.to_string()));
-                        } else {
-                            new_value = prompt.unwrap();
-                            profile.edit_env(env.to_string(), new_value)?;
-                        }
-                    }
-                }
-
-                for env in &mut profile.envs {
-                    if envs.iter().find(|&e| e.contains(&env.name)).is_none() {
-                        continue;
-                    }
-
-                    if *update_comments {
-                        let prompt =
-                            Text::new(&format!("Enter a new comment for '{}':", env.name)).prompt();
-
-                        if let Err(e) = prompt {
-                            return Err(Error::Msg(e.to_string()));
-                        } else {
-                            env.comment = Some(prompt.unwrap());
-                        }
-                    }
-
-                    if *update_expiration_date {
-                        let prompt = DateSelect::new(&format!(
-                            "Select a new expiration date for '{}':",
-                            env.name
-                        ))
-                        .with_default(Local::now().date_naive())
-                        .prompt();
-
-                        if let Err(e) = prompt {
-                            return Err(Error::Msg(e.to_string()));
-                        } else {
-                            env.expiration_date = Some(prompt.unwrap());
-                        }
-                    }
-                }
-
-                println!("{}", "Applying Changes".green());
-                profile.save()?;
             }
 
             Command::Export {
                 profile_name,
-                file,
-                envs,
+                output_file_path,
+                keys,
             } => {
-                if !does_profile_exist(profile_name) {
-                    return Err(Error::ProfileDoesNotExist(profile_name.to_string()));
-                }
+                let profile =
+                    get_profile(utils::get_profile_path(profile_name)?, Some(get_userkey))?;
 
-                let mut file_name = ".env";
+                ops::check_expired_envs(&profile);
 
-                if file.is_some() {
-                    file_name = file.as_ref().unwrap()
-                }
-
-                let profile = get_profile(get_profile_path(profile_name), Some(get_userkey))?;
-                check_expired_envs(&profile);
-
-                if envs.is_some() && envs.as_ref().unwrap().contains(&"select".to_string()) {
-                    let prompt = MultiSelect::new("Select the environment variables you want to export:", profile.envs.keys())
-                        .with_default(&(0..profile.envs.len()).collect::<Vec<usize>>())
-                        .with_vim_mode(vim_mode)
-                        .with_help_message("↑↓ to move, space to select/unselect one, → to all, ← to none, type to filter, enter to confirm")
-                        .prompt();
-
-                    if let Err(e) = prompt {
-                        return Err(Error::Msg(e.to_string()));
+                let envs_selected = if keys.is_some() {
+                    let keys_vec = keys.as_ref().unwrap();
+                    if keys_vec.contains(&"select".to_string()) {
+                        let keys = profile.envs.keys();
+                        let default_indices: Vec<usize> = (0..keys.len()).collect();
+                        Some(prompts::multi_select_prompt(
+                            prompts::MultiSelectPromptOptions {
+                                title: "Select the environment variables you want to export:"
+                                    .to_string(),
+                                options: keys,
+                                default_indices: Some(default_indices),
+                            },
+                        )?)
+                    } else {
+                        Some(keys_vec.clone())
                     }
+                } else {
+                    None
+                };
 
-                    ops::export_envs(
-                        &profile,
-                        file_name,
-                        &Some(
-                            prompt
-                                .unwrap()
-                                .iter()
-                                .cloned()
-                                .map(|s| s.to_owned())
-                                .collect(),
-                        ),
-                    )?;
-
-                    return Ok(());
-                }
-
-                ops::export_envs(&profile, file_name, envs)?;
+                ops::export_envs(
+                    &profile,
+                    output_file_path.as_deref().unwrap_or(".env"),
+                    &envs_selected,
+                )?;
             }
 
             Command::Import {
+                source,
                 profile_name,
-                file,
-                url,
             } => {
-                if does_profile_exist(profile_name) {
-                    return Err(Error::ProfileExists(profile_name.to_string()));
-                }
+                let profile_name = if let Some(name) = profile_name {
+                    name.clone()
+                } else {
+                    Path::new(source)
+                        .file_stem()
+                        .and_then(|s| s.to_str())
+                        .unwrap_or("imported")
+                        .to_string()
+                };
 
-                if url.is_some() && Url::parse(url.as_ref().unwrap()).is_ok() {
-                    ops::download_profile(
-                        url.as_ref().unwrap().to_string(),
-                        profile_name.to_string(),
-                    )?;
-
+                if Url::parse(source).is_ok() {
+                    ops::download_profile(source.to_string(), profile_name)?;
                     return Ok(());
                 }
 
-                if file.is_some() {
-                    ops::import_profile(
-                        file.as_ref().unwrap().to_string(),
-                        profile_name.to_string(),
-                    )?;
+                if Path::new(source).exists() {
+                    ops::import_profile(source.to_string(), profile_name)?;
                     return Ok(());
                 }
 
-                return Err(Error::Msg(
-                    "You must provide either a file or a url to import a profile".to_string(),
+                return Err(AppError::Msg(
+                    "Source must be a valid file path or URL".to_string(),
                 ));
             }
 
             Command::Version { verbose } => {
+                println!("{} {}", "Version".green(), env!("BUILD_VERSION"));
+
                 if *verbose {
-                    println!("{} {}", "Version".green(), env!("BUILD_VERSION"));
-                    println!("{} {}", "Build Timestamp".green(), env!("BUILD_TIMESTAMP"));
                     println!("{} {}", "Author".green(), env!("CARGO_PKG_AUTHORS"));
                     println!("{} {}", "License".green(), env!("CARGO_PKG_LICENSE"));
                     println!("{} {}", "Repository".green(), env!("CARGO_PKG_REPOSITORY"));
-                } else {
-                    println!("{} {}", "Version".green(), env!("BUILD_VERSION"));
+                    println!("{} {}", "Build Timestamp".green(), env!("BUILD_TIMESTAMP"));
                 }
             }
         }

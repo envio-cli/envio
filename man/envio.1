@@ -2,49 +2,39 @@
 .el .ds Aq '
 .TH envio 1  "envio " 
 .SH NAME
-envio \- envio is a modern and secure CLI tool that simplifies the management of environment variables
+envio
 .SH SYNOPSIS
 \fBenvio\fR [\fB\-h\fR|\fB\-\-help\fR] <\fIsubcommands\fR>
 .SH DESCRIPTION
-envio is a modern and secure CLI tool that simplifies the management of environment variables
 .SH OPTIONS
 .TP
 \fB\-h\fR, \fB\-\-help\fR
 Print help
 .SH SUBCOMMANDS
 .TP
-envio\-create(1)
-Create a new profile
+envio\-profile(1)
+manage profiles
 .TP
-envio\-add(1)
-Add envionment variables to a profile
+envio\-set(1)
+set or update environment variables in a profile
+.TP
+envio\-unset(1)
+remove environment variables from a profile
 .TP
 envio\-load(1)
-Load all environment variables in a profile for use in your terminal sessions
+load environment variables from a profile for use in the current terminal session
 .TP
 envio\-unload(1)
-Unload a profile
+unload a profile from the current terminal session
 .TP
-envio\-launch(1)
-Run a command with the environment variables from a profile
-.TP
-envio\-remove(1)
-Remove a environment variable from a profile
-.TP
-envio\-list(1)
-List all the environment variables in a profile or all the profiles currenty stored
-.TP
-envio\-update(1)
-Update environment variables in a profile
-.TP
-envio\-export(1)
-Export a profile to a file if no file is specified it will be exported to a file named .env
+envio\-run(1)
+run a command with profile environment variables
 .TP
 envio\-import(1)
-Download a profile over the internet and import it into the system or import a locally stored profile into your current envio installation
+import a profile from a file or url
+.TP
+envio\-export(1)
+export a profile to a file
 .TP
 envio\-version(1)
-Print the version
-.TP
-envio\-help(1)
-Print this message or the help of the given subcommand(s)
+print version information

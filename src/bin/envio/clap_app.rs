@@ -1,199 +1,228 @@
 use clap::Parser;
 
 #[derive(Parser, Debug)]
-
-/// envio is a modern and secure CLI tool that simplifies the management of
-/// environment variables.
+#[clap(disable_help_subcommand = true)]
 pub struct ClapApp {
     #[command(subcommand)]
     pub command: Command,
 }
 
-/// List of all possible `subcommands` for the application
-/// When a subcommand is passed to the application, clap returns the corresponding enum variant
-/// The enum variant then calls the run method which is implemented in the command.rs file.
-///
-/// When adding a new subcommand, add it to this enum and then write a match arm in the run method
-/// which is located in the command.rs file
 #[derive(clap::Subcommand, Debug)]
 pub enum Command {
+    #[command(subcommand, about = "manage profiles")]
+    Profile(ProfileCommand),
+
     #[command(
-        name = "create",
-        about = "Create a new profile",
-        override_usage = "envio create <PROFILE_NAME> [OPTIONS]"
+        name = "set",
+        about = "set or update environment variables in a profile",
+        override_usage = "envio set <PROFILE_NAME> <ENVS>... [OPTIONS]"
     )]
-    Create {
-        #[arg(required = true)]
+    Set {
+        #[arg(required = true, help = "name of the profile")]
         profile_name: String,
-        #[arg(required = false, long = "file-to-import-envs-from", short = 'f')]
-        envs_file: Option<String>,
-        #[arg(
-            required = false,
-            long = "envs",
-            short = 'e',
-            value_delimiter = ' ',
-            num_args = 1..,
-        )]
-        envs: Option<Vec<String>>,
-        #[arg(required = false, long = "gpg-key-fingerprint", short = 'g')]
-        gpg: Option<String>,
-        #[arg(required = false, long = "add-comments", short = 'c')]
-        add_comments: bool,
-        #[arg(required = false, long = "add-expiration-date", short = 'x')]
-        add_expiration_date: bool,
-    },
-    #[command(
-        name = "add",
-        about = "Add envionment variables to a profile",
-        override_usage = "envio add <PROFILE_NAME> [OPTIONS]"
-    )]
-    Add {
-        #[arg(required = true)]
-        profile_name: String,
-        #[arg(
-            required = true,
-            long = "envs",
-            short = 'e',
-            value_delimiter = ' ',
-            num_args = 1..,
-        )]
+        #[arg(required = true, value_delimiter = ' ', num_args = 1.., help = "environment variables to set (format: KEY=VALUE or only provide KEY and the value will be prompted for)")]
         envs: Vec<String>,
-        #[arg(required = false, long = "add-comments", short = 'c')]
-        add_comments: bool,
-        #[arg(required = false, long = "add-expiration-date", short = 'x')]
-        add_expiration_date: bool,
+        #[arg(
+            long = "comments",
+            short = 'c',
+            help = "add comments to the provided environment variables"
+        )]
+        comments: bool,
+        #[arg(
+            long = "expires",
+            short = 'x',
+            help = "add expiration dates to the provided environment variables"
+        )]
+        expires: bool,
     },
+
+    #[command(
+        name = "unset",
+        about = "remove environment variables from a profile",
+        override_usage = "envio unset <PROFILE_NAME> <KEYS>... [OPTIONS]"
+    )]
+    Unset {
+        #[arg(required = true, help = "name of the profile")]
+        profile_name: String,
+        #[arg(required = true, value_delimiter = ' ', num_args = 1.., help = "keys of environment variables to remove")]
+        keys: Vec<String>,
+    },
+
     #[command(
         name = "load",
-        about = "Load all environment variables in a profile for use in your terminal sessions"
+        about = "load environment variables from a profile for use in the current terminal session",
+        override_usage = "envio load <PROFILE_NAME>"
     )]
     Load {
-        #[arg(required = true)]
+        #[arg(required = true, help = "name of the profile")]
         profile_name: String,
     },
+
     #[cfg(target_family = "unix")]
-    #[command(name = "unload", about = "Unload a profile")]
+    #[command(
+        name = "unload",
+        about = "unload a profile from the current terminal session",
+        override_usage = "envio unload"
+    )]
     Unload,
+
     #[cfg(target_family = "windows")]
-    #[command(name = "unload", about = "Unload a profile")]
+    #[command(
+        name = "unload",
+        about = "unload a profile from the current terminal session",
+        override_usage = "envio unload <PROFILE_NAME>"
+    )]
     Unload {
-        #[arg(required = true)]
+        #[arg(required = true, help = "name of the profile")]
         profile_name: String,
     },
+
     #[command(
-        name = "launch",
-        about = "Run a command with the environment variables from a profile",
-        override_usage = "envio launch <PROFILE_NAME> <--command STRING_COMMAND | -- COMMAND>"
+        name = "run",
+        about = "run a command with profile environment variables",
+        override_usage = "envio run <PROFILE_NAME> -- <COMMAND>"
     )]
-    Launch {
-        #[arg(required = true)]
+    Run {
+        #[arg(required = true, help = "name of the profile")]
         profile_name: String,
-        #[command(flatten)]
-        command: LaunchCommandArg,
+        #[arg(last = true, required = true, help = "command to run")]
+        command: Vec<String>,
     },
+
     #[command(
-        name = "remove",
-        about = "Remove a environment variable from a profile",
-        override_usage = "envio remove <PROFILE_NAME> [OPTIONS]"
+        name = "import",
+        about = "import a profile from a file or url",
+        override_usage = "envio import <SOURCE> [OPTIONS]"
     )]
-    Remove {
-        #[arg(required = true)]
-        profile_name: String,
-        #[arg(required = false, long = "envs-to-remove", short = 'e', value_delimiter = ' ', num_args = 1..)]
-        envs: Option<Vec<String>>,
-    },
-    #[command(
-        name = "list",
-        about = "List all the environment variables in a profile or all the profiles currenty stored"
-    )]
-    List {
-        #[arg(required = false, long = "profiles", short = 'p')]
-        profiles: bool,
-        #[arg(required = false, long = "profile-name", short = 'n')]
-        profile_name: Option<String>,
-        #[arg(required = false, long = "no-pretty-print", short = 'v')]
-        no_pretty_print: bool,
-        #[arg(required = false, long = "display-comments", short = 'c')]
-        display_comments: bool,
-        #[arg(required = false, long = "display-expiration-date", short = 'x')]
-        display_expiration_date: bool,
-    },
-    #[command(
-        name = "update",
-        about = "Update environment variables in a profile",
-        override_usage = "envio update <PROFILE_NAME> [OPTIONS]"
-    )]
-    Update {
-        #[arg(required = true)]
-        profile_name: String,
+    Import {
+        #[arg(required = true, help = "source file or url")]
+        source: String,
         #[arg(
-            required = true,
-            long = "envs",
-            short = 'e',
-            value_delimiter = ' ',
-            num_args = 1..,
+            long = "profile-name",
+            short = 'n',
+            help = "name for the imported profile"
         )]
-        envs: Vec<String>,
-        #[arg(required = false, long = "update-values", short = 'v')]
-        update_values: bool,
-        #[arg(required = false, long = "update-comments", short = 'c')]
-        update_comments: bool,
-        #[arg(required = false, long = "update-expiration-date", short = 'x')]
-        update_expiration_date: bool,
+        profile_name: Option<String>,
     },
+
     #[command(
         name = "export",
-        about = "Export a profile to a file if no file is specified it will be exported to a file named .env",
+        about = "export a profile to a file",
         override_usage = "envio export <PROFILE_NAME> [OPTIONS]"
     )]
     Export {
-        #[arg(required = true)]
+        #[arg(required = true, help = "name of the profile")]
         profile_name: String,
-        #[arg(required = false, long = "file-to-export-to", short = 'f')]
-        file: Option<String>,
         #[arg(
-            required = false,
-            long = "envs",
-            short = 'e',
-            value_delimiter = ' ',
-            num_args = 1..,
+            long = "output-file-path",
+            short = 'o',
+            help = "output file path (default: .env)"
         )]
-        envs: Option<Vec<String>>,
+        output_file_path: Option<String>,
+        #[arg(
+            long = "keys",
+            short = 'k',
+            value_delimiter = ',',
+            num_args = 1..,
+            help = "comma-separated list of keys to export (type 'select' to choose interactively)"
+        )]
+        keys: Option<Vec<String>>,
     },
+
     #[command(
-        name = "import",
-        about = "Download a profile over the internet and import it into the system or import a locally stored profile into your current envio installation",
-        override_usage = "envio import <PROFILE_NAME> [OPTIONS]"
+        name = "version",
+        about = "print version information",
+        override_usage = "envio version [OPTIONS]"
     )]
-    Import {
-        #[arg(required = true)]
-        profile_name: String,
-        #[arg(required = false, long = "file-to-import-from", short = 'f')]
-        file: Option<String>,
-        #[arg(required = false, long = "url", short = 'u')]
-        url: Option<String>,
-    },
-    #[command(name = "version", about = "Print the version")]
     Version {
-        #[arg(required = false, long = "verbose", short = 'v')]
+        #[arg(
+            long = "verbose",
+            short = 'v',
+            help = "show verbose version information"
+        )]
         verbose: bool,
     },
 }
 
-#[derive(clap::Args, Debug)]
-#[group(required = true, multiple = false)]
-pub struct LaunchCommandArg {
-    #[arg(long = "command", short = 'c', name = "STRING_COMMAND")]
-    argument: Option<String>,
-    #[arg(last = true, name = "COMMAND")]
-    positional: Vec<String>,
-}
+#[derive(clap::Subcommand, Debug)]
+pub enum ProfileCommand {
+    #[command(
+        name = "new",
+        about = "create a new profile",
+        override_usage = "envio profile new <PROFILE_NAME> [OPTIONS]"
+    )]
+    New {
+        #[arg(required = true, help = "name of the profile")]
+        profile_name: String,
+        #[arg(long = "description", short = 'd', help = "description of the profile")]
+        description: Option<String>,
+        #[arg(
+            long = "from-file",
+            short = 'f',
+            help = "file path to load environment variables from"
+        )]
+        envs_file: Option<String>,
+        #[arg(
+            long = "envs",
+            short = 'e',
+            value_delimiter = ' ',
+            num_args = 1..,
+            help = "environment variables to add (format: KEY=VALUE or only provide KEY and the value will be prompted for)"
+        )]
+        envs: Option<Vec<String>>,
+        #[arg(long = "cipher-kind", short = 'k', help = "encryption cipher to use")]
+        cipher_kind: Option<String>,
+        #[arg(
+            long = "comments",
+            short = 'c',
+            help = "add comments to the provided environment variables"
+        )]
+        comments: bool,
+        #[arg(
+            long = "expires",
+            short = 'x',
+            help = "add expiration dates to the provided environment variables"
+        )]
+        expires: bool,
+    },
 
-impl LaunchCommandArg {
-    pub fn value(&self) -> Vec<&str> {
-        if let Some(command) = self.argument.as_ref() {
-            return command.split_whitespace().collect();
-        }
-        self.positional.iter().map(|s| s.as_str()).collect()
-    }
+    #[command(
+        name = "delete",
+        about = "delete a profile",
+        override_usage = "envio profile delete <PROFILE_NAME>"
+    )]
+    Delete {
+        #[arg(required = true, help = "name of the profile")]
+        profile_name: String,
+    },
+
+    #[command(
+        name = "list",
+        about = "list all profiles",
+        override_usage = "envio profile list [OPTIONS]"
+    )]
+    List {
+        #[arg(long = "no-pretty-print", help = "disable pretty printing")]
+        no_pretty_print: bool,
+    },
+
+    #[command(
+        name = "show",
+        about = "show environment variables in a profile",
+        override_usage = "envio profile show <PROFILE_NAME> [OPTIONS]"
+    )]
+    Show {
+        #[arg(required = true, help = "name of the profile")]
+        profile_name: String,
+        #[arg(long = "show-comments", short = 'c', help = "display comments")]
+        show_comments: bool,
+        #[arg(
+            long = "show-expiration",
+            short = 'x',
+            help = "display expiration dates"
+        )]
+        show_expiration: bool,
+        #[arg(long = "no-pretty-print", help = "disable pretty printing")]
+        no_pretty_print: bool,
+    },
 }
