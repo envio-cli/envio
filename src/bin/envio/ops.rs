@@ -77,20 +77,20 @@ pub fn check_expired_envs(profile: &Profile) {
 
 pub fn export_envs(
     profile: &Profile,
-    file_name: &str,
+    output_file_path: &str,
     envs_selected: &Option<Vec<String>>,
 ) -> AppResult<()> {
-    let path = if contains_path_separator(file_name) {
-        PathBuf::from(file_name)
+    let path = if contains_path_separator(output_file_path) {
+        PathBuf::from(output_file_path)
     } else {
-        get_cwd().join(file_name)
+        get_cwd().join(output_file_path)
     };
 
     let mut file = std::fs::OpenOptions::new()
         .create(true)
         .write(true)
         .truncate(true)
-        .open(path)
+        .open(&path)
         .unwrap();
 
     let mut buffer = String::from("");
@@ -120,7 +120,7 @@ pub fn export_envs(
 
     write!(file, "{}", buffer)?;
 
-    println!("{}", "Exported envs".bold());
+    println!("{}", format!("Exported envs to {}", path.display()).bold());
     Ok(())
 }
 

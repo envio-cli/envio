@@ -36,8 +36,8 @@ complete -c envio -n "__fish_seen_subcommand_from unload" -s h -l help -d 'Print
 complete -c envio -n "__fish_seen_subcommand_from run" -s h -l help -d 'Print help'
 complete -c envio -n "__fish_seen_subcommand_from import" -s n -l profile-name -d 'name for the imported profile' -r
 complete -c envio -n "__fish_seen_subcommand_from import" -s h -l help -d 'Print help'
-complete -c envio -n "__fish_seen_subcommand_from export" -s t -l to -d 'output file path' -r
-complete -c envio -n "__fish_seen_subcommand_from export" -s k -l keys -d 'comma-separated list of keys to export leave empty to prompt for selection' -r
+complete -c envio -n "__fish_seen_subcommand_from export" -s o -l output-file-path -d 'output file path (default: .env)' -r
+complete -c envio -n "__fish_seen_subcommand_from export" -s k -l keys -d 'comma-separated list of keys to export (type \'select\' to choose interactively)' -r
 complete -c envio -n "__fish_seen_subcommand_from export" -s h -l help -d 'Print help'
 complete -c envio -n "__fish_seen_subcommand_from version" -s v -l verbose -d 'show verbose version information'
 complete -c envio -n "__fish_seen_subcommand_from version" -s h -l help -d 'Print help'

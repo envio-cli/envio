@@ -434,15 +434,9 @@ impl ClapApp {
 
             Command::Export {
                 profile_name,
-                file,
+                output_file_path,
                 keys,
             } => {
-                let mut file_name = ".env";
-
-                if file.is_some() {
-                    file_name = file.as_ref().unwrap()
-                }
-
                 let profile =
                     get_profile(utils::get_profile_path(profile_name)?, Some(get_userkey))?;
 
@@ -468,7 +462,11 @@ impl ClapApp {
                     None
                 };
 
-                ops::export_envs(&profile, file_name, &envs_selected)?;
+                ops::export_envs(
+                    &profile,
+                    output_file_path.as_deref().unwrap_or(".env"),
+                    &envs_selected,
+                )?;
             }
 
             Command::Import {

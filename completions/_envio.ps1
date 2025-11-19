@@ -118,10 +118,10 @@ Register-ArgumentCompleter -Native -CommandName 'envio' -ScriptBlock {
             break
         }
         'envio;export' {
-            [CompletionResult]::new('-t', 't', [CompletionResultType]::ParameterName, 'output file path')
-            [CompletionResult]::new('--to', 'to', [CompletionResultType]::ParameterName, 'output file path')
-            [CompletionResult]::new('-k', 'k', [CompletionResultType]::ParameterName, 'comma-separated list of keys to export leave empty to prompt for selection')
-            [CompletionResult]::new('--keys', 'keys', [CompletionResultType]::ParameterName, 'comma-separated list of keys to export leave empty to prompt for selection')
+            [CompletionResult]::new('-o', 'o', [CompletionResultType]::ParameterName, 'output file path (default: .env)')
+            [CompletionResult]::new('--output-file-path', 'output-file-path', [CompletionResultType]::ParameterName, 'output file path (default: .env)')
+            [CompletionResult]::new('-k', 'k', [CompletionResultType]::ParameterName, 'comma-separated list of keys to export (type ''select'' to choose interactively)')
+            [CompletionResult]::new('--keys', 'keys', [CompletionResultType]::ParameterName, 'comma-separated list of keys to export (type ''select'' to choose interactively)')
             [CompletionResult]::new('-h', 'h', [CompletionResultType]::ParameterName, 'Print help')
             [CompletionResult]::new('--help', 'help', [CompletionResultType]::ParameterName, 'Print help')
             break

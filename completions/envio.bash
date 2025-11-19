@@ -72,17 +72,17 @@ _envio() {
             return 0
             ;;
         envio__export)
-            opts="-t -k -h --to --keys --help <PROFILE_NAME>"
+            opts="-o -k -h --output-file-path --keys --help <PROFILE_NAME>"
             if [[ ${cur} == -* || ${COMP_CWORD} -eq 2 ]] ; then
                 COMPREPLY=( $(compgen -W "${opts}" -- "${cur}") )
                 return 0
             fi
             case "${prev}" in
-                --to)
+                --output-file-path)
                     COMPREPLY=($(compgen -f "${cur}"))
                     return 0
                     ;;
-                -t)
+                -o)
                     COMPREPLY=($(compgen -f "${cur}"))
                     return 0
                     ;;

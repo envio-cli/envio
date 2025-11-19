@@ -113,14 +113,18 @@ pub enum Command {
     Export {
         #[arg(required = true, help = "name of the profile")]
         profile_name: String,
-        #[arg(long = "to", short = 't', help = "output file path")]
-        file: Option<String>,
+        #[arg(
+            long = "output-file-path",
+            short = 'o',
+            help = "output file path (default: .env)"
+        )]
+        output_file_path: Option<String>,
         #[arg(
             long = "keys",
             short = 'k',
             value_delimiter = ',',
             num_args = 1..,
-            help = "comma-separated list of keys to export leave empty to prompt for selection"
+            help = "comma-separated list of keys to export (type 'select' to choose interactively)"
         )]
         keys: Option<Vec<String>>,
     },

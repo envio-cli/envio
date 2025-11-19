@@ -141,10 +141,10 @@ _arguments "${_arguments_options[@]}" \
 ;;
 (export)
 _arguments "${_arguments_options[@]}" \
-'-t+[output file path]:FILE: ' \
-'--to=[output file path]:FILE: ' \
-'*-k+[comma-separated list of keys to export leave empty to prompt for selection]:KEYS: ' \
-'*--keys=[comma-separated list of keys to export leave empty to prompt for selection]:KEYS: ' \
+'-o+[output file path (default\: .env)]:OUTPUT_FILE_PATH: ' \
+'--output-file-path=[output file path (default\: .env)]:OUTPUT_FILE_PATH: ' \
+'*-k+[comma-separated list of keys to export (type '\''select'\'' to choose interactively)]:KEYS: ' \
+'*--keys=[comma-separated list of keys to export (type '\''select'\'' to choose interactively)]:KEYS: ' \
 '-h[Print help]' \
 '--help[Print help]' \
 ':profile_name -- name of the profile:' \
