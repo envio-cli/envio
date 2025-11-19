@@ -37,13 +37,15 @@ Register-ArgumentCompleter -Native -CommandName 'envio' -ScriptBlock {
         'envio;profile' {
             [CompletionResult]::new('-h', 'h', [CompletionResultType]::ParameterName, 'Print help')
             [CompletionResult]::new('--help', 'help', [CompletionResultType]::ParameterName, 'Print help')
-            [CompletionResult]::new('create', 'create', [CompletionResultType]::ParameterValue, 'create a new profile')
+            [CompletionResult]::new('new', 'new', [CompletionResultType]::ParameterValue, 'create a new profile')
             [CompletionResult]::new('delete', 'delete', [CompletionResultType]::ParameterValue, 'delete a profile')
             [CompletionResult]::new('list', 'list', [CompletionResultType]::ParameterValue, 'list all profiles')
             [CompletionResult]::new('show', 'show', [CompletionResultType]::ParameterValue, 'show environment variables in a profile')
             break
         }
-        'envio;profile;create' {
+        'envio;profile;new' {
+            [CompletionResult]::new('-d', 'd', [CompletionResultType]::ParameterName, 'description of the profile')
+            [CompletionResult]::new('--description', 'description', [CompletionResultType]::ParameterName, 'description of the profile')
             [CompletionResult]::new('-f', 'f', [CompletionResultType]::ParameterName, 'file path to load environment variables from')
             [CompletionResult]::new('--from-file', 'from-file', [CompletionResultType]::ParameterName, 'file path to load environment variables from')
             [CompletionResult]::new('-e', 'e', [CompletionResultType]::ParameterName, 'environment variables to add (format: KEY=VALUE or only provide KEY and the value will be prompted for)')

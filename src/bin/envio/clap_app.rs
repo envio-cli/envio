@@ -143,13 +143,15 @@ pub enum Command {
 #[derive(clap::Subcommand, Debug)]
 pub enum ProfileCommand {
     #[command(
-        name = "create",
+        name = "new",
         about = "create a new profile",
-        override_usage = "envio profile create <PROFILE_NAME> [OPTIONS]"
+        override_usage = "envio profile new <PROFILE_NAME> [OPTIONS]"
     )]
-    Create {
+    New {
         #[arg(required = true, help = "name of the profile")]
         profile_name: String,
+        #[arg(long = "description", short = 'd', help = "description of the profile")]
+        description: Option<String>,
         #[arg(
             long = "from-file",
             short = 'f',

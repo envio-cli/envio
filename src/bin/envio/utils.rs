@@ -1,6 +1,6 @@
 use std::{fs::File, io::Write, path::PathBuf};
 
-use envio::{Env, EnvVec};
+use envio::{profile::SerializedProfile, Env, EnvVec};
 use indicatif::{ProgressBar, ProgressStyle};
 use reqwest::Client;
 
@@ -105,6 +105,14 @@ pub fn get_profile_path(profile_name: &str) -> AppResult<PathBuf> {
     }
 
     Ok(path)
+}
+
+pub fn get_profile_description(profile_name: &str) -> AppResult<Option<String>> {
+    let path = get_profile_path(profile_name)?;
+
+    let serialized_profile: SerializedProfile = serde_json::from_slice(&std::fs::read(path)?)?;
+
+    Ok(serialized_profile.metadata.description)
 }
 
 pub fn parse_envs_from_string(buffer: &str) -> AppResult<EnvVec> {
