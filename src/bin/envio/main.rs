@@ -1,19 +1,22 @@
 mod clap_app;
 mod commands;
+mod error;
 mod ops;
+mod output;
 mod prompts;
 mod utils;
 mod version;
 
 use clap::Parser;
 use clap_app::ClapApp;
-use colored::Colorize;
+use error::AppResult;
+use output::{error, warning};
 use semver::Version;
 #[cfg(target_family = "unix")]
 use utils::initalize_config;
 use version::get_latest_version;
 
-fn main() {
+fn main() -> AppResult<()> {
     color_eyre::install().unwrap();
 
     let latest_version = get_latest_version();
@@ -21,27 +24,24 @@ fn main() {
     let current_version = if let Ok(val) = Version::parse(env!("BUILD_VERSION")) {
         val
     } else {
-        eprintln!("{}: Failed to parse current version", "Error".red());
+        error("failed to parse current version");
         "0.0.0".parse().unwrap()
     };
 
     if latest_version > current_version {
-        println!(
-            "{}: {} -> {}",
-            "New version available".yellow(),
-            current_version,
-            latest_version
-        );
+        warning(format!("{} -> {}", current_version, latest_version));
     }
 
     let app = ClapApp::parse();
 
     #[cfg(target_family = "unix")]
     if let Err(e) = initalize_config() {
-        eprintln!("{}: {}", "Error".red(), e);
+        error(e);
     }
 
     if let Err(e) = app.run() {
-        eprintln!("{}: {}", "Error".red(), e);
+        error(e);
     }
+
+    Ok(())
 }

@@ -8,24 +8,21 @@ use std::{
 use chrono::{Local, NaiveDate};
 use colored::Colorize;
 use comfy_table::{Attribute, Cell, Table};
-use envio::{
-    crypto::Cipher,
-    error::{Error, Result},
-    profile::ProfileMetadata,
-    EnvVec, Profile,
-};
+use envio::{crypto::Cipher, profile::ProfileMetadata, EnvVec, Profile};
 
 #[cfg(target_family = "unix")]
 use crate::utils::get_shell_config;
-use crate::utils::{
-    contains_path_separator, does_profile_exist, download_file, get_configdir, get_cwd,
+use crate::{
+    error::{AppError, AppResult},
+    output::{success, warning},
+    utils::{contains_path_separator, download_file, get_configdir, get_cwd, get_profile_path},
 };
 
-pub fn create_profile(name: String, envs: Option<EnvVec>, cipher: Box<dyn Cipher>) -> Result<()> {
-    if does_profile_exist(&name) {
-        return Err(Error::ProfileAlreadyExists(name));
-    }
-
+pub fn create_profile(
+    name: String,
+    envs: Option<EnvVec>,
+    cipher: Box<dyn Cipher>,
+) -> AppResult<()> {
     let envs = match envs {
         Some(env) => env,
         None => EnvVec::new(),
@@ -56,7 +53,7 @@ pub fn create_profile(name: String, envs: Option<EnvVec>, cipher: Box<dyn Cipher
 
     Profile::new(metadata, cipher, envs).save()?;
 
-    println!("{}: Profile created", "Success".green());
+    success("profile created");
     Ok(())
 }
 
@@ -64,11 +61,7 @@ pub fn check_expired_envs(profile: &Profile) {
     for env in &profile.envs {
         if let Some(date) = env.expiration_date {
             if date <= Local::now().date_naive() {
-                println!(
-                    "{}: Environment variable '{}' has expired",
-                    "Warning".yellow(),
-                    env.name
-                );
+                warning(format!("environment variable '{}' has expired", env.name));
             }
         }
     }
@@ -78,7 +71,7 @@ pub fn export_envs(
     profile: &Profile,
     file_name: &str,
     envs_selected: &Option<Vec<String>>,
-) -> Result<()> {
+) -> AppResult<()> {
     let path = if contains_path_separator(file_name) {
         PathBuf::from(file_name)
     } else {
@@ -95,7 +88,7 @@ pub fn export_envs(
     let mut buffer = String::from("");
 
     if profile.envs.is_empty() {
-        return Err(Error::EmptyProfile(profile.metadata.name.to_string()));
+        return Err(AppError::EmptyProfile(profile.metadata.name.to_string()));
     }
 
     let mut keys: Vec<_> = profile.envs.keys();
@@ -109,7 +102,7 @@ pub fn export_envs(
         }
 
         if keys.is_empty() {
-            return Err(Error::Msg("No envs to export".to_string()));
+            return Err(AppError::Msg("No envs to export".to_string()));
         }
     }
 
@@ -167,28 +160,24 @@ pub fn list_envs(profile: &Profile, show_comments: bool, show_expiration: bool) 
     println!("{table}");
 }
 
-pub fn delete_profile(name: &str) -> Result<()> {
-    if does_profile_exist(name) {
-        let configdir = get_configdir();
-        let profile_path = configdir.join("profiles").join(format!("{}.env", name));
+pub fn delete_profile(name: &str) -> AppResult<()> {
+    let configdir = get_configdir();
+    let profile_path = configdir.join("profiles").join(format!("{}.env", name));
 
-        match std::fs::remove_file(profile_path) {
-            Ok(_) => println!("{}: Deleted profile", "Success".green()),
-            Err(e) => return Err(Error::Io(e)),
-        }
-    } else {
-        return Err(Error::ProfileDoesNotExist(name.to_string()));
-    }
+    std::fs::remove_file(profile_path)?;
+    success("deleted profile");
 
     Ok(())
 }
 
-pub fn list_profiles(raw: bool) -> Result<()> {
+pub fn list_profiles(raw: bool) -> AppResult<()> {
     let configdir = get_configdir();
     let profile_dir = configdir.join("profiles");
 
     if !profile_dir.exists() {
-        return Err(Error::Msg("profiles directory does not exist".to_string()));
+        return Err(AppError::Msg(
+            "profiles directory does not exist".to_string(),
+        ));
     }
 
     let mut profiles = Vec::new();
@@ -232,7 +221,7 @@ pub fn list_profiles(raw: bool) -> Result<()> {
     Ok(())
 }
 
-pub fn download_profile(url: String, profile_name: String) -> Result<()> {
+pub fn download_profile(url: String, profile_name: String) -> AppResult<()> {
     println!("Downloading profile from {}", url);
     let configdir = get_configdir();
 
@@ -243,7 +232,9 @@ pub fn download_profile(url: String, profile_name: String) -> Result<()> {
     {
         Some(location) => location.to_owned(),
         None => {
-            return Err(Error::Msg("Could not convert path to string".to_string()));
+            return Err(AppError::Msg(
+                "Could not convert path to string".to_string(),
+            ));
         }
     };
 
@@ -253,7 +244,10 @@ pub fn download_profile(url: String, profile_name: String) -> Result<()> {
     {
         Ok(runtime) => runtime,
         Err(e) => {
-            return Err(Error::Msg(format!("Failed to create tokio runtime: {}", e)));
+            return Err(AppError::Msg(format!(
+                "Failed to create tokio runtime: {}",
+                e
+            )));
         }
     };
 
@@ -263,9 +257,12 @@ pub fn download_profile(url: String, profile_name: String) -> Result<()> {
     Ok(())
 }
 
-pub fn import_profile(file_path: String, profile_name: String) -> Result<()> {
+pub fn import_profile(file_path: String, profile_name: String) -> AppResult<()> {
     if !Path::new(&file_path).exists() {
-        return Err(Error::Msg(format!("File `{}` does not exist", file_path)));
+        return Err(AppError::Msg(format!(
+            "File `{}` does not exist",
+            file_path
+        )));
     }
 
     let configdir = get_configdir();
@@ -285,7 +282,9 @@ pub fn import_profile(file_path: String, profile_name: String) -> Result<()> {
     {
         Some(location) => location.to_owned(),
         None => {
-            return Err(Error::Msg("Could not convert path to string".to_string()));
+            return Err(AppError::Msg(
+                "Could not convert path to string".to_string(),
+            ));
         }
     };
 
@@ -301,7 +300,7 @@ pub fn import_profile(file_path: String, profile_name: String) -> Result<()> {
 }
 
 #[cfg(target_family = "unix")]
-pub fn create_shellscript(profile: &str) -> Result<()> {
+pub fn create_shellscript(profile: &str) -> AppResult<()> {
     let configdir = get_configdir();
     let shellscript_path = configdir.join("setenv.sh");
 
@@ -341,10 +340,8 @@ done <<< "$ENV_VARS"
 }
 
 #[cfg(target_family = "unix")]
-pub fn load_profile(profile_name: &str) -> Result<()> {
-    if !does_profile_exist(profile_name) {
-        return Err(Error::ProfileDoesNotExist(profile_name.to_string()));
-    }
+pub fn load_profile(profile_name: &str) -> AppResult<()> {
+    get_profile_path(profile_name)?; // will error if the profile does not exist
 
     let shell_config = get_shell_config()?;
 
@@ -363,21 +360,21 @@ pub fn load_profile(profile_name: &str) -> Result<()> {
 }
 
 #[cfg(target_family = "windows")]
-pub fn load_profile(profile: Profile) -> envio::error::Result<()> {
+pub fn load_profile(profile: Profile) -> AppResult<()> {
     for env in profile.envs {
         let output = Command::new("setx").arg(&env.name).arg(&env.value).output();
 
         match output {
             Ok(output) => {
                 if !output.status.success() {
-                    return Err(envio::error::Error::Msg(format!(
-                        "Failed to execute setx for environment variable: {} with value: {}",
+                    return Err(AppError::Msg(format!(
+                        "failed to execute setx for environment variable: {} with value: {}",
                         env.name, env.value
                     )));
                 }
             }
             Err(e) => {
-                return Err(envio::error::Error::Msg(format!("{}", e)));
+                return Err(AppError::Msg(format!("{}", e)));
             }
         }
     }
@@ -387,7 +384,7 @@ pub fn load_profile(profile: Profile) -> envio::error::Result<()> {
 }
 
 #[cfg(target_family = "unix")]
-pub fn unload_profile() -> Result<()> {
+pub fn unload_profile() -> AppResult<()> {
     let file = std::fs::OpenOptions::new()
         .write(true)
         .append(false)
@@ -401,7 +398,7 @@ pub fn unload_profile() -> Result<()> {
 }
 
 #[cfg(target_family = "windows")]
-pub fn unload_profile(profile: Profile) -> Result<()> {
+pub fn unload_profile(profile: Profile) -> AppResult<()> {
     for env in profile.envs.keys() {
         let status = Command::new("REG")
             .arg("delete")
@@ -414,17 +411,18 @@ pub fn unload_profile(profile: Profile) -> Result<()> {
         match status {
             Ok(status) => {
                 if !status.success() {
-                    return Err(Error::Msg(format!(
-                        "Failed to delete environment variable: {}",
+                    return Err(AppError::Msg(format!(
+                        "failed to delete environment variable: {}",
                         env
                     )));
                 }
             }
             Err(e) => {
-                return Err(Error::Msg(format!("{}", e)));
+                return Err(AppError::Msg(format!("{}", e)));
             }
         }
     }
+
     println!("Reload your shell to apply changes");
 
     Ok(())

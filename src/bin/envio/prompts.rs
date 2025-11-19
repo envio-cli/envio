@@ -1,10 +1,11 @@
 use std::{env, path::Path};
 
-use envio::error::{Error, Result};
 use inquire::{
     min_length, Confirm, DateSelect, MultiSelect, Password, PasswordDisplayMode, Select, Text,
 };
 use regex::Regex;
+
+use crate::error::AppResult;
 
 pub struct PasswordPromptOptions {
     pub title: String,
@@ -14,7 +15,7 @@ pub struct PasswordPromptOptions {
     pub confirmation_error_message: Option<String>,
 }
 
-pub fn password_prompt(options: PasswordPromptOptions) -> Result<String> {
+pub fn password_prompt(options: PasswordPromptOptions) -> AppResult<String> {
     let mut prompt = Password::new(&options.title)
         .with_display_mode(PasswordDisplayMode::Masked)
         .with_display_toggle_enabled()
@@ -32,7 +33,7 @@ pub fn password_prompt(options: PasswordPromptOptions) -> Result<String> {
         prompt = prompt.without_confirmation();
     }
 
-    prompt.prompt().map_err(|e| Error::Msg(e.to_string()))
+    Ok(prompt.prompt()?)
 }
 
 pub struct SelectPromptOptions<T> {
@@ -40,15 +41,14 @@ pub struct SelectPromptOptions<T> {
     pub options: Vec<T>,
 }
 
-pub fn select_prompt<T>(options: SelectPromptOptions<T>) -> Result<T>
+pub fn select_prompt<T>(options: SelectPromptOptions<T>) -> AppResult<T>
 where
     T: std::fmt::Display,
 {
-    Select::new(&options.title, options.options)
+    Ok(Select::new(&options.title, options.options)
         .with_vim_mode(get_vim_mode()?)
         .with_help_message("↑↓ to move, space to select, type to filter, enter to confirm")
-        .prompt()
-        .map_err(|e| Error::Msg(e.to_string()))
+        .prompt()?)
 }
 
 pub struct TextPromptOptions {
@@ -56,11 +56,10 @@ pub struct TextPromptOptions {
     pub default: Option<String>,
 }
 
-pub fn text_prompt(options: TextPromptOptions) -> Result<String> {
-    Text::new(&options.title)
+pub fn text_prompt(options: TextPromptOptions) -> AppResult<String> {
+    Ok(Text::new(&options.title)
         .with_default(options.default.as_deref().unwrap_or(""))
-        .prompt()
-        .map_err(|e| Error::Msg(e.to_string()))
+        .prompt()?)
 }
 
 pub struct ConfirmPromptOptions {
@@ -69,12 +68,11 @@ pub struct ConfirmPromptOptions {
     pub default: bool,
 }
 
-pub fn confirm_prompt(options: ConfirmPromptOptions) -> Result<bool> {
-    Confirm::new(&options.title)
+pub fn confirm_prompt(options: ConfirmPromptOptions) -> AppResult<bool> {
+    Ok(Confirm::new(&options.title)
         .with_default(options.default)
         .with_help_message(options.help_message.as_deref().unwrap_or(""))
-        .prompt()
-        .map_err(|e| Error::Msg(e.to_string()))
+        .prompt()?)
 }
 
 pub struct DatePromptOptions {
@@ -82,11 +80,10 @@ pub struct DatePromptOptions {
     pub default: Option<chrono::NaiveDate>,
 }
 
-pub fn date_prompt(options: DatePromptOptions) -> Result<chrono::NaiveDate> {
-    DateSelect::new(&options.title)
+pub fn date_prompt(options: DatePromptOptions) -> AppResult<chrono::NaiveDate> {
+    Ok(DateSelect::new(&options.title)
         .with_default(options.default.unwrap_or(chrono::Local::now().date_naive()))
-        .prompt()
-        .map_err(|e| Error::Msg(e.to_string()))
+        .prompt()?)
 }
 
 pub struct MultiSelectPromptOptions<T> {
@@ -95,19 +92,18 @@ pub struct MultiSelectPromptOptions<T> {
     pub default_indices: Option<Vec<usize>>,
 }
 
-pub fn multi_select_prompt<T>(options: MultiSelectPromptOptions<T>) -> Result<Vec<T>>
+pub fn multi_select_prompt<T>(options: MultiSelectPromptOptions<T>) -> AppResult<Vec<T>>
 where
     T: std::fmt::Display,
 {
-    MultiSelect::new(&options.title, options.options)
+    Ok(MultiSelect::new(&options.title, options.options)
         .with_default(&options.default_indices.unwrap_or_default())
         .with_vim_mode(get_vim_mode()?)
         .with_help_message("↑↓ to move, space to select/unselect one, → to all, ← to none, type to filter, enter to confirm")
-        .prompt()
-        .map_err(|e| Error::Msg(e.to_string()))
+        .prompt()?)
 }
 
-fn get_vim_mode() -> Result<bool> {
+fn get_vim_mode() -> AppResult<bool> {
     let editor = env::var("VISUAL")
         .or_else(|_| env::var("EDITOR"))
         .unwrap_or_default();

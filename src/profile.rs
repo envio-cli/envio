@@ -117,7 +117,7 @@ impl Profile {
         let encrypted_envs = match self.cipher.encrypt(&serialized_envs) {
             Ok(data) => data,
             Err(e) => {
-                return Err(Error::Crypto(e.to_string()));
+                return Err(Error::Cipher(e.to_string()));
             }
         };
 

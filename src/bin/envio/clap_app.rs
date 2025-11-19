@@ -208,11 +208,7 @@ pub enum ProfileCommand {
     Show {
         #[arg(required = true, help = "name of the profile")]
         profile_name: String,
-        #[arg(
-            long = "show-comments",
-            short = 'c',
-            help = "display comments"
-        )]
+        #[arg(long = "show-comments", short = 'c', help = "display comments")]
         show_comments: bool,
         #[arg(
             long = "show-expiration",

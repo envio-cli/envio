@@ -4,7 +4,6 @@ use chrono::Local;
 use colored::Colorize;
 use envio::{
     crypto::{create_cipher, gpg::get_gpg_keys, CipherKind},
-    error::{Error, Result},
     get_profile, Env, EnvVec,
 };
 use strum::IntoEnumIterator;
@@ -12,17 +11,14 @@ use url::Url;
 
 use crate::{
     clap_app::{ClapApp, Command, ProfileCommand},
-    ops::{self, check_expired_envs},
-    prompts::{
-        confirm_prompt, date_prompt, multi_select_prompt, password_prompt, select_prompt,
-        text_prompt, ConfirmPromptOptions, DatePromptOptions, MultiSelectPromptOptions,
-        PasswordPromptOptions, SelectPromptOptions, TextPromptOptions,
-    },
-    utils::{does_profile_exist, get_profile_path, parse_envs_from_string},
+    error::{AppError, AppResult},
+    ops,
+    output::error,
+    prompts, utils,
 };
 
 fn get_userkey() -> String {
-    match password_prompt(PasswordPromptOptions {
+    match prompts::password_prompt(prompts::PasswordPromptOptions {
         title: "Enter your encryption key:".to_string(),
         help_message: Some("OH NO! you forgot your key! just kidding... or did you?".to_string()),
         min_length: None,
@@ -31,14 +27,14 @@ fn get_userkey() -> String {
     }) {
         Ok(key) => key,
         Err(e) => {
-            eprintln!("{}: {}", "Error".red(), e);
+            error(e);
             std::process::exit(1);
         }
     }
 }
 
 impl ClapApp {
-    pub fn run(&self) -> Result<()> {
+    pub fn run(&self) -> AppResult<()> {
         match &self.command {
             Command::Profile(ProfileCommand::Create {
                 profile_name,
@@ -49,21 +45,21 @@ impl ClapApp {
                 expires: add_expires,
             }) => {
                 if profile_name.is_empty() {
-                    return Err(Error::ProfileNameEmpty(profile_name.to_string()));
+                    return Err(AppError::ProfileNameEmpty);
                 }
 
-                if does_profile_exist(profile_name) {
-                    return Err(Error::ProfileExists(profile_name.to_string()));
+                if utils::get_profile_path(profile_name).is_ok() {
+                    return Err(AppError::ProfileExists(profile_name.to_string()));
                 }
 
                 let selected_cipher_kind = if let Some(kind) = cipher_kind {
                     kind.parse::<CipherKind>()
-                        .map_err(|e| Error::Msg(e.to_string()))?
+                        .map_err(|e| AppError::Msg(e.to_string()))?
                 } else {
                     let cipher_options: Vec<String> =
                         CipherKind::iter().map(|k| k.to_string()).collect();
 
-                    select_prompt(SelectPromptOptions {
+                    prompts::select_prompt(prompts::SelectPromptOptions {
                         title: "Select the encryption method:".to_string(),
                         options: cipher_options,
                     })?
@@ -85,31 +81,33 @@ impl ClapApp {
                             available_keys = match get_gpg_keys() {
                                 Some(keys) => keys,
                                 None => {
-                                    return Err(Error::Crypto("No GPG keys found".to_string()));
+                                    return Err(AppError::Msg("no GPG keys found".to_string()));
                                 }
                             };
                         }
 
                         if available_keys.is_empty() {
-                            return Err(Error::Crypto("No GPG keys found".to_string()));
+                            return Err(AppError::Msg("no GPG keys found".to_string()));
                         }
 
-                        Some(select_prompt(SelectPromptOptions {
+                        Some(prompts::select_prompt(prompts::SelectPromptOptions {
                             title: "Select the GPG key you want to use for encryption:".to_string(),
                             options: available_keys.iter().map(|(s, _)| s.clone()).collect(),
                         })?)
                     }
 
-                    CipherKind::AGE => Some(password_prompt(PasswordPromptOptions {
-                        title: "Enter your encryption key:".to_string(),
-                        help_message: Some(
-                            "Remember this key, you will need it to decrypt your profile later"
-                                .to_string(),
-                        ),
-                        min_length: Some(8),
-                        with_confirmation: true,
-                        confirmation_error_message: Some("The keys don't match".to_string()),
-                    })?),
+                    CipherKind::AGE => {
+                        Some(prompts::password_prompt(prompts::PasswordPromptOptions {
+                            title: "Enter your encryption key:".to_string(),
+                            help_message: Some(
+                                "Remember this key, you will need it to decrypt your profile later"
+                                    .to_string(),
+                            ),
+                            min_length: Some(8),
+                            with_confirmation: true,
+                            confirmation_error_message: Some("The keys don't match".to_string()),
+                        })?)
+                    }
 
                     _ => None,
                 };
@@ -122,7 +120,7 @@ impl ClapApp {
                     let file = envs_file.as_ref().unwrap();
 
                     if !Path::new(file).exists() {
-                        return Err(Error::Msg(format!("File '{}' does not exist", file)));
+                        return Err(AppError::Msg(format!("file '{}' does not exist", file)));
                     }
 
                     let mut file = std::fs::OpenOptions::new().read(true).open(file).unwrap();
@@ -130,17 +128,17 @@ impl ClapApp {
                     let mut buffer = String::new();
                     file.read_to_string(&mut buffer).unwrap();
 
-                    envs_vec = Some(parse_envs_from_string(&buffer)?);
+                    envs_vec = Some(utils::parse_envs_from_string(&buffer)?);
 
                     if envs_vec.is_none() {
-                        return Err(Error::Msg("Unable to parse envs from file".to_string()));
+                        return Err(AppError::Msg("unable to parse envs from file".to_string()));
                     }
 
                     let mut options = vec![];
 
                     for env in envs_vec.clone().unwrap() {
                         if env.value.is_empty() {
-                            if confirm_prompt(ConfirmPromptOptions {
+                            if prompts::confirm_prompt(prompts::ConfirmPromptOptions {
                                 title: format!(
                                     "Would you like to assign a value to key: {} ?",
                                     env.name
@@ -151,7 +149,7 @@ impl ClapApp {
                                 ),
                                 default: false,
                             })? {
-                                let value = text_prompt(TextPromptOptions {
+                                let value = prompts::text_prompt(prompts::TextPromptOptions {
                                     title: format!("Enter the value for {}:", env.name),
                                     default: None,
                                 })?;
@@ -169,7 +167,7 @@ impl ClapApp {
                     }
 
                     let default_options = (0..options.len()).collect::<Vec<usize>>();
-                    let selected_keys = multi_select_prompt(MultiSelectPromptOptions {
+                    let selected_keys = prompts::multi_select_prompt(prompts::MultiSelectPromptOptions {
                         title:
                             "Select the environment variables you want to keep in your new profile:"
                                 .to_string(),
@@ -196,14 +194,14 @@ impl ClapApp {
                                         value.to_string(),
                                     ));
                                 } else {
-                                    return Err(Error::Msg(format!(
-                                        "Unable to parse value for key '{}'",
+                                    return Err(AppError::Msg(format!(
+                                        "unable to parse value for key '{}'",
                                         key
                                     )));
                                 }
                             } else {
-                                return Err(Error::Msg(format!(
-                                    "Unable to parse key-value pair from '{}'",
+                                return Err(AppError::Msg(format!(
+                                    "unable to parse key-value pair from '{}'",
                                     env
                                 )));
                             }
@@ -211,7 +209,7 @@ impl ClapApp {
                             continue;
                         }
 
-                        let value = text_prompt(TextPromptOptions {
+                        let value = prompts::text_prompt(prompts::TextPromptOptions {
                             title: format!("Enter the value for {}:", env),
                             default: None,
                         })?;
@@ -226,17 +224,18 @@ impl ClapApp {
 
                 for env in envs_vec.as_mut().unwrap() {
                     if *add_comments {
-                        env.comment = Some(text_prompt(TextPromptOptions {
+                        env.comment = Some(prompts::text_prompt(prompts::TextPromptOptions {
                             title: format!("Enter a comment for '{}':", env.name),
                             default: None,
                         })?);
                     }
 
                     if *add_expires {
-                        env.expiration_date = Some(date_prompt(DatePromptOptions {
-                            title: format!("Select an expiration date for '{}':", env.name),
-                            default: Some(Local::now().date_naive()),
-                        })?);
+                        env.expiration_date =
+                            Some(prompts::date_prompt(prompts::DatePromptOptions {
+                                title: format!("Select an expiration date for '{}':", env.name),
+                                default: Some(Local::now().date_naive()),
+                            })?);
                     }
                 }
 
@@ -249,12 +248,10 @@ impl ClapApp {
                 comments: add_comments,
                 expires: add_expires,
             } => {
-                if !does_profile_exist(profile_name) {
-                    return Err(Error::ProfileDoesNotExist(profile_name.to_string()));
-                }
+                let mut profile =
+                    get_profile(utils::get_profile_path(profile_name)?, Some(get_userkey))?;
 
-                let mut profile = get_profile(get_profile_path(profile_name), Some(get_userkey))?;
-                check_expired_envs(&profile);
+                ops::check_expired_envs(&profile);
 
                 for env in envs {
                     if env.contains('=') {
@@ -268,14 +265,14 @@ impl ClapApp {
                                     profile.insert_env(key.to_string(), value.to_string());
                                 }
                             } else {
-                                return Err(Error::Msg(format!(
-                                    "Unable to parse value for key '{}'",
+                                return Err(AppError::Msg(format!(
+                                    "unable to parse value for key '{}'",
                                     key
                                 )));
                             }
                         } else {
-                            return Err(Error::Msg(format!(
-                                "Unable to parse key-value pair from '{}'",
+                            return Err(AppError::Msg(format!(
+                                "unable to parse key-value pair from '{}'",
                                 env
                             )));
                         }
@@ -283,7 +280,7 @@ impl ClapApp {
                         continue;
                     }
 
-                    let prompt = text_prompt(TextPromptOptions {
+                    let prompt = prompts::text_prompt(prompts::TextPromptOptions {
                         title: format!(
                             "Enter the {} value for {}:",
                             if profile.envs.contains_key(env) {
@@ -309,17 +306,18 @@ impl ClapApp {
                     }
 
                     if *add_comments {
-                        env.comment = Some(text_prompt(TextPromptOptions {
+                        env.comment = Some(prompts::text_prompt(prompts::TextPromptOptions {
                             title: format!("Enter a comment for '{}':", env.name),
                             default: None,
                         })?);
                     }
 
                     if *add_expires {
-                        env.expiration_date = Some(date_prompt(DatePromptOptions {
-                            title: format!("Select an expiration date for '{}':", env.name),
-                            default: Some(Local::now().date_naive()),
-                        })?);
+                        env.expiration_date =
+                            Some(prompts::date_prompt(prompts::DatePromptOptions {
+                                title: format!("Select an expiration date for '{}':", env.name),
+                                default: Some(Local::now().date_naive()),
+                            })?);
                     }
                 }
 
@@ -328,12 +326,10 @@ impl ClapApp {
             }
 
             Command::Unset { profile_name, keys } => {
-                if !does_profile_exist(profile_name) {
-                    return Err(Error::ProfileDoesNotExist(profile_name.to_string()));
-                }
+                let mut profile =
+                    get_profile(utils::get_profile_path(profile_name)?, Some(get_userkey))?;
 
-                let mut profile = get_profile(get_profile_path(profile_name), Some(get_userkey))?;
-                check_expired_envs(&profile);
+                ops::check_expired_envs(&profile);
 
                 for key in keys {
                     profile.remove_env(&key)?;
@@ -351,16 +347,10 @@ impl ClapApp {
 
                 #[cfg(target_family = "windows")]
                 {
-                    if !does_profile_exist(profile_name) {
-                        return Err(Error::ProfileDoesNotExist(profile_name.to_string()));
-                    }
+                    let profile =
+                        get_profile(utils::get_profile_path(profile_name)?, Some(get_userkey))?;
 
-                    let profile = get_profile(get_profile_path(profile_name), Some(get_userkey))?;
-                    check_expired_envs(&profile);
-
-                    if let Err(e) = ops::load_profile(profile) {
-                        return Err(e);
-                    }
+                    ops::load_profile(profile)?;
                 }
             }
 
@@ -371,34 +361,26 @@ impl ClapApp {
 
             #[cfg(target_family = "windows")]
             Command::Unload { profile_name } => {
-                if !does_profile_exist(profile_name) {
-                    return Err(Error::ProfileDoesNotExist(profile_name.to_string()));
-                }
+                let profile =
+                    get_profile(utils::get_profile_path(profile_name)?, Some(get_userkey))?;
 
-                let profile = get_profile(get_profile_path(profile_name), Some(get_userkey))?;
-                check_expired_envs(&profile);
-
-                if let Err(e) = ops::unload_profile(profile) {
-                    return Err(e);
-                }
+                ops::unload_profile(profile)?;
             }
+
             Command::Run {
                 profile_name,
                 command,
             } => {
                 if command.is_empty() {
-                    return Err(Error::Msg("Command cannot be empty".to_string()));
+                    return Err(AppError::Msg("command cannot be empty".to_string()));
                 }
 
                 let program = &command[0];
                 let args = &command[1..];
 
-                if !does_profile_exist(profile_name) {
-                    return Err(Error::ProfileDoesNotExist(profile_name.to_string()));
-                }
-
-                let profile = get_profile(get_profile_path(profile_name), Some(get_userkey))?;
-                check_expired_envs(&profile);
+                let profile =
+                    get_profile(utils::get_profile_path(profile_name)?, Some(get_userkey))?;
+                ops::check_expired_envs(&profile);
 
                 let mut cmd = std::process::Command::new(program)
                     .envs::<HashMap<String, String>, _, _>(profile.envs.into())
@@ -410,24 +392,22 @@ impl ClapApp {
 
                 let status = match cmd.wait() {
                     Ok(s) => s,
-                    Err(e) => return Err(Error::Msg(format!("Failed to execute command: {}", e))),
+                    Err(e) => {
+                        return Err(AppError::Msg(format!("failed to execute command: {}", e)))
+                    }
                 };
 
                 match status.code() {
                     Some(code) => std::process::exit(code),
                     None => {
-                        return Err(Error::Msg(
-                            "The child process was terminated by a signal".to_string(),
+                        return Err(AppError::Msg(
+                            "the child process was terminated by a signal".to_string(),
                         ))
                     }
                 }
             }
 
             Command::Profile(ProfileCommand::Delete { profile_name }) => {
-                if !does_profile_exist(profile_name) {
-                    return Err(Error::ProfileDoesNotExist(profile_name.to_string()));
-                }
-
                 ops::delete_profile(profile_name)?;
             }
 
@@ -441,12 +421,9 @@ impl ClapApp {
                 show_comments,
                 show_expiration,
             }) => {
-                if !does_profile_exist(profile_name) {
-                    return Err(Error::ProfileDoesNotExist(profile_name.to_string()));
-                }
-
-                let profile = get_profile(get_profile_path(profile_name), Some(get_userkey))?;
-                check_expired_envs(&profile);
+                let profile =
+                    get_profile(utils::get_profile_path(profile_name)?, Some(get_userkey))?;
+                ops::check_expired_envs(&profile);
 
                 if *no_pretty_print {
                     for env in profile.envs {
@@ -462,30 +439,29 @@ impl ClapApp {
                 file,
                 keys,
             } => {
-                if !does_profile_exist(profile_name) {
-                    return Err(Error::ProfileDoesNotExist(profile_name.to_string()));
-                }
-
                 let mut file_name = ".env";
 
                 if file.is_some() {
                     file_name = file.as_ref().unwrap()
                 }
 
-                let profile = get_profile(get_profile_path(profile_name), Some(get_userkey))?;
-                check_expired_envs(&profile);
+                let profile =
+                    get_profile(utils::get_profile_path(profile_name)?, Some(get_userkey))?;
+                ops::check_expired_envs(&profile);
 
                 let envs_selected = if keys.is_some() {
                     let keys_vec = keys.as_ref().unwrap();
                     if keys_vec.contains(&"select".to_string()) {
                         let keys = profile.envs.keys();
                         let default_indices: Vec<usize> = (0..keys.len()).collect();
-                        Some(multi_select_prompt(MultiSelectPromptOptions {
-                            title: "Select the environment variables you want to export:"
-                                .to_string(),
-                            options: keys,
-                            default_indices: Some(default_indices),
-                        })?)
+                        Some(prompts::multi_select_prompt(
+                            prompts::MultiSelectPromptOptions {
+                                title: "Select the environment variables you want to export:"
+                                    .to_string(),
+                                options: keys,
+                                default_indices: Some(default_indices),
+                            },
+                        )?)
                     } else {
                         Some(keys_vec.clone())
                     }
@@ -510,10 +486,6 @@ impl ClapApp {
                         .to_string()
                 };
 
-                if does_profile_exist(&profile_name) {
-                    return Err(Error::ProfileExists(profile_name.to_string()));
-                }
-
                 if Url::parse(source).is_ok() {
                     ops::download_profile(source.to_string(), profile_name)?;
                     return Ok(());
@@ -524,8 +496,8 @@ impl ClapApp {
                     return Ok(());
                 }
 
-                return Err(Error::Msg(
-                    "Source must be a valid file path or URL".to_string(),
+                return Err(AppError::Msg(
+                    "source must be a valid file path or URL".to_string(),
                 ));
             }
 
