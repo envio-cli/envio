@@ -41,6 +41,10 @@ pub fn create_profile(
 
     let profile_file_path = profile_dir.join(name.clone() + ".env");
 
+    if profile_file_path.exists() {
+        return Err(AppError::ProfileExists(name));
+    }
+
     let metadata = ProfileMetadata {
         name,
         version: env!("BUILD_VERSION").to_string(),
@@ -160,11 +164,8 @@ pub fn list_envs(profile: &Profile, show_comments: bool, show_expiration: bool) 
     println!("{table}");
 }
 
-pub fn delete_profile(name: &str) -> AppResult<()> {
-    let configdir = get_configdir();
-    let profile_path = configdir.join("profiles").join(format!("{}.env", name));
-
-    std::fs::remove_file(profile_path)?;
+pub fn delete_profile(profile_name: &str) -> AppResult<()> {
+    std::fs::remove_file(get_profile_path(profile_name)?)?;
     success("deleted profile");
 
     Ok(())
@@ -176,7 +177,7 @@ pub fn list_profiles(raw: bool) -> AppResult<()> {
 
     if !profile_dir.exists() {
         return Err(AppError::Msg(
-            "profiles directory does not exist".to_string(),
+            "Profiles directory does not exist".to_string(),
         ));
     }
 
@@ -275,26 +276,15 @@ pub fn import_profile(file_path: String, profile_name: String) -> AppResult<()> 
     let mut contents = String::new();
     file.read_to_string(&mut contents).unwrap();
 
-    let location = match configdir
+    let location = configdir
         .join("profiles")
-        .join(profile_name.clone() + ".env")
-        .to_str()
-    {
-        Some(location) => location.to_owned(),
-        None => {
-            return Err(AppError::Msg(
-                "Could not convert path to string".to_string(),
-            ));
-        }
-    };
+        .join(format!("{}.env", profile_name));
 
-    let mut file = std::fs::OpenOptions::new()
-        .write(true)
-        .create(true)
-        .open(location)
-        .unwrap();
+    if location.exists() {
+        return Err(AppError::ProfileExists(profile_name));
+    }
 
-    file.write_all(contents.as_bytes())?;
+    std::fs::write(location, contents)?;
 
     Ok(())
 }
@@ -368,7 +358,7 @@ pub fn load_profile(profile: Profile) -> AppResult<()> {
             Ok(output) => {
                 if !output.status.success() {
                     return Err(AppError::Msg(format!(
-                        "failed to execute setx for environment variable: {} with value: {}",
+                        "Failed to execute setx for environment variable: {} with value: {}",
                         env.name, env.value
                     )));
                 }
@@ -412,7 +402,7 @@ pub fn unload_profile(profile: Profile) -> AppResult<()> {
             Ok(status) => {
                 if !status.success() {
                     return Err(AppError::Msg(format!(
-                        "failed to delete environment variable: {}",
+                        "Failed to delete environment variable: {}",
                         env
                     )));
                 }

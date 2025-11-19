@@ -44,14 +44,6 @@ impl ClapApp {
                 comments: add_comments,
                 expires: add_expires,
             }) => {
-                if profile_name.is_empty() {
-                    return Err(AppError::ProfileNameEmpty);
-                }
-
-                if utils::get_profile_path(profile_name).is_ok() {
-                    return Err(AppError::ProfileExists(profile_name.to_string()));
-                }
-
                 let selected_cipher_kind = if let Some(kind) = cipher_kind {
                     kind.parse::<CipherKind>()
                         .map_err(|e| AppError::Msg(e.to_string()))?
@@ -81,13 +73,13 @@ impl ClapApp {
                             available_keys = match get_gpg_keys() {
                                 Some(keys) => keys,
                                 None => {
-                                    return Err(AppError::Msg("no GPG keys found".to_string()));
+                                    return Err(AppError::Msg("No GPG keys found".to_string()));
                                 }
                             };
                         }
 
                         if available_keys.is_empty() {
-                            return Err(AppError::Msg("no GPG keys found".to_string()));
+                            return Err(AppError::Msg("No GPG keys found".to_string()));
                         }
 
                         Some(prompts::select_prompt(prompts::SelectPromptOptions {
@@ -120,7 +112,7 @@ impl ClapApp {
                     let file = envs_file.as_ref().unwrap();
 
                     if !Path::new(file).exists() {
-                        return Err(AppError::Msg(format!("file '{}' does not exist", file)));
+                        return Err(AppError::Msg(format!("File '{}' does not exist", file)));
                     }
 
                     let mut file = std::fs::OpenOptions::new().read(true).open(file).unwrap();
@@ -131,7 +123,7 @@ impl ClapApp {
                     envs_vec = Some(utils::parse_envs_from_string(&buffer)?);
 
                     if envs_vec.is_none() {
-                        return Err(AppError::Msg("unable to parse envs from file".to_string()));
+                        return Err(AppError::Msg("Unable to parse envs from file".to_string()));
                     }
 
                     let mut options = vec![];
@@ -195,13 +187,13 @@ impl ClapApp {
                                     ));
                                 } else {
                                     return Err(AppError::Msg(format!(
-                                        "unable to parse value for key '{}'",
+                                        "Unable to parse value for key '{}'",
                                         key
                                     )));
                                 }
                             } else {
                                 return Err(AppError::Msg(format!(
-                                    "unable to parse key-value pair from '{}'",
+                                    "Unable to parse key-value pair from '{}'",
                                     env
                                 )));
                             }
@@ -266,13 +258,13 @@ impl ClapApp {
                                 }
                             } else {
                                 return Err(AppError::Msg(format!(
-                                    "unable to parse value for key '{}'",
+                                    "Unable to parse value for key '{}'",
                                     key
                                 )));
                             }
                         } else {
                             return Err(AppError::Msg(format!(
-                                "unable to parse key-value pair from '{}'",
+                                "Unable to parse key-value pair from '{}'",
                                 env
                             )));
                         }
@@ -282,9 +274,9 @@ impl ClapApp {
 
                     let prompt = prompts::text_prompt(prompts::TextPromptOptions {
                         title: format!(
-                            "Enter the {} value for {}:",
+                            "Enter the {}value for {}:",
                             if profile.envs.contains_key(env) {
-                                "new"
+                                "new "
                             } else {
                                 ""
                             },
@@ -372,7 +364,7 @@ impl ClapApp {
                 command,
             } => {
                 if command.is_empty() {
-                    return Err(AppError::Msg("command cannot be empty".to_string()));
+                    return Err(AppError::Msg("Command cannot be empty".to_string()));
                 }
 
                 let program = &command[0];
@@ -393,7 +385,7 @@ impl ClapApp {
                 let status = match cmd.wait() {
                     Ok(s) => s,
                     Err(e) => {
-                        return Err(AppError::Msg(format!("failed to execute command: {}", e)))
+                        return Err(AppError::Msg(format!("Failed to execute command: {}", e)))
                     }
                 };
 
@@ -401,7 +393,7 @@ impl ClapApp {
                     Some(code) => std::process::exit(code),
                     None => {
                         return Err(AppError::Msg(
-                            "the child process was terminated by a signal".to_string(),
+                            "The child process was terminated by a signal".to_string(),
                         ))
                     }
                 }
@@ -447,6 +439,7 @@ impl ClapApp {
 
                 let profile =
                     get_profile(utils::get_profile_path(profile_name)?, Some(get_userkey))?;
+
                 ops::check_expired_envs(&profile);
 
                 let envs_selected = if keys.is_some() {
@@ -497,7 +490,7 @@ impl ClapApp {
                 }
 
                 return Err(AppError::Msg(
-                    "source must be a valid file path or URL".to_string(),
+                    "Source must be a valid file path or URL".to_string(),
                 ));
             }
 
@@ -505,10 +498,10 @@ impl ClapApp {
                 println!("{} {}", "Version".green(), env!("BUILD_VERSION"));
 
                 if *verbose {
-                    println!("{} {}", "Build Timestamp".green(), env!("BUILD_TIMESTAMP"));
                     println!("{} {}", "Author".green(), env!("CARGO_PKG_AUTHORS"));
                     println!("{} {}", "License".green(), env!("CARGO_PKG_LICENSE"));
                     println!("{} {}", "Repository".green(), env!("CARGO_PKG_REPOSITORY"));
+                    println!("{} {}", "Build Timestamp".green(), env!("BUILD_TIMESTAMP"));
                 }
             }
         }

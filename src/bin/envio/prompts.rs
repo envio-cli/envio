@@ -57,9 +57,13 @@ pub struct TextPromptOptions {
 }
 
 pub fn text_prompt(options: TextPromptOptions) -> AppResult<String> {
-    Ok(Text::new(&options.title)
-        .with_default(options.default.as_deref().unwrap_or(""))
-        .prompt()?)
+    let mut prompt = Text::new(&options.title);
+
+    if let Some(ref default) = options.default {
+        prompt = prompt.with_default(default);
+    }
+
+    Ok(prompt.prompt()?)
 }
 
 pub struct ConfirmPromptOptions {

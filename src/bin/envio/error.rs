@@ -6,16 +6,13 @@ pub enum AppError {
     #[error(transparent)]
     Library(#[from] envio::error::Error),
 
-    #[error("profile `{0}` does not exist")]
+    #[error("Profile `{0}` does not exist")]
     ProfileDoesNotExist(String),
 
-    #[error("profile name is empty")]
-    ProfileNameEmpty,
-
-    #[error("profile `{0}` already exists")]
+    #[error("Profile `{0}` already exists")]
     ProfileExists(String),
 
-    #[error("profile `{0}` is empty")]
+    #[error("Profile `{0}` is empty")]
     EmptyProfile(String),
 
     #[error(transparent)]
