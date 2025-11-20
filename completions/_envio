@@ -40,10 +40,10 @@ _arguments "${_arguments_options[@]}" \
         (( CURRENT += 1 ))
         curcontext="${curcontext%:*:*}:envio-profile-command-$line[1]:"
         case $line[1] in
-            (new)
+            (create)
 _arguments "${_arguments_options[@]}" \
-'-d+[description of the profile]:DESCRIPTION: ' \
-'--description=[description of the profile]:DESCRIPTION: ' \
+'-d+[optional note or description of the profile]:DESCRIPTION: ' \
+'--description=[optional note or description of the profile]:DESCRIPTION: ' \
 '-f+[file path to load environment variables from]:ENVS_FILE: ' \
 '--from-file=[file path to load environment variables from]:ENVS_FILE: ' \
 '*-e+[environment variables to add (format\: KEY=VALUE or only provide KEY and the value will be prompted for)]:ENVS: ' \
@@ -173,10 +173,15 @@ _envio_commands() {
 'unload:unload a profile from the current terminal session' \
 'run:run a command with profile environment variables' \
 'import:import a profile from a file or url' \
-'export:export a profile to a file' \
+'export:export the environment variables of a profile to a file' \
 'version:print version information' \
     )
     _describe -t commands 'envio commands' commands "$@"
+}
+(( $+functions[_envio__profile__create_commands] )) ||
+_envio__profile__create_commands() {
+    local commands; commands=()
+    _describe -t commands 'envio profile create commands' commands "$@"
 }
 (( $+functions[_envio__profile__delete_commands] )) ||
 _envio__profile__delete_commands() {
@@ -203,15 +208,10 @@ _envio__load_commands() {
     local commands; commands=()
     _describe -t commands 'envio load commands' commands "$@"
 }
-(( $+functions[_envio__profile__new_commands] )) ||
-_envio__profile__new_commands() {
-    local commands; commands=()
-    _describe -t commands 'envio profile new commands' commands "$@"
-}
 (( $+functions[_envio__profile_commands] )) ||
 _envio__profile_commands() {
     local commands; commands=(
-'new:create a new profile' \
+'create:create a new profile' \
 'delete:delete a profile' \
 'list:list all profiles' \
 'show:show environment variables in a profile' \

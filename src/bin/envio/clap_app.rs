@@ -80,6 +80,7 @@ pub enum Command {
     #[command(
         name = "run",
         about = "run a command with profile environment variables",
+        aliases = &["exec"],
         override_usage = "envio run <PROFILE_NAME> -- <COMMAND>"
     )]
     Run {
@@ -107,7 +108,7 @@ pub enum Command {
 
     #[command(
         name = "export",
-        about = "export a profile to a file",
+        about = "export the environment variables of a profile to a file",
         override_usage = "envio export <PROFILE_NAME> [OPTIONS]"
     )]
     Export {
@@ -147,14 +148,19 @@ pub enum Command {
 #[derive(clap::Subcommand, Debug)]
 pub enum ProfileCommand {
     #[command(
-        name = "new",
+        name = "create",
         about = "create a new profile",
-        override_usage = "envio profile new <PROFILE_NAME> [OPTIONS]"
+        aliases = &["new"],
+        override_usage = "envio profile create <PROFILE_NAME> [OPTIONS]"
     )]
-    New {
+    Create {
         #[arg(required = true, help = "name of the profile")]
         profile_name: String,
-        #[arg(long = "description", short = 'd', help = "description of the profile")]
+        #[arg(
+            long = "description",
+            short = 'd',
+            help = "optional note or description of the profile"
+        )]
         description: Option<String>,
         #[arg(
             long = "from-file",
@@ -189,6 +195,7 @@ pub enum ProfileCommand {
     #[command(
         name = "delete",
         about = "delete a profile",
+        aliases = &["remove"],
         override_usage = "envio profile delete <PROFILE_NAME>"
     )]
     Delete {
@@ -199,6 +206,7 @@ pub enum ProfileCommand {
     #[command(
         name = "list",
         about = "list all profiles",
+        aliases = &["ls"],
         override_usage = "envio profile list [OPTIONS]"
     )]
     List {

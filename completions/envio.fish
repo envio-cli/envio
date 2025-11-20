@@ -6,20 +6,20 @@ complete -c envio -n "__fish_use_subcommand" -f -a "load" -d 'load environment v
 complete -c envio -n "__fish_use_subcommand" -f -a "unload" -d 'unload a profile from the current terminal session'
 complete -c envio -n "__fish_use_subcommand" -f -a "run" -d 'run a command with profile environment variables'
 complete -c envio -n "__fish_use_subcommand" -f -a "import" -d 'import a profile from a file or url'
-complete -c envio -n "__fish_use_subcommand" -f -a "export" -d 'export a profile to a file'
+complete -c envio -n "__fish_use_subcommand" -f -a "export" -d 'export the environment variables of a profile to a file'
 complete -c envio -n "__fish_use_subcommand" -f -a "version" -d 'print version information'
-complete -c envio -n "__fish_seen_subcommand_from profile; and not __fish_seen_subcommand_from new; and not __fish_seen_subcommand_from delete; and not __fish_seen_subcommand_from list; and not __fish_seen_subcommand_from show" -s h -l help -d 'Print help'
-complete -c envio -n "__fish_seen_subcommand_from profile; and not __fish_seen_subcommand_from new; and not __fish_seen_subcommand_from delete; and not __fish_seen_subcommand_from list; and not __fish_seen_subcommand_from show" -f -a "new" -d 'create a new profile'
-complete -c envio -n "__fish_seen_subcommand_from profile; and not __fish_seen_subcommand_from new; and not __fish_seen_subcommand_from delete; and not __fish_seen_subcommand_from list; and not __fish_seen_subcommand_from show" -f -a "delete" -d 'delete a profile'
-complete -c envio -n "__fish_seen_subcommand_from profile; and not __fish_seen_subcommand_from new; and not __fish_seen_subcommand_from delete; and not __fish_seen_subcommand_from list; and not __fish_seen_subcommand_from show" -f -a "list" -d 'list all profiles'
-complete -c envio -n "__fish_seen_subcommand_from profile; and not __fish_seen_subcommand_from new; and not __fish_seen_subcommand_from delete; and not __fish_seen_subcommand_from list; and not __fish_seen_subcommand_from show" -f -a "show" -d 'show environment variables in a profile'
-complete -c envio -n "__fish_seen_subcommand_from profile; and __fish_seen_subcommand_from new" -s d -l description -d 'description of the profile' -r
-complete -c envio -n "__fish_seen_subcommand_from profile; and __fish_seen_subcommand_from new" -s f -l from-file -d 'file path to load environment variables from' -r
-complete -c envio -n "__fish_seen_subcommand_from profile; and __fish_seen_subcommand_from new" -s e -l envs -d 'environment variables to add (format: KEY=VALUE or only provide KEY and the value will be prompted for)' -r
-complete -c envio -n "__fish_seen_subcommand_from profile; and __fish_seen_subcommand_from new" -s k -l cipher-kind -d 'encryption cipher to use' -r
-complete -c envio -n "__fish_seen_subcommand_from profile; and __fish_seen_subcommand_from new" -s c -l comments -d 'add comments to the provided environment variables'
-complete -c envio -n "__fish_seen_subcommand_from profile; and __fish_seen_subcommand_from new" -s x -l expires -d 'add expiration dates to the provided environment variables'
-complete -c envio -n "__fish_seen_subcommand_from profile; and __fish_seen_subcommand_from new" -s h -l help -d 'Print help'
+complete -c envio -n "__fish_seen_subcommand_from profile; and not __fish_seen_subcommand_from create; and not __fish_seen_subcommand_from delete; and not __fish_seen_subcommand_from list; and not __fish_seen_subcommand_from show" -s h -l help -d 'Print help'
+complete -c envio -n "__fish_seen_subcommand_from profile; and not __fish_seen_subcommand_from create; and not __fish_seen_subcommand_from delete; and not __fish_seen_subcommand_from list; and not __fish_seen_subcommand_from show" -f -a "create" -d 'create a new profile'
+complete -c envio -n "__fish_seen_subcommand_from profile; and not __fish_seen_subcommand_from create; and not __fish_seen_subcommand_from delete; and not __fish_seen_subcommand_from list; and not __fish_seen_subcommand_from show" -f -a "delete" -d 'delete a profile'
+complete -c envio -n "__fish_seen_subcommand_from profile; and not __fish_seen_subcommand_from create; and not __fish_seen_subcommand_from delete; and not __fish_seen_subcommand_from list; and not __fish_seen_subcommand_from show" -f -a "list" -d 'list all profiles'
+complete -c envio -n "__fish_seen_subcommand_from profile; and not __fish_seen_subcommand_from create; and not __fish_seen_subcommand_from delete; and not __fish_seen_subcommand_from list; and not __fish_seen_subcommand_from show" -f -a "show" -d 'show environment variables in a profile'
+complete -c envio -n "__fish_seen_subcommand_from profile; and __fish_seen_subcommand_from create" -s d -l description -d 'optional note or description of the profile' -r
+complete -c envio -n "__fish_seen_subcommand_from profile; and __fish_seen_subcommand_from create" -s f -l from-file -d 'file path to load environment variables from' -r
+complete -c envio -n "__fish_seen_subcommand_from profile; and __fish_seen_subcommand_from create" -s e -l envs -d 'environment variables to add (format: KEY=VALUE or only provide KEY and the value will be prompted for)' -r
+complete -c envio -n "__fish_seen_subcommand_from profile; and __fish_seen_subcommand_from create" -s k -l cipher-kind -d 'encryption cipher to use' -r
+complete -c envio -n "__fish_seen_subcommand_from profile; and __fish_seen_subcommand_from create" -s c -l comments -d 'add comments to the provided environment variables'
+complete -c envio -n "__fish_seen_subcommand_from profile; and __fish_seen_subcommand_from create" -s x -l expires -d 'add expiration dates to the provided environment variables'
+complete -c envio -n "__fish_seen_subcommand_from profile; and __fish_seen_subcommand_from create" -s h -l help -d 'Print help'
 complete -c envio -n "__fish_seen_subcommand_from profile; and __fish_seen_subcommand_from delete" -s h -l help -d 'Print help'
 complete -c envio -n "__fish_seen_subcommand_from profile; and __fish_seen_subcommand_from list" -l no-pretty-print -d 'disable pretty printing'
 complete -c envio -n "__fish_seen_subcommand_from profile; and __fish_seen_subcommand_from list" -s h -l help -d 'Print help'

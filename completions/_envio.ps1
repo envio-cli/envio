@@ -30,22 +30,22 @@ Register-ArgumentCompleter -Native -CommandName 'envio' -ScriptBlock {
             [CompletionResult]::new('unload', 'unload', [CompletionResultType]::ParameterValue, 'unload a profile from the current terminal session')
             [CompletionResult]::new('run', 'run', [CompletionResultType]::ParameterValue, 'run a command with profile environment variables')
             [CompletionResult]::new('import', 'import', [CompletionResultType]::ParameterValue, 'import a profile from a file or url')
-            [CompletionResult]::new('export', 'export', [CompletionResultType]::ParameterValue, 'export a profile to a file')
+            [CompletionResult]::new('export', 'export', [CompletionResultType]::ParameterValue, 'export the environment variables of a profile to a file')
             [CompletionResult]::new('version', 'version', [CompletionResultType]::ParameterValue, 'print version information')
             break
         }
         'envio;profile' {
             [CompletionResult]::new('-h', 'h', [CompletionResultType]::ParameterName, 'Print help')
             [CompletionResult]::new('--help', 'help', [CompletionResultType]::ParameterName, 'Print help')
-            [CompletionResult]::new('new', 'new', [CompletionResultType]::ParameterValue, 'create a new profile')
+            [CompletionResult]::new('create', 'create', [CompletionResultType]::ParameterValue, 'create a new profile')
             [CompletionResult]::new('delete', 'delete', [CompletionResultType]::ParameterValue, 'delete a profile')
             [CompletionResult]::new('list', 'list', [CompletionResultType]::ParameterValue, 'list all profiles')
             [CompletionResult]::new('show', 'show', [CompletionResultType]::ParameterValue, 'show environment variables in a profile')
             break
         }
-        'envio;profile;new' {
-            [CompletionResult]::new('-d', 'd', [CompletionResultType]::ParameterName, 'description of the profile')
-            [CompletionResult]::new('--description', 'description', [CompletionResultType]::ParameterName, 'description of the profile')
+        'envio;profile;create' {
+            [CompletionResult]::new('-d', 'd', [CompletionResultType]::ParameterName, 'optional note or description of the profile')
+            [CompletionResult]::new('--description', 'description', [CompletionResultType]::ParameterName, 'optional note or description of the profile')
             [CompletionResult]::new('-f', 'f', [CompletionResultType]::ParameterName, 'file path to load environment variables from')
             [CompletionResult]::new('--from-file', 'from-file', [CompletionResultType]::ParameterName, 'file path to load environment variables from')
             [CompletionResult]::new('-e', 'e', [CompletionResultType]::ParameterName, 'environment variables to add (format: KEY=VALUE or only provide KEY and the value will be prompted for)')

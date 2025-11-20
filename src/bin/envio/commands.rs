@@ -36,7 +36,7 @@ fn get_userkey() -> String {
 impl ClapApp {
     pub fn run(&self) -> AppResult<()> {
         match &self.command {
-            Command::Profile(ProfileCommand::New {
+            Command::Profile(ProfileCommand::Create {
                 profile_name,
                 description,
                 envs,
