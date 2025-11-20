@@ -109,14 +109,6 @@ impl Profile {
     }
 
     pub fn save(&mut self) -> Result<()> {
-        let file = std::fs::OpenOptions::new()
-            .write(true)
-            .append(false)
-            .create(true)
-            .open(&self.metadata.file_path)?;
-
-        file.set_len(0)?;
-
         let serialized_envs = bincode::serialize(&self.envs)?;
 
         let encrypted_envs = match self.cipher.encrypt(&serialized_envs) {
@@ -132,6 +124,12 @@ impl Profile {
             metadata: self.metadata.clone(),
             content: encrypted_envs,
         };
+
+        let file = std::fs::OpenOptions::new()
+            .write(true)
+            .append(false)
+            .create(true)
+            .open(&self.metadata.file_path)?;
 
         serde_json::to_writer_pretty(&file, &serialized_profile)?;
 
