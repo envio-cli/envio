@@ -15,6 +15,12 @@ use crate::{
     crypto::{Cipher, CipherKind},
     error::{Error, Result},
 };
+
+#[derive(Serialize, Deserialize)]
+struct GPGMetadata {
+    key_fingerprint: String,
+}
+
 #[derive(Serialize, Deserialize)]
 pub struct GPG {
     key_fingerprint: String,
@@ -140,6 +146,20 @@ impl Cipher for GPG {
 
             Ok(output.stdout)
         }
+    }
+
+    fn get_metadata(&self) -> Option<serde_json::Value> {
+        serde_json::to_value(GPGMetadata {
+            key_fingerprint: self.key_fingerprint.clone(),
+        })
+        .ok()
+    }
+
+    fn load_metadata(&mut self, data: serde_json::Value) -> Result<()> {
+        let metadata: GPGMetadata = serde_json::from_value(data)?;
+        self.key_fingerprint = metadata.key_fingerprint;
+
+        Ok(())
     }
 }
 

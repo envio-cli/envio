@@ -16,6 +16,7 @@ pub struct ProfileMetadata {
     pub description: Option<String>,
     pub file_path: PathBuf,
     pub cipher_kind: CipherKind,
+    pub cipher_metadata: Option<serde_json::Value>,
     pub created_at: DateTime<Local>,
     pub updated_at: DateTime<Local>,
 }
@@ -41,7 +42,7 @@ impl Profile {
         }
     }
 
-    pub fn from_file<P: AsRef<Path>>(file_path: P, cipher: Box<dyn Cipher>) -> Result<Profile> {
+    pub fn from_file<P: AsRef<Path>>(file_path: P, mut cipher: Box<dyn Cipher>) -> Result<Profile> {
         let file_content = std::fs::read(&file_path)?;
 
         let serialized_profile: SerializedProfile = serde_json::from_slice(&file_content)?;
@@ -49,6 +50,10 @@ impl Profile {
         let decrypted_envs_bytes = cipher.decrypt(&serialized_profile.content)?;
 
         let envs: EnvVec = bincode::deserialize(&decrypted_envs_bytes)?;
+
+        if let Some(cipher_metadata) = &serialized_profile.metadata.cipher_metadata {
+            cipher.load_metadata(cipher_metadata.clone())?;
+        }
 
         Ok(Profile {
             metadata: serialized_profile.metadata,

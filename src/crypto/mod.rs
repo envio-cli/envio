@@ -30,6 +30,15 @@ pub trait Cipher {
     fn encrypt(&self, data: &[u8]) -> Result<Vec<u8>>;
     fn decrypt(&self, encrypted_data: &[u8]) -> Result<Vec<u8>>;
     fn kind(&self) -> CipherKind;
+
+    fn get_metadata(&self) -> Option<serde_json::Value> {
+        None
+    }
+
+    #[allow(unused)]
+    fn load_metadata(&mut self, data: serde_json::Value) -> Result<()> {
+        Ok(())
+    }
 }
 
 pub fn create_cipher(cipher_kind: CipherKind, key: Option<&str>) -> Result<Box<dyn Cipher>> {

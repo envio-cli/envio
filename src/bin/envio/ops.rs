@@ -55,13 +55,14 @@ pub fn create_profile(
         description,
         file_path: profile_file_path,
         cipher_kind: cipher.kind(),
+        cipher_metadata: cipher.get_metadata(),
         created_at: Local::now(),
         updated_at: Local::now(),
     };
 
     Profile::new(metadata, cipher, envs).save()?;
 
-    success("profile created");
+    success("Profile created");
     Ok(())
 }
 
@@ -167,7 +168,7 @@ pub fn list_envs(profile: &Profile, show_comments: bool, show_expiration: bool) 
 
 pub fn delete_profile(profile_name: &str) -> AppResult<()> {
     std::fs::remove_file(get_profile_path(profile_name)?)?;
-    success("deleted profile");
+    success("Deleted profile");
 
     Ok(())
 }

@@ -24,7 +24,7 @@ fn main() -> AppResult<()> {
     let current_version = if let Ok(val) = Version::parse(env!("BUILD_VERSION")) {
         val
     } else {
-        error("failed to parse current version");
+        error("Failed to parse current version");
         "0.0.0".parse().unwrap()
     };
 
