@@ -448,7 +448,7 @@ impl ClapApp {
             }
 
             Command::Version { verbose } => {
-                println!("{} {}", "Version".green(), env!("BUILD_VERSION"));
+                println!("{} {}", "Version".green(), env!("CARGO_PKG_VERSION"));
 
                 if *verbose {
                     println!("{} {}", "Author".green(), env!("CARGO_PKG_AUTHORS"));

@@ -51,7 +51,7 @@ pub fn create_profile(
 
     let metadata = ProfileMetadata {
         name,
-        version: env!("BUILD_VERSION").to_string(),
+        version: env!("CARGO_PKG_VERSION").to_string(),
         description,
         file_path: profile_file_path,
         cipher_kind: cipher.kind(),

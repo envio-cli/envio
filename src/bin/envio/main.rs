@@ -21,7 +21,7 @@ fn main() -> AppResult<()> {
 
     let latest_version = get_latest_version();
 
-    let current_version = if let Ok(val) = Version::parse(env!("BUILD_VERSION")) {
+    let current_version = if let Ok(val) = Version::parse(env!("CARGO_PKG_VERSION")) {
         val
     } else {
         error("Failed to parse current version");

@@ -14,7 +14,7 @@ _envio() {
     fi
 
     local context curcontext="$curcontext" state line
-    _arguments "${_arguments_options[@]}" : \
+    _arguments "${_arguments_options[@]}" \
 '-h[Print help]' \
 '--help[Print help]' \
 ":: :_envio_commands" \
@@ -27,7 +27,7 @@ _envio() {
         curcontext="${curcontext%:*:*}:envio-command-$line[1]:"
         case $line[1] in
             (profile)
-_arguments "${_arguments_options[@]}" : \
+_arguments "${_arguments_options[@]}" \
 '-h[Print help]' \
 '--help[Print help]' \
 ":: :_envio__profile_commands" \
@@ -41,40 +41,40 @@ _arguments "${_arguments_options[@]}" : \
         curcontext="${curcontext%:*:*}:envio-profile-command-$line[1]:"
         case $line[1] in
             (create)
-_arguments "${_arguments_options[@]}" : \
-'-d+[optional note or description of the profile]:DESCRIPTION:_default' \
-'--description=[optional note or description of the profile]:DESCRIPTION:_default' \
-'-f+[file path to load environment variables from]:ENVS_FILE:_default' \
-'--from-file=[file path to load environment variables from]:ENVS_FILE:_default' \
-'*-e+[environment variables to add (format\: KEY=VALUE or only provide KEY and the value will be prompted for)]:ENVS:_default' \
-'*--envs=[environment variables to add (format\: KEY=VALUE or only provide KEY and the value will be prompted for)]:ENVS:_default' \
-'-k+[encryption cipher to use]:CIPHER_KIND:_default' \
-'--cipher-kind=[encryption cipher to use]:CIPHER_KIND:_default' \
+_arguments "${_arguments_options[@]}" \
+'-d+[optional note or description of the profile]:DESCRIPTION: ' \
+'--description=[optional note or description of the profile]:DESCRIPTION: ' \
+'-f+[file path to load environment variables from]:ENVS_FILE: ' \
+'--from-file=[file path to load environment variables from]:ENVS_FILE: ' \
+'*-e+[environment variables to add (format\: KEY=VALUE or only provide KEY and the value will be prompted for)]:ENVS: ' \
+'*--envs=[environment variables to add (format\: KEY=VALUE or only provide KEY and the value will be prompted for)]:ENVS: ' \
+'-k+[encryption cipher to use]:CIPHER_KIND: ' \
+'--cipher-kind=[encryption cipher to use]:CIPHER_KIND: ' \
 '-c[add comments to the provided environment variables]' \
 '--comments[add comments to the provided environment variables]' \
 '-x[add expiration dates to the provided environment variables]' \
 '--expires[add expiration dates to the provided environment variables]' \
 '-h[Print help]' \
 '--help[Print help]' \
-':profile_name -- name of the profile:_default' \
+':profile_name -- name of the profile:' \
 && ret=0
 ;;
 (delete)
-_arguments "${_arguments_options[@]}" : \
+_arguments "${_arguments_options[@]}" \
 '-h[Print help]' \
 '--help[Print help]' \
-':profile_name -- name of the profile:_default' \
+':profile_name -- name of the profile:' \
 && ret=0
 ;;
 (list)
-_arguments "${_arguments_options[@]}" : \
+_arguments "${_arguments_options[@]}" \
 '--no-pretty-print[disable pretty printing]' \
 '-h[Print help]' \
 '--help[Print help]' \
 && ret=0
 ;;
 (show)
-_arguments "${_arguments_options[@]}" : \
+_arguments "${_arguments_options[@]}" \
 '-c[display comments]' \
 '--show-comments[display comments]' \
 '-x[display expiration dates]' \
@@ -82,7 +82,7 @@ _arguments "${_arguments_options[@]}" : \
 '--no-pretty-print[disable pretty printing]' \
 '-h[Print help]' \
 '--help[Print help]' \
-':profile_name -- name of the profile:_default' \
+':profile_name -- name of the profile:' \
 && ret=0
 ;;
         esac
@@ -90,68 +90,68 @@ _arguments "${_arguments_options[@]}" : \
 esac
 ;;
 (set)
-_arguments "${_arguments_options[@]}" : \
+_arguments "${_arguments_options[@]}" \
 '-c[add comments to the provided environment variables]' \
 '--comments[add comments to the provided environment variables]' \
 '-x[add expiration dates to the provided environment variables]' \
 '--expires[add expiration dates to the provided environment variables]' \
 '-h[Print help]' \
 '--help[Print help]' \
-':profile_name -- name of the profile:_default' \
-'*::envs -- environment variables to set (format\: KEY=VALUE or only provide KEY and the value will be prompted for):_default' \
+':profile_name -- name of the profile:' \
+'*::envs -- environment variables to set (format\: KEY=VALUE or only provide KEY and the value will be prompted for):' \
 && ret=0
 ;;
 (unset)
-_arguments "${_arguments_options[@]}" : \
+_arguments "${_arguments_options[@]}" \
 '-h[Print help]' \
 '--help[Print help]' \
-':profile_name -- name of the profile:_default' \
-'*::keys -- keys of environment variables to remove:_default' \
+':profile_name -- name of the profile:' \
+'*::keys -- keys of environment variables to remove:' \
 && ret=0
 ;;
 (load)
-_arguments "${_arguments_options[@]}" : \
+_arguments "${_arguments_options[@]}" \
 '-h[Print help]' \
 '--help[Print help]' \
-':profile_name -- name of the profile:_default' \
+':profile_name -- name of the profile:' \
 && ret=0
 ;;
 (unload)
-_arguments "${_arguments_options[@]}" : \
+_arguments "${_arguments_options[@]}" \
 '-h[Print help]' \
 '--help[Print help]' \
 && ret=0
 ;;
 (run)
-_arguments "${_arguments_options[@]}" : \
+_arguments "${_arguments_options[@]}" \
 '-h[Print help]' \
 '--help[Print help]' \
-':profile_name -- name of the profile:_default' \
-'*::command -- command to run:_default' \
+':profile_name -- name of the profile:' \
+'*::command -- command to run:' \
 && ret=0
 ;;
 (import)
-_arguments "${_arguments_options[@]}" : \
-'-n+[name for the imported profile]:PROFILE_NAME:_default' \
-'--profile-name=[name for the imported profile]:PROFILE_NAME:_default' \
+_arguments "${_arguments_options[@]}" \
+'-n+[name for the imported profile]:PROFILE_NAME: ' \
+'--profile-name=[name for the imported profile]:PROFILE_NAME: ' \
 '-h[Print help]' \
 '--help[Print help]' \
-':source -- source file or url:_default' \
+':source -- source file or url:' \
 && ret=0
 ;;
 (export)
-_arguments "${_arguments_options[@]}" : \
-'-o+[output file path (default\: .env)]:OUTPUT_FILE_PATH:_default' \
-'--output-file-path=[output file path (default\: .env)]:OUTPUT_FILE_PATH:_default' \
-'*-k+[comma-separated list of keys to export (type '\''select'\'' to choose interactively)]:KEYS:_default' \
-'*--keys=[comma-separated list of keys to export (type '\''select'\'' to choose interactively)]:KEYS:_default' \
+_arguments "${_arguments_options[@]}" \
+'-o+[output file path (default\: .env)]:OUTPUT_FILE_PATH: ' \
+'--output-file-path=[output file path (default\: .env)]:OUTPUT_FILE_PATH: ' \
+'*-k+[comma-separated list of keys to export (type '\''select'\'' to choose interactively)]:KEYS: ' \
+'*--keys=[comma-separated list of keys to export (type '\''select'\'' to choose interactively)]:KEYS: ' \
 '-h[Print help]' \
 '--help[Print help]' \
-':profile_name -- name of the profile:_default' \
+':profile_name -- name of the profile:' \
 && ret=0
 ;;
 (version)
-_arguments "${_arguments_options[@]}" : \
+_arguments "${_arguments_options[@]}" \
 '-v[show verbose version information]' \
 '--verbose[show verbose version information]' \
 '-h[Print help]' \
@@ -178,6 +178,16 @@ _envio_commands() {
     )
     _describe -t commands 'envio commands' commands "$@"
 }
+(( $+functions[_envio__profile__create_commands] )) ||
+_envio__profile__create_commands() {
+    local commands; commands=()
+    _describe -t commands 'envio profile create commands' commands "$@"
+}
+(( $+functions[_envio__profile__delete_commands] )) ||
+_envio__profile__delete_commands() {
+    local commands; commands=()
+    _describe -t commands 'envio profile delete commands' commands "$@"
+}
 (( $+functions[_envio__export_commands] )) ||
 _envio__export_commands() {
     local commands; commands=()
@@ -187,6 +197,11 @@ _envio__export_commands() {
 _envio__import_commands() {
     local commands; commands=()
     _describe -t commands 'envio import commands' commands "$@"
+}
+(( $+functions[_envio__profile__list_commands] )) ||
+_envio__profile__list_commands() {
+    local commands; commands=()
+    _describe -t commands 'envio profile list commands' commands "$@"
 }
 (( $+functions[_envio__load_commands] )) ||
 _envio__load_commands() {
@@ -203,26 +218,6 @@ _envio__profile_commands() {
     )
     _describe -t commands 'envio profile commands' commands "$@"
 }
-(( $+functions[_envio__profile__create_commands] )) ||
-_envio__profile__create_commands() {
-    local commands; commands=()
-    _describe -t commands 'envio profile create commands' commands "$@"
-}
-(( $+functions[_envio__profile__delete_commands] )) ||
-_envio__profile__delete_commands() {
-    local commands; commands=()
-    _describe -t commands 'envio profile delete commands' commands "$@"
-}
-(( $+functions[_envio__profile__list_commands] )) ||
-_envio__profile__list_commands() {
-    local commands; commands=()
-    _describe -t commands 'envio profile list commands' commands "$@"
-}
-(( $+functions[_envio__profile__show_commands] )) ||
-_envio__profile__show_commands() {
-    local commands; commands=()
-    _describe -t commands 'envio profile show commands' commands "$@"
-}
 (( $+functions[_envio__run_commands] )) ||
 _envio__run_commands() {
     local commands; commands=()
@@ -232,6 +227,11 @@ _envio__run_commands() {
 _envio__set_commands() {
     local commands; commands=()
     _describe -t commands 'envio set commands' commands "$@"
+}
+(( $+functions[_envio__profile__show_commands] )) ||
+_envio__profile__show_commands() {
+    local commands; commands=()
+    _describe -t commands 'envio profile show commands' commands "$@"
 }
 (( $+functions[_envio__unload_commands] )) ||
 _envio__unload_commands() {
