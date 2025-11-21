@@ -191,7 +191,7 @@ impl ClapApp {
                 ops::create_profile(
                     profile_name.to_string(),
                     description.clone(),
-                    Some(envs_map),
+                    envs_map,
                     cipher,
                 )?;
             }

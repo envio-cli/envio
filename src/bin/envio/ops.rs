@@ -7,7 +7,7 @@ use std::{
 
 use chrono::Local;
 use colored::Colorize;
-use comfy_table::{Attribute, Cell, Table};
+use comfy_table::{Attribute, Cell, ContentArrangement, Table};
 use envio::{crypto::Cipher, profile::ProfileMetadata, EnvMap, Profile};
 
 #[cfg(target_family = "unix")]
@@ -24,14 +24,9 @@ use crate::{
 pub fn create_profile(
     name: String,
     description: Option<String>,
-    envs: Option<EnvMap>,
+    envs: EnvMap,
     cipher: Box<dyn Cipher>,
 ) -> AppResult<()> {
-    let envs = match envs {
-        Some(env) => env,
-        None => EnvMap::new(),
-    };
-
     let config_dir = get_configdir();
     let profile_dir = config_dir.join("profiles");
 
@@ -120,6 +115,7 @@ pub fn export_envs(
 
 pub fn list_envs(profile: &Profile, show_comments: bool, show_expiration: bool) {
     let mut table = Table::new();
+    table.set_content_arrangement(ContentArrangement::Dynamic);
 
     let mut header = vec![
         Cell::new("Environment Variable").add_attribute(Attribute::Bold),
@@ -214,6 +210,8 @@ pub fn list_profiles(no_pretty_print: bool) -> AppResult<()> {
     }
 
     let mut table = Table::new();
+    table.set_content_arrangement(ContentArrangement::Dynamic);
+
     table.set_header(vec![
         Cell::new("Name").add_attribute(Attribute::Bold),
         Cell::new("Description").add_attribute(Attribute::Bold),
