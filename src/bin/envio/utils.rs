@@ -1,6 +1,6 @@
 use std::{fs::File, io::Write, path::PathBuf};
 
-use envio::{profile::SerializedProfile, Env, EnvVec};
+use envio::{profile::SerializedProfile, Env, EnvMap};
 use indicatif::{ProgressBar, ProgressStyle};
 use reqwest::Client;
 
@@ -41,7 +41,7 @@ pub fn initalize_config() -> AppResult<()> {
 
             if !file_path.exists() {
                 return Err(AppError::Msg(
-                    "specified shell config file does not exist".to_string(),
+                    "Specified shell config file does not exist".to_string(),
                 ));
             }
         }
@@ -115,28 +115,31 @@ pub fn get_profile_description(profile_name: &str) -> AppResult<Option<String>> 
     Ok(serialized_profile.metadata.description)
 }
 
-pub fn parse_envs_from_string(buffer: &str) -> AppResult<EnvVec> {
-    let mut envs_vec = EnvVec::new();
+pub fn parse_envs_from_string(buffer: &str) -> AppResult<EnvMap> {
+    let mut envs_vec = EnvMap::new();
 
     for buf in buffer.lines() {
         if buf.is_empty() || !buf.contains('=') {
             continue;
         }
 
-        let mut split = buf.split('=');
+        let mut split = buf.splitn(2, '=');
 
         let key = split.next();
-        let mut value = split.next();
+        let value = split.next();
 
         if key.is_none() {
-            return Err(AppError::Msg("can not parse key from buffer".to_string()));
+            return Err(AppError::Msg("Can not parse key from buffer".to_string()));
         }
 
         if value.is_none() {
-            value = Some("");
+            return Err(AppError::Msg(format!(
+                "Can not parse value from buffer for key: `{}`",
+                key.unwrap()
+            )));
         }
 
-        envs_vec.push(Env::from_key_value(
+        envs_vec.insert(Env::from_key_value(
             key.unwrap().to_string(),
             value.unwrap().to_string(),
         ));
@@ -153,7 +156,7 @@ pub async fn download_file(url: &str, file_name: &str) -> AppResult<()> {
     let mut file = File::create(file_name)?;
 
     let mut content_length = if resp.content_length().is_none() {
-        return Err(AppError::Msg("content length is not available".to_string()));
+        return Err(AppError::Msg("Content length is not available".to_string()));
     } else {
         resp.content_length().unwrap()
     };
@@ -182,7 +185,7 @@ pub fn get_shell_config() -> AppResult<&'static str> {
     let shell_env_value = if let Ok(e) = std::env::var("SHELL") {
         e
     } else {
-        return Err(AppError::Msg("failed to get shell".to_string()));
+        return Err(AppError::Msg("Failed to get shell".to_string()));
     };
 
     let shell_as_vec = shell_env_value.split('/').collect::<Vec<&str>>();

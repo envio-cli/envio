@@ -1,11 +1,12 @@
-use std::{collections::HashMap, io::Read, path::Path};
+use std::{io::Read, path::Path};
 
 use chrono::Local;
 use colored::Colorize;
 use envio::{
     crypto::{create_cipher, gpg::get_gpg_keys, CipherKind},
-    get_profile, Env, EnvVec,
+    get_profile, Env, EnvMap,
 };
+use indexmap::IndexMap;
 use strum::IntoEnumIterator;
 use url::Url;
 
@@ -107,7 +108,7 @@ impl ClapApp {
 
                 let cipher = create_cipher(selected_cipher_kind, key.as_deref())?;
 
-                let mut envs_vec;
+                let mut envs_map;
 
                 if envs_file.is_some() {
                     let file = envs_file.as_ref().unwrap();
@@ -116,65 +117,25 @@ impl ClapApp {
                         return Err(AppError::Msg(format!("File '{}' does not exist", file)));
                     }
 
-                    let mut file = std::fs::OpenOptions::new().read(true).open(file).unwrap();
+                    let mut file = std::fs::OpenOptions::new().read(true).open(file)?;
 
                     let mut buffer = String::new();
-                    file.read_to_string(&mut buffer).unwrap();
+                    file.read_to_string(&mut buffer)?;
 
-                    envs_vec = Some(utils::parse_envs_from_string(&buffer)?);
+                    envs_map = utils::parse_envs_from_string(&buffer)?;
 
-                    if envs_vec.is_none() {
-                        return Err(AppError::Msg("Unable to parse envs from file".to_string()));
-                    }
-
-                    let mut options = vec![];
-
-                    for env in envs_vec.clone().unwrap() {
-                        if env.value.is_empty() {
-                            if prompts::confirm_prompt(prompts::ConfirmPromptOptions {
-                                title: format!(
-                                    "Would you like to assign a value to key: {} ?",
-                                    env.name
-                                ),
-                                help_message: Some(
-                                    "If you do not want to assign a value to this key, press enter"
-                                        .to_string(),
-                                ),
-                                default: false,
-                            })? {
-                                let value = prompts::text_prompt(prompts::TextPromptOptions {
-                                    title: format!("Enter the value for {}:", env.name),
-                                    default: None,
-                                })?;
-                                envs_vec
-                                    .as_mut()
-                                    .unwrap()
-                                    .push(Env::from_key_value(env.name.clone(), value));
-                            }
-                        }
-
-                        // we add the keys to the options list so that we can use them in the multi
-                        // select prompt. The reason we do not have this in
-                        // a separate loop is for efficiency reasons
-                        options.push(env.name.clone());
-                    }
-
-                    let default_options = (0..options.len()).collect::<Vec<usize>>();
+                    let default_options = (0..envs_map.len()).collect::<Vec<usize>>();
                     let selected_keys = prompts::multi_select_prompt(prompts::MultiSelectPromptOptions {
                         title:
                             "Select the environment variables you want to keep in your new profile:"
                                 .to_string(),
-                        options: options.clone(),
+                        options: envs_map.keys().cloned().collect(),
                         default_indices: Some(default_options),
                     })?;
 
-                    for key in options {
-                        if !selected_keys.contains(&key) {
-                            envs_vec.as_mut().unwrap().remove(&key);
-                        }
-                    }
+                    envs_map.retain(|env| selected_keys.contains(&env.name));
                 } else if envs.is_some() {
-                    envs_vec = Some(EnvVec::new());
+                    envs_map = EnvMap::new();
 
                     for env in envs.as_ref().unwrap() {
                         if (*env).contains('=') {
@@ -182,10 +143,8 @@ impl ClapApp {
 
                             if let Some(key) = parts.next() {
                                 if let Some(value) = parts.next() {
-                                    envs_vec.as_mut().unwrap().push(Env::from_key_value(
-                                        key.to_string(),
-                                        value.to_string(),
-                                    ));
+                                    envs_map
+                                        .insert_from_key_value(key.to_string(), value.to_string());
                                 } else {
                                     return Err(AppError::Msg(format!(
                                         "Unable to parse value for key '{}'",
@@ -206,16 +165,13 @@ impl ClapApp {
                             title: format!("Enter the value for {}:", env),
                             default: None,
                         })?;
-                        envs_vec
-                            .as_mut()
-                            .unwrap()
-                            .push(Env::from_key_value(env.to_string(), value));
+                        envs_map.insert_from_key_value(env.to_string(), value);
                     }
                 } else {
-                    envs_vec = Some(EnvVec::new()); // the user created a profile without any envs
+                    envs_map = EnvMap::new(); // the user created a profile without any envs
                 }
 
-                for env in envs_vec.as_mut().unwrap() {
+                for env in envs_map.iter_mut() {
                     if *add_comments {
                         env.comment = Some(prompts::text_prompt(prompts::TextPromptOptions {
                             title: format!("Enter a comment for '{}':", env.name),
@@ -235,7 +191,7 @@ impl ClapApp {
                 ops::create_profile(
                     profile_name.to_string(),
                     description.clone(),
-                    envs_vec,
+                    Some(envs_map),
                     cipher,
                 )?;
             }
@@ -251,17 +207,16 @@ impl ClapApp {
 
                 ops::check_expired_envs(&profile);
 
+                let mut set_envs = Vec::new();
+
                 for env in envs {
                     if env.contains('=') {
                         let mut parts = env.splitn(2, '=');
 
                         if let Some(key) = parts.next() {
                             if let Some(value) = parts.next() {
-                                if profile.envs.contains_key(key) {
-                                    profile.edit_env(key.to_string(), value.to_string())?;
-                                } else {
-                                    profile.insert_env(key.to_string(), value.to_string());
-                                }
+                                set_envs
+                                    .push(Env::from_key_value(key.to_string(), value.to_string()));
                             } else {
                                 return Err(AppError::Msg(format!(
                                     "Unable to parse value for key '{}'",
@@ -291,18 +246,10 @@ impl ClapApp {
                         default: None,
                     })?;
 
-                    if profile.envs.contains_key(env) {
-                        profile.edit_env(env.to_string(), prompt)?;
-                    } else {
-                        profile.insert_env(env.to_string(), prompt);
-                    }
+                    set_envs.push(Env::from_key_value(env.to_string(), prompt));
                 }
 
-                for env in &mut profile.envs {
-                    if envs.iter().find(|&e| e.contains(&env.name)).is_none() {
-                        continue;
-                    }
-
+                for mut env in set_envs {
                     if *add_comments {
                         env.comment = Some(prompts::text_prompt(prompts::TextPromptOptions {
                             title: format!("Enter a comment for '{}':", env.name),
@@ -317,6 +264,8 @@ impl ClapApp {
                                 default: Some(Local::now().date_naive()),
                             })?);
                     }
+
+                    profile.envs.insert(env);
                 }
 
                 println!("{}", "Applying Changes".green());
@@ -330,7 +279,7 @@ impl ClapApp {
                 ops::check_expired_envs(&profile);
 
                 for key in keys {
-                    profile.remove_env(&key)?;
+                    profile.envs.remove(&key)?;
                 }
 
                 println!("{}", "Applying Changes".green());
@@ -381,7 +330,7 @@ impl ClapApp {
                 ops::check_expired_envs(&profile);
 
                 let mut cmd = std::process::Command::new(program)
-                    .envs::<HashMap<String, String>, _, _>(profile.envs.into())
+                    .envs::<IndexMap<String, String>, _, _>(profile.envs.into())
                     .args(args)
                     .stdout(std::process::Stdio::inherit())
                     .stderr(std::process::Stdio::inherit())
@@ -445,7 +394,7 @@ impl ClapApp {
                 let envs_selected = if keys.is_some() {
                     let keys_vec = keys.as_ref().unwrap();
                     if keys_vec.contains(&"select".to_string()) {
-                        let keys = profile.envs.keys();
+                        let keys: Vec<String> = profile.envs.keys().cloned().collect();
                         let default_indices: Vec<usize> = (0..keys.len()).collect();
                         Some(prompts::multi_select_prompt(
                             prompts::MultiSelectPromptOptions {

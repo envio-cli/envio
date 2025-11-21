@@ -6,7 +6,7 @@ pub mod utils;
 
 use std::path::Path;
 
-pub use env::{Env, EnvVec};
+pub use env::{Env, EnvMap};
 pub use profile::{Profile, ProfileMetadata};
 
 use crate::{

@@ -1,8 +1,6 @@
 use std::{env, path::Path};
 
-use inquire::{
-    min_length, Confirm, DateSelect, MultiSelect, Password, PasswordDisplayMode, Select, Text,
-};
+use inquire::{min_length, DateSelect, MultiSelect, Password, PasswordDisplayMode, Select, Text};
 use regex::Regex;
 
 use crate::error::AppResult;
@@ -64,19 +62,6 @@ pub fn text_prompt(options: TextPromptOptions) -> AppResult<String> {
     }
 
     Ok(prompt.prompt()?)
-}
-
-pub struct ConfirmPromptOptions {
-    pub title: String,
-    pub help_message: Option<String>,
-    pub default: bool,
-}
-
-pub fn confirm_prompt(options: ConfirmPromptOptions) -> AppResult<bool> {
-    Ok(Confirm::new(&options.title)
-        .with_default(options.default)
-        .with_help_message(options.help_message.as_deref().unwrap_or(""))
-        .prompt()?)
 }
 
 pub struct DatePromptOptions {

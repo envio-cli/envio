@@ -8,7 +8,7 @@ use std::{
 use chrono::Local;
 use colored::Colorize;
 use comfy_table::{Attribute, Cell, Table};
-use envio::{crypto::Cipher, profile::ProfileMetadata, EnvVec, Profile};
+use envio::{crypto::Cipher, profile::ProfileMetadata, EnvMap, Profile};
 
 #[cfg(target_family = "unix")]
 use crate::utils::get_shell_config;
@@ -24,12 +24,12 @@ use crate::{
 pub fn create_profile(
     name: String,
     description: Option<String>,
-    envs: Option<EnvVec>,
+    envs: Option<EnvMap>,
     cipher: Box<dyn Cipher>,
 ) -> AppResult<()> {
     let envs = match envs {
         Some(env) => env,
-        None => EnvVec::new(),
+        None => EnvMap::new(),
     };
 
     let config_dir = get_configdir();
@@ -87,41 +87,34 @@ pub fn export_envs(
         get_cwd().join(output_file_path)
     };
 
+    if profile.envs.is_empty() {
+        return Err(AppError::EmptyProfile(profile.metadata.name.clone()));
+    }
+
     let mut file = std::fs::OpenOptions::new()
         .create(true)
         .write(true)
         .truncate(true)
-        .open(&path)
-        .unwrap();
+        .open(&path)?;
 
-    let mut buffer = String::from("");
+    let envs_to_export: Vec<_> = match envs_selected {
+        Some(selected) if !selected.is_empty() => selected
+            .iter()
+            .filter_map(|key| profile.envs.get(key))
+            .collect(),
+        _ => profile.envs.iter().collect(),
+    };
 
-    if profile.envs.is_empty() {
-        return Err(AppError::EmptyProfile(profile.metadata.name.to_string()));
+    if envs_to_export.is_empty() {
+        return Err(AppError::Msg("No envs to export".to_string()));
     }
 
-    let mut keys: Vec<_> = profile.envs.keys();
-
-    if let Some(envs_selected) = envs_selected {
-        if !envs_selected.is_empty() {
-            keys = keys
-                .into_iter()
-                .filter(|item| envs_selected.contains(item))
-                .collect::<Vec<String>>();
-        }
-
-        if keys.is_empty() {
-            return Err(AppError::Msg("No envs to export".to_string()));
-        }
+    for env in envs_to_export {
+        writeln!(file, "{}={}", env.name, env.value)?;
     }
-
-    for key in keys {
-        buffer = buffer + key.as_str() + "=" + profile.envs.get(key.as_str()).unwrap() + "\n";
-    }
-
-    write!(file, "{}", buffer)?;
 
     println!("{}", format!("Exported envs to {}", path.display()).bold());
+
     Ok(())
 }
 

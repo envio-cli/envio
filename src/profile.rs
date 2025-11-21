@@ -5,7 +5,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::{
     crypto::{Cipher, CipherKind},
-    env::{Env, EnvVec},
+    env::EnvMap,
     error::{Error, Result},
 };
 
@@ -23,7 +23,7 @@ pub struct ProfileMetadata {
 
 pub struct Profile {
     pub metadata: ProfileMetadata,
-    pub envs: EnvVec,
+    pub envs: EnvMap,
     pub cipher: Box<dyn Cipher>,
 }
 
@@ -34,7 +34,7 @@ pub struct SerializedProfile {
 }
 
 impl Profile {
-    pub fn new(metadata: ProfileMetadata, cipher: Box<dyn Cipher>, envs: EnvVec) -> Profile {
+    pub fn new(metadata: ProfileMetadata, cipher: Box<dyn Cipher>, envs: EnvMap) -> Profile {
         Profile {
             metadata,
             cipher,
@@ -49,7 +49,7 @@ impl Profile {
 
         let decrypted_envs_bytes = cipher.decrypt(&serialized_profile.content)?;
 
-        let envs: EnvVec = bincode::deserialize(&decrypted_envs_bytes)?;
+        let envs: EnvMap = bincode::deserialize(&decrypted_envs_bytes)?;
 
         if let Some(cipher_metadata) = &serialized_profile.metadata.cipher_metadata {
             cipher.load_metadata(cipher_metadata.clone())?;
@@ -60,52 +60,6 @@ impl Profile {
             envs,
             cipher,
         })
-    }
-
-    pub fn insert_env(&mut self, env: String, env_value: String) {
-        self.envs.push(Env::from_key_value(env, env_value));
-    }
-
-    pub fn edit_env(&mut self, env: String, new_value: String) -> Result<()> {
-        if self.envs.iter().any(|e| e.name == env) {
-            for e in self.envs.iter_mut() {
-                if e.name == env {
-                    e.value = new_value;
-                    return Ok(());
-                }
-            }
-        }
-
-        Err(Error::EnvDoesNotExist(env))
-    }
-
-    pub fn remove_env(&mut self, env: &str) -> Result<()> {
-        if self.envs.iter().any(|e| e.name == env) {
-            self.envs.retain(|e| e.name != env);
-            return Ok(());
-        }
-
-        Err(Error::EnvDoesNotExist(env.to_string()))
-    }
-
-    pub fn get_env(&self, env: &str) -> Option<&String> {
-        for e in self.envs.iter() {
-            if e.name == env {
-                return Some(&e.value);
-            }
-        }
-
-        None
-    }
-
-    pub fn get_envs_hashmap(&self) -> std::collections::HashMap<String, String> {
-        let mut envs = std::collections::HashMap::new();
-
-        for e in self.envs.iter() {
-            envs.insert(e.name.clone(), e.value.clone());
-        }
-
-        envs
     }
 
     pub fn save(&mut self) -> Result<()> {
@@ -128,6 +82,7 @@ impl Profile {
         let file = std::fs::OpenOptions::new()
             .write(true)
             .append(false)
+            .truncate(true)
             .create(true)
             .open(&self.metadata.file_path)?;
 

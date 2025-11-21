@@ -1,7 +1,8 @@
-use std::collections::HashMap;
-
 use chrono::NaiveDate;
+use indexmap::IndexMap;
 use serde::{Deserialize, Serialize};
+
+use crate::error::{Error, Result};
 
 #[derive(Serialize, Deserialize, Clone)]
 pub struct Env {
@@ -13,155 +14,131 @@ pub struct Env {
 
 impl Env {
     pub fn new(
-        name: String,
-        value: String,
+        name: impl Into<String>,
+        value: impl Into<String>,
         comment: Option<String>,
         expiration_date: Option<NaiveDate>,
-    ) -> Env {
-        Env {
-            name,
-            value,
+    ) -> Self {
+        Self {
+            name: name.into(),
+            value: value.into(),
             comment,
             expiration_date,
         }
     }
 
-    pub fn from_key_value(key: String, value: String) -> Env {
-        Env {
-            name: key,
-            value,
-            comment: None,
-            expiration_date: None,
-        }
+    pub fn from_key_value(name: impl Into<String>, value: impl Into<String>) -> Self {
+        Self::new(name, value, None, None)
     }
 }
 
-/// Wrapper around a vector of `Env`
 #[derive(Serialize, Deserialize, Clone)]
-pub struct EnvVec {
-    envs: Vec<Env>,
+pub struct EnvMap {
+    envs: IndexMap<String, Env>,
 }
 
-impl From<Vec<Env>> for EnvVec {
-    fn from(envs: Vec<Env>) -> Self {
-        EnvVec { envs }
+impl EnvMap {
+    pub fn new() -> Self {
+        Self {
+            envs: IndexMap::new(),
+        }
     }
-}
 
-impl From<HashMap<String, String>> for EnvVec {
-    fn from(envs: HashMap<String, String>) -> Self {
-        let mut env_vec = EnvVec::new();
+    pub fn insert(&mut self, env: Env) {
+        self.envs.insert(env.name.clone(), env);
+    }
 
-        for (key, value) in envs {
-            env_vec.push(Env::from_key_value(key, value));
+    pub fn insert_from_key_value(&mut self, key: impl Into<String>, value: impl Into<String>) {
+        self.insert(Env::from_key_value(key, value));
+    }
+
+    pub fn remove(&mut self, key: &str) -> Result<()> {
+        if let None = self.envs.shift_remove(key) {
+            return Err(Error::EnvDoesNotExist(key.to_string()));
         }
 
-        env_vec
-    }
-}
-
-impl From<EnvVec> for Vec<Env> {
-    fn from(val: EnvVec) -> Self {
-        val.envs
-    }
-}
-
-impl From<EnvVec> for HashMap<String, String> {
-    fn from(val: EnvVec) -> Self {
-        let mut envs = HashMap::new();
-
-        for e in val.envs {
-            envs.insert(e.name, e.value);
-        }
-
-        envs
-    }
-}
-
-impl Default for EnvVec {
-    fn default() -> Self {
-        Self::new()
-    }
-}
-
-impl EnvVec {
-    pub fn new() -> EnvVec {
-        EnvVec { envs: Vec::new() }
+        Ok(())
     }
 
-    pub fn push(&mut self, env: Env) {
-        self.envs.push(env);
-    }
-
-    pub fn remove(&mut self, env: &str) {
-        self.envs.retain(|e| e.name != env);
-    }
-
-    pub fn iter(&self) -> std::slice::Iter<'_, Env> {
-        self.envs.iter()
-    }
-
-    pub fn iter_mut(&mut self) -> std::slice::IterMut<'_, Env> {
-        self.envs.iter_mut()
-    }
-
-    pub fn keys(&self) -> Vec<String> {
-        self.envs.iter().map(|e| e.name.clone()).collect()
+    pub fn get(&self, key: &str) -> Option<&Env> {
+        self.envs.get(key)
     }
 
     pub fn contains_key(&self, key: &str) -> bool {
-        self.envs.iter().any(|e| e.name == key)
+        self.envs.contains_key(key)
     }
 
-    pub fn get(&self, key: &str) -> Option<&String> {
-        for e in self.envs.iter() {
-            if e.name == key {
-                return Some(&e.value);
-            }
-        }
-
-        None
-    }
-
-    pub fn is_empty(&self) -> bool {
-        self.envs.is_empty()
+    pub fn keys(&self) -> impl Iterator<Item = &String> {
+        self.envs.keys()
     }
 
     pub fn len(&self) -> usize {
         self.envs.len()
     }
 
-    pub fn retain<F>(&mut self, f: F)
+    pub fn is_empty(&self) -> bool {
+        self.envs.is_empty()
+    }
+
+    pub fn retain<F>(&mut self, mut f: F)
     where
         F: FnMut(&Env) -> bool,
     {
-        self.envs.retain(f);
+        self.envs.retain(|_, env| f(env));
+    }
+
+    pub fn iter(&self) -> impl Iterator<Item = &Env> {
+        self.envs.values()
+    }
+
+    pub fn iter_mut(&mut self) -> impl Iterator<Item = &mut Env> {
+        self.envs.values_mut()
     }
 }
 
-impl IntoIterator for EnvVec {
+impl From<IndexMap<String, String>> for EnvMap {
+    fn from(map: IndexMap<String, String>) -> Self {
+        let mut env_map = Self::new();
+        for (k, v) in map {
+            env_map.insert(Env::from_key_value(k, v));
+        }
+        env_map
+    }
+}
+
+impl From<EnvMap> for IndexMap<String, String> {
+    fn from(env_map: EnvMap) -> IndexMap<String, String> {
+        env_map
+            .envs
+            .into_iter()
+            .map(|(k, v)| (k, v.value))
+            .collect()
+    }
+}
+
+impl IntoIterator for EnvMap {
     type Item = Env;
-    type IntoIter = std::vec::IntoIter<Env>;
+    type IntoIter = indexmap::map::IntoValues<String, Env>;
 
     fn into_iter(self) -> Self::IntoIter {
-        self.envs.into_iter()
+        self.envs.into_values()
     }
 }
 
-impl<'a> IntoIterator for &'a EnvVec {
+impl<'a> IntoIterator for &'a EnvMap {
     type Item = &'a Env;
-    type IntoIter = std::slice::Iter<'a, Env>;
+    type IntoIter = indexmap::map::Values<'a, String, Env>;
 
     fn into_iter(self) -> Self::IntoIter {
-        self.envs.iter()
+        self.envs.values()
     }
 }
 
-impl<'a> IntoIterator for &'a mut EnvVec {
+impl<'a> IntoIterator for &'a mut EnvMap {
     type Item = &'a mut Env;
-    type IntoIter = std::slice::IterMut<'a, Env>;
+    type IntoIter = indexmap::map::ValuesMut<'a, String, Env>;
 
     fn into_iter(self) -> Self::IntoIter {
-        self.envs.iter_mut()
+        self.envs.values_mut()
     }
 }
