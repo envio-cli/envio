@@ -1,6 +1,9 @@
 use std::{fs::File, io::Write, path::PathBuf};
 
-use envio::{profile::SerializedProfile, Env, EnvMap};
+use envio::{
+    profile::{ProfileMetadata, SerializedProfile},
+    Env, EnvMap,
+};
 use indicatif::{ProgressBar, ProgressState, ProgressStyle};
 use reqwest::Client;
 
@@ -107,12 +110,10 @@ pub fn get_profile_path(profile_name: &str) -> AppResult<PathBuf> {
     Ok(path)
 }
 
-pub fn get_profile_description(profile_name: &str) -> AppResult<Option<String>> {
+pub fn get_profile_metadata(profile_name: &str) -> AppResult<ProfileMetadata> {
     let path = get_profile_path(profile_name)?;
-
     let serialized_profile: SerializedProfile = envio::utils::get_serialized_profile(path)?;
-
-    Ok(serialized_profile.metadata.description)
+    Ok(serialized_profile.metadata)
 }
 
 pub fn parse_envs_from_string(buffer: &str) -> AppResult<EnvMap> {

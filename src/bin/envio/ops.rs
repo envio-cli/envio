@@ -16,7 +16,7 @@ use crate::{
     error::{AppError, AppResult},
     output::{success, warning},
     utils::{
-        contains_path_separator, download_file, get_configdir, get_cwd, get_profile_description,
+        contains_path_separator, download_file, get_configdir, get_cwd, get_profile_metadata,
         get_profile_path,
     },
 };
@@ -200,11 +200,14 @@ pub fn list_profiles(no_pretty_print: bool) -> AppResult<()> {
             println!("{}", "No profiles found".bold());
             return Ok(());
         }
+
         for profile in profiles {
             println!(
                 "{} - {}",
                 profile,
-                get_profile_description(&profile)?.unwrap_or("".to_string())
+                get_profile_metadata(&profile)?
+                    .description
+                    .unwrap_or("".to_string())
             );
         }
         return Ok(());
@@ -214,12 +217,17 @@ pub fn list_profiles(no_pretty_print: bool) -> AppResult<()> {
     table.set_header(vec![
         Cell::new("Name").add_attribute(Attribute::Bold),
         Cell::new("Description").add_attribute(Attribute::Bold),
+        Cell::new("Created At").add_attribute(Attribute::Bold),
+        Cell::new("Updated At").add_attribute(Attribute::Bold),
     ]);
 
     for profile in profiles {
+        let metadata = get_profile_metadata(&profile)?;
         table.add_row(vec![
             &profile,
-            &get_profile_description(&profile)?.unwrap_or("".to_string()),
+            &metadata.description.unwrap_or("".to_string()),
+            &metadata.created_at.format("%Y-%m-%d %H:%M:%S").to_string(),
+            &metadata.updated_at.format("%Y-%m-%d %H:%M:%S").to_string(),
         ]);
     }
 
