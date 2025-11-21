@@ -1,4 +1,7 @@
-use std::io::{Read, Write};
+use std::{
+    any::Any,
+    io::{Read, Write},
+};
 
 use age::secrecy::Secret;
 use serde::{Deserialize, Serialize};
@@ -8,27 +11,28 @@ use crate::{
     error::{Error, Result},
 };
 
-/// represents the password-based cipher that `envio` provides
 #[derive(Serialize, Deserialize)]
-pub struct AGE {
+pub struct PASSPHRASE {
     key: String,
 }
 
-impl Cipher for AGE {
-    fn new(key: String) -> Self {
-        AGE { key }
+impl PASSPHRASE {
+    pub fn new(key: String) -> Self {
+        PASSPHRASE { key }
     }
 
-    fn set_key(&mut self, key: String) {
+    pub fn set_key(&mut self, key: String) {
         self.key = key;
     }
 
-    fn get_key(&self) -> String {
+    pub fn get_key(&self) -> String {
         self.key.clone()
     }
+}
 
+impl Cipher for PASSPHRASE {
     fn kind(&self) -> CipherKind {
-        CipherKind::AGE
+        CipherKind::PASSPHRASE
     }
 
     fn encrypt(&self, data: &[u8]) -> Result<Vec<u8>> {
@@ -65,5 +69,13 @@ impl Cipher for AGE {
         reader.read_to_end(&mut decrypted)?;
 
         Ok(decrypted)
+    }
+
+    fn as_any(&self) -> &dyn Any {
+        self
+    }
+
+    fn as_any_mut(&mut self) -> &mut dyn Any {
+        self
     }
 }

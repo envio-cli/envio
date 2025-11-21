@@ -1,3 +1,4 @@
+use std::any::Any;
 #[cfg(target_family = "windows")]
 use std::collections::VecDeque;
 #[cfg(target_family = "windows")]
@@ -26,19 +27,21 @@ pub struct GPG {
     key_fingerprint: String,
 }
 
-impl Cipher for GPG {
-    fn new(key_fingerprint: String) -> Self {
+impl GPG {
+    pub fn new(key_fingerprint: String) -> Self {
         GPG { key_fingerprint }
     }
 
-    fn set_key(&mut self, key: String) {
+    pub fn set_key(&mut self, key: String) {
         self.key_fingerprint = key;
     }
 
-    fn get_key(&self) -> String {
+    pub fn get_key(&self) -> String {
         self.key_fingerprint.clone()
     }
+}
 
+impl Cipher for GPG {
     fn kind(&self) -> CipherKind {
         CipherKind::GPG
     }
@@ -160,6 +163,14 @@ impl Cipher for GPG {
         self.key_fingerprint = metadata.key_fingerprint;
 
         Ok(())
+    }
+
+    fn as_any(&self) -> &dyn Any {
+        self
+    }
+
+    fn as_any_mut(&mut self) -> &mut dyn Any {
+        self
     }
 }
 

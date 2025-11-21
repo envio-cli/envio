@@ -10,7 +10,7 @@ pub use env::{Env, EnvMap};
 pub use profile::{Profile, ProfileMetadata};
 
 use crate::{
-    crypto::{get_profile_cipher, CipherKind},
+    crypto::{get_profile_cipher, CipherKind, PASSPHRASE},
     error::{Error, Result},
 };
 
@@ -22,11 +22,16 @@ where
     let mut cipher = get_profile_cipher(&file_path)?;
 
     match cipher.kind() {
-        CipherKind::AGE => {
+        CipherKind::PASSPHRASE => {
             let key = key_provider.ok_or_else(|| {
-                Error::Msg("Key provider is required for age-encrypted profiles".into())
+                Error::Msg("Key provider is required for passphrase-encrypted profiles".into())
             })?;
-            cipher.set_key(key());
+
+            cipher
+                .as_any_mut()
+                .downcast_mut::<PASSPHRASE>()
+                .unwrap()
+                .set_key(key());
         }
         _ => {}
     }

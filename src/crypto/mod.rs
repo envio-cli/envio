@@ -1,11 +1,14 @@
-pub mod age;
 pub mod gpg;
+pub mod none;
+pub mod passphrase;
 
-use std::path::Path;
+use std::{any::Any, path::Path};
 
 // re-export the cipher types
-pub use age::AGE;
 pub use gpg::GPG;
+pub use none::NONE;
+pub use passphrase::PASSPHRASE;
+
 use serde::{Deserialize, Serialize};
 use strum_macros::{Display, EnumIter, EnumString};
 
@@ -14,19 +17,15 @@ use crate::{error::Result, utils};
 #[derive(Clone, PartialEq, Serialize, Deserialize, Display, EnumIter, EnumString)]
 #[serde(rename_all = "lowercase")]
 pub enum CipherKind {
-    #[strum(ascii_case_insensitive, to_string = "age")]
-    AGE,
+    #[strum(ascii_case_insensitive, to_string = "none")]
+    NONE,
+    #[strum(ascii_case_insensitive, to_string = "passphrase")]
+    PASSPHRASE,
     #[strum(ascii_case_insensitive, to_string = "gpg")]
     GPG,
 }
 
-pub trait Cipher {
-    fn new(key: String) -> Self
-    where
-        Self: Sized;
-
-    fn set_key(&mut self, key: String);
-    fn get_key(&self) -> String;
+pub trait Cipher: Any {
     fn encrypt(&self, data: &[u8]) -> Result<Vec<u8>>;
     fn decrypt(&self, encrypted_data: &[u8]) -> Result<Vec<u8>>;
     fn kind(&self) -> CipherKind;
@@ -39,12 +38,16 @@ pub trait Cipher {
     fn load_metadata(&mut self, data: serde_json::Value) -> Result<()> {
         Ok(())
     }
+
+    fn as_any(&self) -> &dyn Any;
+    fn as_any_mut(&mut self) -> &mut dyn Any;
 }
 
 pub fn create_cipher(cipher_kind: CipherKind, key: Option<&str>) -> Result<Box<dyn Cipher>> {
     match cipher_kind {
-        CipherKind::AGE => Ok(Box::new(AGE::new(key.unwrap_or_default().into()))),
+        CipherKind::PASSPHRASE => Ok(Box::new(PASSPHRASE::new(key.unwrap_or_default().into()))),
         CipherKind::GPG => Ok(Box::new(GPG::new(key.unwrap_or_default().into()))),
+        CipherKind::NONE => Ok(Box::new(NONE)),
     }
 }
 
