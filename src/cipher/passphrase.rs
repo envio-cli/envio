@@ -7,7 +7,7 @@ use age::secrecy::Secret;
 use serde::{Deserialize, Serialize};
 
 use crate::{
-    crypto::{Cipher, CipherKind},
+    cipher::{Cipher, CipherKind},
     error::{Error, Result},
 };
 

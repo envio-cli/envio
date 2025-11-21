@@ -4,7 +4,7 @@ use chrono::{DateTime, Local};
 use serde::{Deserialize, Serialize};
 
 use crate::{
-    crypto::{Cipher, CipherKind},
+    cipher::{Cipher, CipherKind},
     env::EnvMap,
     error::{Error, Result},
 };

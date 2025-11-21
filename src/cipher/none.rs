@@ -3,7 +3,7 @@ use std::any::Any;
 use serde::{Deserialize, Serialize};
 
 use crate::{
-    crypto::{Cipher, CipherKind},
+    cipher::{Cipher, CipherKind},
     error::Result,
 };
 

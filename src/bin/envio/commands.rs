@@ -3,7 +3,7 @@ use std::{io::Read, path::Path};
 use chrono::Local;
 use colored::Colorize;
 use envio::{
-    crypto::{create_cipher, gpg::get_gpg_keys, CipherKind},
+    cipher::{create_cipher, gpg::get_gpg_keys, CipherKind},
     get_profile, Env, EnvMap,
 };
 use indexmap::IndexMap;

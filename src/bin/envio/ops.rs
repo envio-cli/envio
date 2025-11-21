@@ -8,7 +8,7 @@ use std::{
 use chrono::Local;
 use colored::Colorize;
 use comfy_table::{Attribute, Cell, ContentArrangement, Table};
-use envio::{crypto::Cipher, profile::ProfileMetadata, EnvMap, Profile};
+use envio::{cipher::Cipher, profile::ProfileMetadata, EnvMap, Profile};
 
 #[cfg(target_family = "unix")]
 use crate::utils::get_shell_config;

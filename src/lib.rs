@@ -1,4 +1,4 @@
-pub mod crypto;
+pub mod cipher;
 pub mod env;
 pub mod error;
 pub mod profile;
@@ -10,7 +10,7 @@ pub use env::{Env, EnvMap};
 pub use profile::{Profile, ProfileMetadata};
 
 use crate::{
-    crypto::{get_profile_cipher, CipherKind, PASSPHRASE},
+    cipher::{get_profile_cipher, CipherKind, PASSPHRASE},
     error::{Error, Result},
 };
 
