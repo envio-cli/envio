@@ -1,7 +1,7 @@
 use std::{fs::File, io::Write, path::PathBuf};
 
 use envio::{profile::SerializedProfile, Env, EnvMap};
-use indicatif::{ProgressBar, ProgressStyle};
+use indicatif::{ProgressBar, ProgressState, ProgressStyle};
 use reqwest::Client;
 
 use crate::error::{AppError, AppResult};
@@ -110,7 +110,7 @@ pub fn get_profile_path(profile_name: &str) -> AppResult<PathBuf> {
 pub fn get_profile_description(profile_name: &str) -> AppResult<Option<String>> {
     let path = get_profile_path(profile_name)?;
 
-    let serialized_profile: SerializedProfile = serde_json::from_slice(&std::fs::read(path)?)?;
+    let serialized_profile: SerializedProfile = envio::utils::get_serialized_profile(path)?;
 
     Ok(serialized_profile.metadata.description)
 }
@@ -147,33 +147,46 @@ pub fn parse_envs_from_string(buffer: &str) -> AppResult<EnvMap> {
 
     Ok(envs_vec)
 }
-
 pub async fn download_file(url: &str, file_name: &str) -> AppResult<()> {
     let client = Client::new();
 
-    let mut resp = client.get(url).send().await?;
+    let pb = ProgressBar::new_spinner();
+    pb.set_message("Connecting...");
+    pb.enable_steady_tick(std::time::Duration::from_millis(100));
+    pb.set_style(
+        ProgressStyle::default_spinner()
+            .template("{msg} {spinner:.green} [{elapsed_precise}]")
+            .unwrap(),
+    );
 
+    let mut resp = client.get(url).send().await?;
     let mut file = File::create(file_name)?;
 
-    let mut content_length = if resp.content_length().is_none() {
-        return Err(AppError::Msg("Content length is not available".to_string()));
-    } else {
-        resp.content_length().unwrap()
+    let content_length = resp.content_length();
+    let style = match content_length {
+        Some(total) => {
+            pb.set_length(total);
+            ProgressStyle::default_bar()
+                .template("[{elapsed_precise}] [{bar:40.cyan/blue}] {bytes}/{total_bytes} ({eta})")
+                .unwrap()
+                .with_key(
+                    "eta",
+                    |state: &ProgressState, w: &mut dyn std::fmt::Write| {
+                        write!(w, "{:.1}s", state.eta().as_secs_f64()).unwrap()
+                    },
+                )
+                .progress_chars("#>-")
+        }
+        None => return Err(AppError::Msg("content length is not available".to_string())),
     };
 
-    let pb = ProgressBar::new(content_length);
+    pb.set_style(style);
 
-    pb.set_style(ProgressStyle::default_bar()
-        .template("{spinner:.green} [{elapsed_precise}] [{bar:40.cyan/blue}] {bytes}/{total_bytes} ({eta})")
-        .unwrap()
-        .progress_chars("#>-"));
-
+    let mut downloaded = 0u64;
     while let Some(chunk) = resp.chunk().await? {
-        let chunk_size = chunk.len();
         file.write_all(&chunk)?;
-
-        pb.inc(chunk_size as u64);
-        content_length -= chunk_size as u64;
+        downloaded += chunk.len() as u64;
+        pb.set_position(downloaded);
     }
 
     pb.finish();

@@ -227,43 +227,29 @@ pub fn list_profiles(no_pretty_print: bool) -> AppResult<()> {
     Ok(())
 }
 
-pub fn download_profile(url: String, profile_name: String) -> AppResult<()> {
-    println!("Downloading profile from {}", url);
+pub fn download_profile(url: String, profile_name: &String) -> AppResult<()> {
     let configdir = get_configdir();
 
-    let location = match configdir
+    let location = configdir
         .join("profiles")
-        .join(profile_name.clone() + ".env")
-        .to_str()
-    {
-        Some(location) => location.to_owned(),
-        None => {
-            return Err(AppError::Msg(
-                "Could not convert path to string".to_string(),
-            ));
-        }
-    };
+        .join(format!("{}.env", profile_name));
 
-    let runtime = match tokio::runtime::Builder::new_current_thread()
+    if location.exists() {
+        return Err(AppError::ProfileExists(profile_name.clone()));
+    }
+
+    let runtime = tokio::runtime::Builder::new_current_thread()
         .enable_all()
-        .build()
-    {
-        Ok(runtime) => runtime,
-        Err(e) => {
-            return Err(AppError::Msg(format!(
-                "Failed to create tokio runtime: {}",
-                e
-            )));
-        }
-    };
+        .build()?;
 
-    runtime.block_on(download_file(url.as_str(), location.as_str()))?;
+    runtime.block_on(download_file(url.as_str(), location.to_str().unwrap()))?;
 
-    println!("Downloaded profile: {}", profile_name);
+    success("Downloaded profile");
+
     Ok(())
 }
 
-pub fn import_profile(file_path: String, profile_name: String) -> AppResult<()> {
+pub fn import_profile(file_path: String, profile_name: &String) -> AppResult<()> {
     if !Path::new(&file_path).exists() {
         return Err(AppError::Msg(format!(
             "File `{}` does not exist",
@@ -286,10 +272,12 @@ pub fn import_profile(file_path: String, profile_name: String) -> AppResult<()> 
         .join(format!("{}.env", profile_name));
 
     if location.exists() {
-        return Err(AppError::ProfileExists(profile_name));
+        return Err(AppError::ProfileExists(profile_name.clone()));
     }
 
     std::fs::write(location, contents)?;
+
+    success("Imported profile");
 
     Ok(())
 }

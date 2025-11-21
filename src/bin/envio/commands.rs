@@ -433,12 +433,12 @@ impl ClapApp {
                 };
 
                 if Url::parse(source).is_ok() {
-                    ops::download_profile(source.to_string(), profile_name)?;
+                    ops::download_profile(source.to_string(), &profile_name)?;
                     return Ok(());
                 }
 
                 if Path::new(source).exists() {
-                    ops::import_profile(source.to_string(), profile_name)?;
+                    ops::import_profile(source.to_string(), &profile_name)?;
                     return Ok(());
                 }
 

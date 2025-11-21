@@ -45,7 +45,7 @@ impl Profile {
     pub fn from_file<P: AsRef<Path>>(file_path: P, mut cipher: Box<dyn Cipher>) -> Result<Profile> {
         let file_content = std::fs::read(&file_path)?;
 
-        let serialized_profile: SerializedProfile = serde_json::from_slice(&file_content)?;
+        let mut serialized_profile: SerializedProfile = serde_json::from_slice(&file_content)?;
 
         let decrypted_envs_bytes = cipher.decrypt(&serialized_profile.content)?;
 
@@ -54,6 +54,9 @@ impl Profile {
         if let Some(cipher_metadata) = &serialized_profile.metadata.cipher_metadata {
             cipher.load_metadata(cipher_metadata.clone())?;
         }
+
+        // ensure file path when saving the profile is correct especially when importing
+        serialized_profile.metadata.file_path = file_path.as_ref().into();
 
         Ok(Profile {
             metadata: serialized_profile.metadata,
