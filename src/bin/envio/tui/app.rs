@@ -5,7 +5,7 @@ use ratatui::{
 
 use crate::error::AppResult;
 
-use super::select::{Action as SelectAction, SelectScreen};
+use super::select_screen::{Action as SelectAction, SelectScreen};
 
 enum Screen {
     Select,
