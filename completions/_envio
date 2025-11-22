@@ -166,15 +166,15 @@ esac
 (( $+functions[_envio_commands] )) ||
 _envio_commands() {
     local commands; commands=(
-'profile:manage profiles' \
-'set:set or update environment variables in a profile' \
-'unset:remove environment variables from a profile' \
-'load:load environment variables from a profile for use in the current terminal session' \
-'unload:unload a profile from the current terminal session' \
-'run:run a command with profile environment variables' \
-'import:import a profile from a file or url' \
-'export:export the environment variables of a profile to a file' \
-'version:print version information' \
+'profile:Manage profiles' \
+'set:Set or update environment variables in a profile' \
+'unset:Remove environment variables from a profile' \
+'load:Load environment variables from a profile for use in the current terminal session' \
+'unload:Unload a profile from the current terminal session' \
+'run:Run a command with profile environment variables' \
+'import:Import a profile from a file or url' \
+'export:Export the environment variables of a profile to a file' \
+'version:Print version information' \
     )
     _describe -t commands 'envio commands' commands "$@"
 }
@@ -211,10 +211,10 @@ _envio__load_commands() {
 (( $+functions[_envio__profile_commands] )) ||
 _envio__profile_commands() {
     local commands; commands=(
-'create:create a new profile' \
-'delete:delete a profile' \
-'list:list all profiles' \
-'show:show environment variables in a profile' \
+'create:Create a new profile' \
+'delete:Delete a profile' \
+'list:List all profiles' \
+'show:Show environment variables in a profile' \
     )
     _describe -t commands 'envio profile commands' commands "$@"
 }
