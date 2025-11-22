@@ -116,6 +116,18 @@ impl From<EnvMap> for IndexMap<String, String> {
     }
 }
 
+impl From<Vec<Env>> for EnvMap {
+    fn from(envs: Vec<Env>) -> Self {
+        let mut env_map = Self::new();
+
+        for env in envs {
+            env_map.insert(env);
+        }
+
+        env_map
+    }
+}
+
 impl IntoIterator for EnvMap {
     type Item = Env;
     type IntoIter = indexmap::map::IntoValues<String, Env>;

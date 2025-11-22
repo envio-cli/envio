@@ -1,4 +1,7 @@
+mod app;
+mod edit_screen;
+mod get_key_screen;
+mod screen;
 mod select_screen;
 
-pub mod app;
 pub use app::TuiApp;

@@ -11,7 +11,7 @@ use crate::{
     error::{Error, Result},
 };
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Clone)]
 pub struct PASSPHRASE {
     key: String,
 }

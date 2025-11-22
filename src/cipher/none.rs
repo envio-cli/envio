@@ -7,7 +7,7 @@ use crate::{
     error::Result,
 };
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Clone)]
 pub struct NONE;
 
 impl Cipher for NONE {

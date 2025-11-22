@@ -22,7 +22,7 @@ struct GPGMetadata {
     key_fingerprint: String,
 }
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Clone)]
 pub struct GPG {
     key_fingerprint: String,
 }

@@ -12,6 +12,8 @@ use ratatui::{
     Frame,
 };
 
+use super::screen::{Action, Screen};
+
 fn styled_span(content: impl Into<String>, fg: Color, bold: bool) -> Span<'static> {
     let mut style = Style::default().fg(fg);
 
@@ -22,25 +24,10 @@ fn styled_span(content: impl Into<String>, fg: Color, bold: bool) -> Span<'stati
     Span::styled(content.into(), style)
 }
 
-fn cipher_color(kind: &CipherKind) -> Color {
-    match kind {
-        CipherKind::PASSPHRASE => Color::Yellow,
-        CipherKind::GPG => Color::Green,
-        CipherKind::NONE => Color::Blue,
-    }
-}
-
 #[derive(Clone)]
 pub struct ProfileInfo {
     pub name: String,
     pub metadata: ProfileMetadata,
-}
-
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub enum Action<'a> {
-    None,
-    Exit,
-    OpenProfile(&'a str),
 }
 
 pub struct SelectScreen {
@@ -49,6 +36,55 @@ pub struct SelectScreen {
     list_state: ListState,
     search_input: String,
     search_mode: bool,
+}
+
+impl Screen for SelectScreen {
+    fn draw(&mut self, frame: &mut Frame) {
+        let area = frame.area();
+        let chunks = Layout::default()
+            .direction(Direction::Vertical)
+            .constraints([
+                Constraint::Length(3),
+                Constraint::Min(3),
+                Constraint::Length(2),
+            ])
+            .split(area);
+
+        self.draw_header(frame, chunks[0]);
+        self.draw_profile_list(frame, chunks[1]);
+        self.draw_footer(frame, chunks[2]);
+    }
+
+    fn handle_key_event(&mut self, key: KeyEvent) -> AppResult<Action> {
+        if self.search_mode {
+            return self.handle_search_key(key);
+        }
+
+        match key.code {
+            KeyCode::Char('/') => {
+                self.search_mode = true;
+                Ok(Action::None)
+            }
+
+            KeyCode::Up | KeyCode::Char('k') => {
+                self.move_selection(-1);
+                Ok(Action::None)
+            }
+
+            KeyCode::Down | KeyCode::Char('j') => {
+                self.move_selection(1);
+                Ok(Action::None)
+            }
+
+            KeyCode::Enter => Ok(self
+                .get_selected_profile()
+                .map_or(Action::None, |p| Action::OpenProfile(p.name.clone()))),
+
+            KeyCode::Esc => Ok(Action::Exit),
+
+            _ => Ok(Action::None),
+        }
+    }
 }
 
 impl SelectScreen {
@@ -141,22 +177,6 @@ impl SelectScreen {
         self.list_state.select(new_selection);
     }
 
-    pub fn draw(&mut self, frame: &mut Frame) {
-        let area = frame.area();
-        let chunks = Layout::default()
-            .direction(Direction::Vertical)
-            .constraints([
-                Constraint::Length(3),
-                Constraint::Min(3),
-                Constraint::Length(2),
-            ])
-            .split(area);
-
-        self.draw_header(frame, chunks[0]);
-        self.draw_profile_list(frame, chunks[1]);
-        self.draw_footer(frame, chunks[2]);
-    }
-
     fn draw_header(&self, frame: &mut Frame, area: Rect) {
         let block = Block::default()
             .borders(Borders::ALL)
@@ -197,9 +217,15 @@ impl SelectScreen {
                     }
                 }
 
+                let cipher_color = match p.metadata.cipher_kind {
+                    CipherKind::PASSPHRASE => Color::Yellow,
+                    CipherKind::GPG => Color::Green,
+                    CipherKind::NONE => Color::Blue,
+                };
+
                 line.push(styled_span(
                     format!(" [{}]", p.metadata.cipher_kind),
-                    cipher_color(&p.metadata.cipher_kind),
+                    cipher_color,
                     false,
                 ));
 
@@ -243,36 +269,7 @@ impl SelectScreen {
         );
     }
 
-    pub fn handle_key_event(&'_ mut self, key: KeyEvent) -> AppResult<Action<'_>> {
-        if self.search_mode {
-            return self.handle_search_key(key);
-        }
-
-        match key.code {
-            KeyCode::Char('/') => {
-                self.search_mode = true;
-                Ok(Action::None)
-            }
-
-            KeyCode::Up | KeyCode::Char('k') => {
-                self.move_selection(-1);
-                Ok(Action::None)
-            }
-
-            KeyCode::Down | KeyCode::Char('j') => {
-                self.move_selection(1);
-                Ok(Action::None)
-            }
-
-            KeyCode::Enter => Ok(self
-                .get_selected_profile()
-                .map_or(Action::None, |p| Action::OpenProfile(p.name.as_str()))),
-            KeyCode::Esc => Ok(Action::Exit),
-            _ => Ok(Action::None),
-        }
-    }
-
-    fn handle_search_key(&'_ mut self, key: KeyEvent) -> AppResult<Action<'_>> {
+    fn handle_search_key(&mut self, key: KeyEvent) -> AppResult<Action> {
         match key.code {
             KeyCode::Esc => {
                 self.search_mode = false;
@@ -283,7 +280,7 @@ impl SelectScreen {
                 self.search_mode = false;
                 Ok(self
                     .get_selected_profile()
-                    .map_or(Action::None, |p| Action::OpenProfile(p.name.as_str())))
+                    .map_or(Action::None, |p| Action::OpenProfile(p.name.clone())))
             }
 
             KeyCode::Char(c) => {
