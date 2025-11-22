@@ -31,6 +31,7 @@ Register-ArgumentCompleter -Native -CommandName 'envio' -ScriptBlock {
             [CompletionResult]::new('run', 'run', [CompletionResultType]::ParameterValue, 'run a command with profile environment variables')
             [CompletionResult]::new('import', 'import', [CompletionResultType]::ParameterValue, 'import a profile from a file or url')
             [CompletionResult]::new('export', 'export', [CompletionResultType]::ParameterValue, 'export the environment variables of a profile to a file')
+            [CompletionResult]::new('tui', 'tui', [CompletionResultType]::ParameterValue, 'launch the interactive TUI application')
             [CompletionResult]::new('version', 'version', [CompletionResultType]::ParameterValue, 'print version information')
             break
         }
@@ -122,6 +123,11 @@ Register-ArgumentCompleter -Native -CommandName 'envio' -ScriptBlock {
             [CompletionResult]::new('--output-file-path', 'output-file-path', [CompletionResultType]::ParameterName, 'output file path (default: .env)')
             [CompletionResult]::new('-k', 'k', [CompletionResultType]::ParameterName, 'comma-separated list of keys to export (type ''select'' to choose interactively)')
             [CompletionResult]::new('--keys', 'keys', [CompletionResultType]::ParameterName, 'comma-separated list of keys to export (type ''select'' to choose interactively)')
+            [CompletionResult]::new('-h', 'h', [CompletionResultType]::ParameterName, 'Print help')
+            [CompletionResult]::new('--help', 'help', [CompletionResultType]::ParameterName, 'Print help')
+            break
+        }
+        'envio;tui' {
             [CompletionResult]::new('-h', 'h', [CompletionResultType]::ParameterName, 'Print help')
             [CompletionResult]::new('--help', 'help', [CompletionResultType]::ParameterName, 'Print help')
             break

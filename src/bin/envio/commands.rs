@@ -11,11 +11,7 @@ use strum::IntoEnumIterator;
 use url::Url;
 
 use crate::{
-    clap_app::{ClapApp, Command, ProfileCommand},
-    error::{AppError, AppResult},
-    ops,
-    output::error,
-    prompts, utils,
+    clap_app::{ClapApp, Command, ProfileCommand}, error::{AppError, AppResult}, ops, output::error, prompts, tui::TuiApp, utils
 };
 
 fn get_userkey() -> String {
@@ -445,6 +441,12 @@ impl ClapApp {
                 return Err(AppError::Msg(
                     "Source must be a valid file path or URL".to_string(),
                 ));
+            }
+
+            Command::Tui => {
+                let mut terminal = ratatui::init();
+                TuiApp::default().run(&mut terminal)?;
+                ratatui::restore();
             }
 
             Command::Version { verbose } => {

@@ -7,6 +7,7 @@ complete -c envio -n "__fish_use_subcommand" -f -a "unload" -d 'unload a profile
 complete -c envio -n "__fish_use_subcommand" -f -a "run" -d 'run a command with profile environment variables'
 complete -c envio -n "__fish_use_subcommand" -f -a "import" -d 'import a profile from a file or url'
 complete -c envio -n "__fish_use_subcommand" -f -a "export" -d 'export the environment variables of a profile to a file'
+complete -c envio -n "__fish_use_subcommand" -f -a "tui" -d 'launch the interactive TUI application'
 complete -c envio -n "__fish_use_subcommand" -f -a "version" -d 'print version information'
 complete -c envio -n "__fish_seen_subcommand_from profile; and not __fish_seen_subcommand_from create; and not __fish_seen_subcommand_from delete; and not __fish_seen_subcommand_from list; and not __fish_seen_subcommand_from show" -s h -l help -d 'Print help'
 complete -c envio -n "__fish_seen_subcommand_from profile; and not __fish_seen_subcommand_from create; and not __fish_seen_subcommand_from delete; and not __fish_seen_subcommand_from list; and not __fish_seen_subcommand_from show" -f -a "create" -d 'create a new profile'
@@ -39,5 +40,6 @@ complete -c envio -n "__fish_seen_subcommand_from import" -s h -l help -d 'Print
 complete -c envio -n "__fish_seen_subcommand_from export" -s o -l output-file-path -d 'output file path (default: .env)' -r
 complete -c envio -n "__fish_seen_subcommand_from export" -s k -l keys -d 'comma-separated list of keys to export (type \'select\' to choose interactively)' -r
 complete -c envio -n "__fish_seen_subcommand_from export" -s h -l help -d 'Print help'
+complete -c envio -n "__fish_seen_subcommand_from tui" -s h -l help -d 'Print help'
 complete -c envio -n "__fish_seen_subcommand_from version" -s v -l verbose -d 'show verbose version information'
 complete -c envio -n "__fish_seen_subcommand_from version" -s h -l help -d 'Print help'

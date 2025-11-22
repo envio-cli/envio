@@ -131,6 +131,13 @@ pub enum Command {
     },
 
     #[command(
+        name = "tui",
+        about = "launch the interactive TUI application",
+        override_usage = "envio tui"
+    )]
+    Tui,
+
+    #[command(
         name = "version",
         about = "print version information",
         override_usage = "envio version [OPTIONS]"
