@@ -11,7 +11,13 @@ use strum::IntoEnumIterator;
 use url::Url;
 
 use crate::{
-    clap_app::{ClapApp, Command, ProfileCommand}, error::{AppError, AppResult}, ops, output::error, prompts, tui::TuiApp, utils
+    clap_app::{ClapApp, Command, ProfileCommand},
+    error::{AppError, AppResult},
+    ops,
+    output::error,
+    prompts,
+    tui::TuiApp,
+    utils,
 };
 
 fn get_userkey() -> String {
