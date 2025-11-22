@@ -1,3 +1,4 @@
-pub mod app;
+mod select;
 
+pub mod app;
 pub use app::TuiApp;

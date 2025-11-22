@@ -1,27 +1,31 @@
 use ratatui::{
-    crossterm::event::{self, Event, KeyCode, KeyEvent, KeyEventKind},
+    crossterm::event::{self, Event, KeyEvent, KeyEventKind},
     DefaultTerminal, Frame,
 };
 
 use crate::error::AppResult;
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+use super::select::{Action as SelectAction, SelectScreen};
+
 enum Screen {
     Select,
     Edit,
+    Passphrase,
 }
 
 pub struct TuiApp {
-    screen: Screen,
+    current_screen: Screen,
+    select_screen: SelectScreen,
     exit: bool,
 }
 
 impl TuiApp {
-    pub fn default() -> Self {
-        TuiApp {
-            screen: Screen::Select,
+    pub fn default() -> AppResult<Self> {
+        Ok(TuiApp {
+            current_screen: Screen::Select,
+            select_screen: SelectScreen::new()?,
             exit: false,
-        }
+        })
     }
 
     pub fn run(&mut self, terminal: &mut DefaultTerminal) -> AppResult<()> {
@@ -33,25 +37,19 @@ impl TuiApp {
         Ok(())
     }
 
-    fn draw(&self, frame: &mut Frame) {
-        match self.screen {
-            Screen::Select => self.draw_select_screen(frame),
-            Screen::Edit => self.draw_edit_screen(frame),
+    fn draw(&mut self, frame: &mut Frame) {
+        match self.current_screen {
+            Screen::Select => {
+                self.select_screen.draw(frame);
+            }
+            _ => {}
         }
-    }
-
-    fn draw_select_screen(&self, frame: &mut Frame) {
-        frame.render_widget("select screen yoo", frame.area());
-    }
-
-    fn draw_edit_screen(&self, frame: &mut Frame) {
-        frame.render_widget("edit screen", frame.area());
     }
 
     fn handle_events(&mut self) -> AppResult<()> {
         match event::read()? {
             Event::Key(key_event) if key_event.kind == KeyEventKind::Press => {
-                self.handle_key_event(key_event)
+                self.handle_key_event(key_event)?
             }
             _ => {}
         };
@@ -59,18 +57,18 @@ impl TuiApp {
         Ok(())
     }
 
-    fn handle_key_event(&mut self, key: KeyEvent) {
-        match self.screen {
-            Screen::Select => match key.code {
-                KeyCode::Esc => {
+    fn handle_key_event(&mut self, key: KeyEvent) -> AppResult<()> {
+        match self.current_screen {
+            Screen::Select => match self.select_screen.handle_key_event(key)? {
+                SelectAction::Exit => {
                     self.exit = true;
                 }
-                _ => {}
-            },
 
-            Screen::Edit => match key.code {
                 _ => {}
             },
+            _ => {}
         }
+
+        Ok(())
     }
 }

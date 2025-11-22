@@ -451,7 +451,7 @@ impl ClapApp {
 
             Command::Tui => {
                 let mut terminal = ratatui::init();
-                TuiApp::default().run(&mut terminal)?;
+                TuiApp::default()?.run(&mut terminal)?;
                 ratatui::restore();
             }
 
