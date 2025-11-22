@@ -9,12 +9,12 @@ pub struct ClapApp {
 
 #[derive(clap::Subcommand, Debug)]
 pub enum Command {
-    #[command(subcommand, about = "manage profiles")]
+    #[command(subcommand, about = "Manage profiles")]
     Profile(ProfileCommand),
 
     #[command(
         name = "set",
-        about = "set or update environment variables in a profile",
+        about = "Set or update environment variables in a profile",
         override_usage = "envio set <PROFILE_NAME> <ENVS>... [OPTIONS]"
     )]
     Set {
@@ -38,7 +38,7 @@ pub enum Command {
 
     #[command(
         name = "unset",
-        about = "remove environment variables from a profile",
+        about = "Remove environment variables from a profile",
         override_usage = "envio unset <PROFILE_NAME> <KEYS>... [OPTIONS]"
     )]
     Unset {
@@ -50,7 +50,7 @@ pub enum Command {
 
     #[command(
         name = "load",
-        about = "load environment variables from a profile for use in the current terminal session",
+        about = "Load environment variables from a profile for use in the current terminal session",
         override_usage = "envio load <PROFILE_NAME>"
     )]
     Load {
@@ -61,7 +61,7 @@ pub enum Command {
     #[cfg(target_family = "unix")]
     #[command(
         name = "unload",
-        about = "unload a profile from the current terminal session",
+        about = "Unload a profile from the current terminal session",
         override_usage = "envio unload"
     )]
     Unload,
@@ -69,7 +69,7 @@ pub enum Command {
     #[cfg(target_family = "windows")]
     #[command(
         name = "unload",
-        about = "unload a profile from the current terminal session",
+        about = "Unload a profile from the current terminal session",
         override_usage = "envio unload <PROFILE_NAME>"
     )]
     Unload {
@@ -79,7 +79,7 @@ pub enum Command {
 
     #[command(
         name = "run",
-        about = "run a command with profile environment variables",
+        about = "Run a command with profile environment variables",
         aliases = &["exec"],
         override_usage = "envio run <PROFILE_NAME> -- <COMMAND>"
     )]
@@ -92,7 +92,7 @@ pub enum Command {
 
     #[command(
         name = "import",
-        about = "import a profile from a file or url",
+        about = "Import a profile from a file or url",
         override_usage = "envio import <SOURCE> [OPTIONS]"
     )]
     Import {
@@ -108,7 +108,7 @@ pub enum Command {
 
     #[command(
         name = "export",
-        about = "export the environment variables of a profile to a file",
+        about = "Export the environment variables of a profile to a file",
         override_usage = "envio export <PROFILE_NAME> [OPTIONS]"
     )]
     Export {
@@ -139,7 +139,7 @@ pub enum Command {
 
     #[command(
         name = "version",
-        about = "print version information",
+        about = "Print version information",
         override_usage = "envio version [OPTIONS]"
     )]
     Version {
@@ -156,7 +156,7 @@ pub enum Command {
 pub enum ProfileCommand {
     #[command(
         name = "create",
-        about = "create a new profile",
+        about = "Create a new profile",
         aliases = &["new"],
         override_usage = "envio profile create <PROFILE_NAME> [OPTIONS]"
     )]
@@ -201,7 +201,7 @@ pub enum ProfileCommand {
 
     #[command(
         name = "delete",
-        about = "delete a profile",
+        about = "Delete a profile",
         aliases = &["remove"],
         override_usage = "envio profile delete <PROFILE_NAME>"
     )]
@@ -212,7 +212,7 @@ pub enum ProfileCommand {
 
     #[command(
         name = "list",
-        about = "list all profiles",
+        about = "List all profiles",
         aliases = &["ls"],
         override_usage = "envio profile list [OPTIONS]"
     )]
@@ -223,7 +223,7 @@ pub enum ProfileCommand {
 
     #[command(
         name = "show",
-        about = "show environment variables in a profile",
+        about = "Show environment variables in a profile",
         override_usage = "envio profile show <PROFILE_NAME> [OPTIONS]"
     )]
     Show {

@@ -4,7 +4,9 @@ use chrono::Local;
 use colored::Colorize;
 use envio::{
     cipher::{create_cipher, gpg::get_gpg_keys, CipherKind},
-    get_profile, Env, EnvMap,
+    get_profile,
+    profile::SerializedProfile,
+    Env, EnvMap,
 };
 use indexmap::IndexMap;
 use strum::IntoEnumIterator;
@@ -16,8 +18,7 @@ use crate::{
     ops,
     output::error,
     prompts,
-    tui::TuiApp,
-    utils,
+    utils::{self, get_configdir},
 };
 
 fn get_userkey() -> String {
@@ -424,29 +425,35 @@ impl ClapApp {
                 source,
                 profile_name,
             } => {
-                let profile_name = if let Some(name) = profile_name {
-                    name.clone()
-                } else {
+                let profile_name = profile_name.clone().unwrap_or_else(|| {
                     Path::new(source)
                         .file_stem()
                         .and_then(|s| s.to_str())
                         .unwrap_or("imported")
                         .to_string()
-                };
+                });
 
                 if Url::parse(source).is_ok() {
                     ops::download_profile(source.to_string(), &profile_name)?;
-                    return Ok(());
-                }
-
-                if Path::new(source).exists() {
+                } else if Path::new(source).exists() {
                     ops::import_profile(source.to_string(), &profile_name)?;
-                    return Ok(());
+                } else {
+                    return Err(AppError::Msg(
+                        "Source must be a valid file path or URL".to_string(),
+                    ));
                 }
 
-                return Err(AppError::Msg(
-                    "Source must be a valid file path or URL".to_string(),
-                ));
+                let location = get_configdir()
+                    .join("profiles")
+                    .join(format!("{}.env", &profile_name));
+
+                let mut serialized_profile: SerializedProfile =
+                    envio::utils::get_serialized_profile(&location)?;
+
+                serialized_profile.metadata.name = profile_name;
+                serialized_profile.metadata.file_path = location.clone();
+
+                envio::utils::save_serialized_profile(&location, serialized_profile)?;
             }
 
             Command::Tui => {
