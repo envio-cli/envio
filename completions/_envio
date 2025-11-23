@@ -180,6 +180,7 @@ _envio_commands() {
 'run:Run a command with profile environment variables' \
 'import:Import a profile from a file or url' \
 'export:Export the environment variables of a profile to a file' \
+'tui:launch the interactive TUI application' \
 'version:Print version information' \
     )
     _describe -t commands 'envio commands' commands "$@"

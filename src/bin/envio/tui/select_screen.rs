@@ -76,6 +76,16 @@ impl Screen for SelectScreen {
                 Ok(Action::None)
             }
 
+            KeyCode::Char('n') => Ok(Action::NewProfile),
+
+            KeyCode::Char('e') => Ok(self
+                .get_selected_profile()
+                .map_or(Action::None, |p| Action::EditProfile(p.name.clone()))),
+
+            KeyCode::Char('d') => Ok(self
+                .get_selected_profile()
+                .map_or(Action::None, |p| Action::DeleteProfile(p.name.clone()))),
+
             KeyCode::Enter => Ok(self
                 .get_selected_profile()
                 .map_or(Action::None, |p| Action::OpenProfile(p.name.clone()))),
@@ -259,7 +269,7 @@ impl SelectScreen {
         let text = if self.search_mode {
             "Enter: Select | Esc: Exit search | Ctrl+C: Quit"
         } else {
-            "Enter: Open | /: Search | Esc: Quit"
+            "Enter: Open | /: Search | n: New | e: Edit | d: Delete | Esc: Quit"
         };
         frame.render_widget(
             Paragraph::new(text)

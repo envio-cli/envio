@@ -35,6 +35,120 @@ pub struct EditScreen {
     save_handle: Option<JoinHandle<AppResult<()>>>,
 }
 
+impl Screen for EditScreen {
+    fn draw(&mut self, frame: &mut Frame) {
+        let area = frame.area();
+        let chunks = Layout::default()
+            .direction(Direction::Vertical)
+            .constraints([
+                Constraint::Length(3),
+                Constraint::Min(3),
+                Constraint::Length(2),
+            ])
+            .split(area);
+
+        self.draw_header(frame, chunks[0]);
+        self.draw_env_list(frame, chunks[1]);
+        self.draw_footer(frame, chunks[2]);
+    }
+
+    fn handle_key_event(&mut self, key: KeyEvent) -> AppResult<Action> {
+        if !matches!(self.status, Status::Saving) {
+            self.status = Status::Idle;
+        }
+
+        match self.edit_mode {
+            EditMode::Key(_) | EditMode::Value(_) => match key.code {
+                KeyCode::Enter => {
+                    self.finish_edit();
+                    Ok(Action::None)
+                }
+
+                KeyCode::Esc => {
+                    self.cancel_edit();
+                    Ok(Action::None)
+                }
+
+                KeyCode::Left => {
+                    if matches!(self.edit_mode, EditMode::Value(_)) {
+                        self.finish_edit();
+                        self.start_edit_key();
+                    }
+
+                    Ok(Action::None)
+                }
+
+                KeyCode::Right => {
+                    if matches!(self.edit_mode, EditMode::Key(_)) {
+                        self.finish_edit();
+                        self.start_edit_value();
+                    }
+
+                    Ok(Action::None)
+                }
+
+                KeyCode::Char(c) => {
+                    self.edit_buffer.push(c);
+                    Ok(Action::None)
+                }
+
+                KeyCode::Backspace => {
+                    self.edit_buffer.pop();
+                    Ok(Action::None)
+                }
+
+                _ => Ok(Action::None),
+            },
+
+            EditMode::None => match key.code {
+                KeyCode::Esc => Ok(Action::Back),
+
+                KeyCode::Up | KeyCode::Char('k') => {
+                    self.move_selection(-1);
+                    Ok(Action::None)
+                }
+
+                KeyCode::Down | KeyCode::Char('j') => {
+                    self.move_selection(1);
+                    Ok(Action::None)
+                }
+
+                KeyCode::Enter => {
+                    self.start_edit_key();
+                    Ok(Action::None)
+                }
+
+                KeyCode::Right => {
+                    self.start_edit_value();
+                    Ok(Action::None)
+                }
+
+                KeyCode::Char('a') => {
+                    self.add_new_pair();
+                    Ok(Action::None)
+                }
+
+                KeyCode::Char('d') => {
+                    self.delete_current();
+                    Ok(Action::None)
+                }
+
+                KeyCode::Char('s') => {
+                    self.save_changes()?;
+                    Ok(Action::None)
+                }
+
+                _ => Ok(Action::None),
+            },
+        }
+    }
+
+    fn tick(&mut self) -> AppResult<Option<ScreenEvent>> {
+        self.check_save();
+        Ok(None)
+    }
+}
+
 impl EditScreen {
     pub fn new(profile: Profile) -> Self {
         let envs: Vec<Env> = profile.envs.iter().cloned().collect();
@@ -110,6 +224,7 @@ impl EditScreen {
             EditMode::Value(idx) if idx < self.envs.len() => {
                 self.envs[idx].value = self.edit_buffer.clone();
             }
+
             _ => {}
         }
 
@@ -330,119 +445,5 @@ impl EditScreen {
                 .block(Block::default().borders(Borders::TOP)),
             area,
         );
-    }
-}
-
-impl Screen for EditScreen {
-    fn draw(&mut self, frame: &mut Frame) {
-        let area = frame.area();
-        let chunks = Layout::default()
-            .direction(Direction::Vertical)
-            .constraints([
-                Constraint::Length(3),
-                Constraint::Min(3),
-                Constraint::Length(2),
-            ])
-            .split(area);
-
-        self.draw_header(frame, chunks[0]);
-        self.draw_env_list(frame, chunks[1]);
-        self.draw_footer(frame, chunks[2]);
-    }
-
-    fn handle_key_event(&mut self, key: KeyEvent) -> AppResult<Action> {
-        if !matches!(self.status, Status::Saving) {
-            self.status = Status::Idle;
-        }
-
-        match self.edit_mode {
-            EditMode::Key(_) | EditMode::Value(_) => match key.code {
-                KeyCode::Enter => {
-                    self.finish_edit();
-                    Ok(Action::None)
-                }
-
-                KeyCode::Esc => {
-                    self.cancel_edit();
-                    Ok(Action::None)
-                }
-
-                KeyCode::Left => {
-                    if matches!(self.edit_mode, EditMode::Value(_)) {
-                        self.finish_edit();
-                        self.start_edit_key();
-                    }
-
-                    Ok(Action::None)
-                }
-
-                KeyCode::Right => {
-                    if matches!(self.edit_mode, EditMode::Key(_)) {
-                        self.finish_edit();
-                        self.start_edit_value();
-                    }
-
-                    Ok(Action::None)
-                }
-
-                KeyCode::Char(c) => {
-                    self.edit_buffer.push(c);
-                    Ok(Action::None)
-                }
-
-                KeyCode::Backspace => {
-                    self.edit_buffer.pop();
-                    Ok(Action::None)
-                }
-
-                _ => Ok(Action::None),
-            },
-
-            EditMode::None => match key.code {
-                KeyCode::Esc => Ok(Action::Back),
-
-                KeyCode::Up | KeyCode::Char('k') => {
-                    self.move_selection(-1);
-                    Ok(Action::None)
-                }
-
-                KeyCode::Down | KeyCode::Char('j') => {
-                    self.move_selection(1);
-                    Ok(Action::None)
-                }
-
-                KeyCode::Enter => {
-                    self.start_edit_key();
-                    Ok(Action::None)
-                }
-
-                KeyCode::Right => {
-                    self.start_edit_value();
-                    Ok(Action::None)
-                }
-
-                KeyCode::Char('a') => {
-                    self.add_new_pair();
-                    Ok(Action::None)
-                }
-
-                KeyCode::Char('d') => {
-                    self.delete_current();
-                    Ok(Action::None)
-                }
-
-                KeyCode::Char('s') => {
-                    self.save_changes()?;
-                    Ok(Action::None)
-                }
-
-                _ => Ok(Action::None),
-            },
-        }
-    }
-
-    fn tick(&mut self) -> AppResult<Option<ScreenEvent>> {
-        self.check_save();
-        Ok(None)
     }
 }

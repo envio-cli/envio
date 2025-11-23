@@ -7,6 +7,7 @@ complete -c envio -n "__fish_use_subcommand" -f -a "unload" -d 'Unload a profile
 complete -c envio -n "__fish_use_subcommand" -f -a "run" -d 'Run a command with profile environment variables'
 complete -c envio -n "__fish_use_subcommand" -f -a "import" -d 'Import a profile from a file or url'
 complete -c envio -n "__fish_use_subcommand" -f -a "export" -d 'Export the environment variables of a profile to a file'
+complete -c envio -n "__fish_use_subcommand" -f -a "tui" -d 'launch the interactive TUI application'
 complete -c envio -n "__fish_use_subcommand" -f -a "version" -d 'Print version information'
 complete -c envio -n "__fish_seen_subcommand_from profile; and not __fish_seen_subcommand_from create; and not __fish_seen_subcommand_from delete; and not __fish_seen_subcommand_from list; and not __fish_seen_subcommand_from show" -s h -l help -d 'Print help'
 complete -c envio -n "__fish_seen_subcommand_from profile; and not __fish_seen_subcommand_from create; and not __fish_seen_subcommand_from delete; and not __fish_seen_subcommand_from list; and not __fish_seen_subcommand_from show" -f -a "create" -d 'Create a new profile'

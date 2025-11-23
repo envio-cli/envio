@@ -9,6 +9,7 @@ use crate::{
     tui::{
         edit_screen::EditScreen,
         get_key_screen::GetKeyScreen,
+        profile_form_screen::{CreateProfileScreen, EditProfileScreen},
         screen::{Action, Screen, ScreenEvent},
         select_screen::SelectScreen,
     },
@@ -37,6 +38,8 @@ impl TuiApp {
             }
 
             self.handle_events()?;
+
+            std::thread::sleep(Duration::from_millis(16));
         }
 
         Ok(())
@@ -89,11 +92,19 @@ impl TuiApp {
                 }
             }
 
+            Action::NewProfile => {
+                self.current_screen = Box::new(CreateProfileScreen::new()?);
+            }
+
+            Action::EditProfile(profile_name) => {
+                self.current_screen = Box::new(EditProfileScreen::new(profile_name)?);
+            }
+
             Action::Back => {
                 self.current_screen = Box::new(SelectScreen::new()?);
             }
 
-            Action::None => {}
+            _ => {}
         }
 
         Ok(())

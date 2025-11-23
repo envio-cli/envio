@@ -31,6 +31,7 @@ Register-ArgumentCompleter -Native -CommandName 'envio' -ScriptBlock {
             [CompletionResult]::new('run', 'run', [CompletionResultType]::ParameterValue, 'Run a command with profile environment variables')
             [CompletionResult]::new('import', 'import', [CompletionResultType]::ParameterValue, 'Import a profile from a file or url')
             [CompletionResult]::new('export', 'export', [CompletionResultType]::ParameterValue, 'Export the environment variables of a profile to a file')
+            [CompletionResult]::new('tui', 'tui', [CompletionResultType]::ParameterValue, 'launch the interactive TUI application')
             [CompletionResult]::new('version', 'version', [CompletionResultType]::ParameterValue, 'Print version information')
             break
         }

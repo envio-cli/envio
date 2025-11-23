@@ -14,7 +14,7 @@ use strum_macros::{Display, EnumIter, EnumString};
 
 use crate::{error::Result, utils};
 
-#[derive(Clone, PartialEq, Serialize, Deserialize, Display, EnumIter, EnumString)]
+#[derive(Copy, Clone, PartialEq, Serialize, Deserialize, Display, EnumIter, EnumString)]
 #[serde(rename_all = "lowercase")]
 pub enum CipherKind {
     #[strum(ascii_case_insensitive, to_string = "none")]

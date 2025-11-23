@@ -16,8 +16,9 @@ use crate::{
     clap_app::{ClapApp, Command, ProfileCommand},
     error::{AppError, AppResult},
     ops,
-    output::error,
+    output::{error, success},
     prompts,
+    tui::TuiApp,
     utils::{self, get_configdir},
 };
 
@@ -66,22 +67,7 @@ impl ClapApp {
 
                 let key = match selected_cipher_kind {
                     CipherKind::GPG => {
-                        let available_keys;
-
-                        #[cfg(target_family = "unix")]
-                        {
-                            available_keys = get_gpg_keys()?;
-                        }
-
-                        #[cfg(target_family = "windows")]
-                        {
-                            available_keys = match get_gpg_keys() {
-                                Some(keys) => keys,
-                                None => {
-                                    return Err(AppError::Msg("No GPG keys found".to_string()));
-                                }
-                            };
-                        }
+                        let available_keys = get_gpg_keys()?;
 
                         if available_keys.is_empty() {
                             return Err(AppError::Msg("No GPG keys found".to_string()));
@@ -197,6 +183,8 @@ impl ClapApp {
                     envs_map,
                     cipher,
                 )?;
+
+                success("Profile created");
             }
 
             Command::Set {

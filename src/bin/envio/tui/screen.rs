@@ -7,6 +7,9 @@ pub enum Action {
     None,
     Exit,
     OpenProfile(String),
+    NewProfile,
+    EditProfile(String),
+    DeleteProfile(String),
     Back,
 }
 

@@ -24,56 +24,6 @@ pub struct GetKeyScreen {
     decrypt_handle: Option<JoinHandle<Option<Profile>>>,
 }
 
-impl GetKeyScreen {
-    pub fn new(profile_name: String) -> Self {
-        Self {
-            profile_name,
-            key: String::new(),
-            feedback: None,
-            decrypt_handle: None,
-        }
-    }
-
-    fn spawn_decrypt(&mut self) -> AppResult<()> {
-        let profile_name = self.profile_name.clone();
-        let key = self.key.clone();
-
-        self.decrypt_handle = Some(thread::spawn(move || {
-            let profile_path = match get_profile_path(&profile_name) {
-                Ok(p) => p,
-                Err(_) => return None,
-            };
-
-            envio::get_profile(profile_path, Some(|| key)).ok()
-        }));
-
-        Ok(())
-    }
-
-    fn check_decrypt(&mut self) -> Option<ScreenEvent> {
-        if let Some(handle) = self.decrypt_handle.take() {
-            match handle.join() {
-                Ok(Some(profile)) => {
-                    self.feedback = None;
-                    return Some(ScreenEvent::ProfileDecrypted(profile));
-                }
-
-                Ok(None) => {
-                    self.feedback = Some(Feedback::IncorrectKey);
-                }
-
-                Err(_) => {
-                    self.feedback = Some(Feedback::DecryptionFailed(
-                        "Decryption thread panicked".to_string(),
-                    ));
-                }
-            }
-        }
-
-        None
-    }
-}
-
 impl Screen for GetKeyScreen {
     fn draw(&mut self, frame: &mut Frame) {
         let area = frame.area();
@@ -190,5 +140,55 @@ impl Screen for GetKeyScreen {
 
     fn tick(&mut self) -> AppResult<Option<ScreenEvent>> {
         Ok(self.check_decrypt())
+    }
+}
+
+impl GetKeyScreen {
+    pub fn new(profile_name: String) -> Self {
+        Self {
+            profile_name,
+            key: String::new(),
+            feedback: None,
+            decrypt_handle: None,
+        }
+    }
+
+    fn spawn_decrypt(&mut self) -> AppResult<()> {
+        let profile_name = self.profile_name.clone();
+        let key = self.key.clone();
+
+        self.decrypt_handle = Some(thread::spawn(move || {
+            let profile_path = match get_profile_path(&profile_name) {
+                Ok(p) => p,
+                Err(_) => return None,
+            };
+
+            envio::get_profile(profile_path, Some(|| key)).ok()
+        }));
+
+        Ok(())
+    }
+
+    fn check_decrypt(&mut self) -> Option<ScreenEvent> {
+        if let Some(handle) = self.decrypt_handle.take() {
+            match handle.join() {
+                Ok(Some(profile)) => {
+                    self.feedback = None;
+                    return Some(ScreenEvent::ProfileDecrypted(profile));
+                }
+
+                Ok(None) => {
+                    self.feedback = Some(Feedback::IncorrectKey);
+                }
+
+                Err(_) => {
+                    self.feedback = Some(Feedback::DecryptionFailed(
+                        "Decryption thread panicked".to_string(),
+                    ));
+                }
+            }
+        }
+
+        None
     }
 }

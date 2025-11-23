@@ -57,7 +57,6 @@ pub fn create_profile(
 
     Profile::new(metadata, cipher, envs).save()?;
 
-    success("Profile created");
     Ok(())
 }
 
