@@ -1,5 +1,3 @@
-use super::screen::{Action, Screen, ScreenEvent};
-use crate::{error::AppResult, utils::get_profile_path};
 use envio::Profile;
 use ratatui::{
     crossterm::event::{KeyCode, KeyEvent},
@@ -10,6 +8,9 @@ use ratatui::{
     Frame,
 };
 use std::thread::{self, JoinHandle};
+
+use super::{Action, Screen, ScreenEvent, ScreenId};
+use crate::{error::AppResult, utils::get_profile_path};
 
 enum Feedback {
     Decrypting,
@@ -140,6 +141,10 @@ impl Screen for GetKeyScreen {
 
     fn tick(&mut self) -> AppResult<Option<ScreenEvent>> {
         Ok(self.check_decrypt())
+    }
+
+    fn id(&self) -> ScreenId {
+        ScreenId::GetKey(self.profile_name.clone())
     }
 }
 

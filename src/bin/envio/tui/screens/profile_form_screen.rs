@@ -1,10 +1,3 @@
-use super::screen::{Action, Screen};
-use crate::{
-    error::AppResult,
-    ops,
-    utils::{get_configdir, get_profile_metadata, get_profile_path},
-};
-
 use envio::{
     cipher::{create_cipher, gpg::get_gpg_keys, CipherKind},
     EnvMap,
@@ -19,6 +12,13 @@ use ratatui::{
 };
 use std::thread::{self, JoinHandle};
 use strum::IntoEnumIterator;
+
+use super::{Action, Screen, ScreenEvent, ScreenId};
+use crate::{
+    error::AppResult,
+    ops,
+    utils::{get_configdir, get_profile_metadata, get_profile_path},
+};
 
 enum Status {
     Idle,
@@ -394,9 +394,13 @@ impl Screen for CreateProfileScreen {
         }
     }
 
-    fn tick(&mut self) -> AppResult<Option<super::screen::ScreenEvent>> {
+    fn tick(&mut self) -> AppResult<Option<ScreenEvent>> {
         self.check_save();
         Ok(None)
+    }
+
+    fn id(&self) -> ScreenId {
+        ScreenId::CreateProfile
     }
 }
 
@@ -925,6 +929,10 @@ impl Screen for EditProfileScreen {
 
             _ => Ok(Action::None),
         }
+    }
+
+    fn id(&self) -> ScreenId {
+        ScreenId::EditProfile(self.profile_name.clone())
     }
 }
 

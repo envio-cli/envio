@@ -1,29 +1,31 @@
 use ratatui::{
     crossterm::event::{self, Event, KeyEvent, KeyEventKind},
-    DefaultTerminal, Frame,
+    DefaultTerminal,
 };
 use std::time::Duration;
 
+use super::{
+    context::AppContext,
+    navigation::NavigationStack,
+    screens::{Action, Screen, ScreenEvent, ScreenId, SelectScreen},
+};
 use crate::{
     error::AppResult,
-    tui::{
-        edit_screen::EditScreen,
-        get_key_screen::GetKeyScreen,
-        profile_form_screen::{CreateProfileScreen, EditProfileScreen},
-        screen::{Action, Screen, ScreenEvent},
-        select_screen::SelectScreen,
-    },
     utils::{get_profile_metadata, get_profile_path},
 };
 
 pub struct TuiApp {
+    ctx: AppContext,
+    navigation: NavigationStack,
     current_screen: Box<dyn Screen>,
     exit: bool,
 }
 
 impl TuiApp {
     pub fn default() -> AppResult<Self> {
-        Ok(TuiApp {
+        Ok(Self {
+            ctx: AppContext::new(),
+            navigation: NavigationStack::new(ScreenId::Select),
             current_screen: Box::new(SelectScreen::new()?),
             exit: false,
         })
@@ -31,13 +33,15 @@ impl TuiApp {
 
     pub fn run(&mut self, terminal: &mut DefaultTerminal) -> AppResult<()> {
         while !self.exit {
-            terminal.draw(|frame| self.draw(frame))?;
+            terminal.draw(|f| self.current_screen.draw(f))?;
 
-            if let Some(event) = self.current_screen.tick()? {
-                self.handle_screen_event(event)?;
+            if let Some(ev) = self.current_screen.tick()? {
+                self.handle_screen_event(ev)?;
             }
 
-            self.handle_events()?;
+            self.handle_input_events()?;
+            self.update_current_screen()?;
+            self.ctx.cache.cleanup_expired();
 
             std::thread::sleep(Duration::from_millis(16));
         }
@@ -45,67 +49,80 @@ impl TuiApp {
         Ok(())
     }
 
-    fn draw(&mut self, frame: &mut Frame) {
-        self.current_screen.draw(frame);
+    fn update_current_screen(&mut self) -> AppResult<()> {
+        if let Some(id) = self.navigation.current() {
+            if id != &self.current_screen.id() {
+                self.current_screen = id.create_screen(&mut self.ctx)?;
+            }
+        }
+        Ok(())
     }
 
     fn handle_screen_event(&mut self, event: ScreenEvent) -> AppResult<()> {
         match event {
             ScreenEvent::ProfileDecrypted(profile) => {
-                self.current_screen = Box::new(EditScreen::new(profile));
+                let name = profile.metadata.name.clone();
+                self.ctx.cache.insert_profile(name.clone(), profile);
+                self.navigation.push(ScreenId::Edit(name))?;
+            }
+
+            ScreenEvent::ProfileUpdated(profile) => {
+                let name = profile.metadata.name.clone();
+                self.ctx.cache.insert_profile(name, profile);
             }
         }
-
         Ok(())
     }
 
-    fn handle_events(&mut self) -> AppResult<()> {
+    fn handle_input_events(&mut self) -> AppResult<()> {
         if event::poll(Duration::from_millis(0))? {
-            match event::read()? {
-                Event::Key(key_event) if key_event.kind == KeyEventKind::Press => {
-                    self.handle_key_event(key_event)?
+            if let Event::Key(k) = event::read()? {
+                if k.kind == KeyEventKind::Press {
+                    self.handle_key(k)?;
                 }
-                _ => {}
             }
         }
-
         Ok(())
     }
 
-    fn handle_key_event(&mut self, key: KeyEvent) -> AppResult<()> {
-        let action = self.current_screen.handle_key_event(key)?;
-
-        match action {
-            Action::Exit => {
-                self.exit = true;
-            }
-
-            Action::OpenProfile(profile_name) => {
-                let metadata = get_profile_metadata(&profile_name)?;
-
-                if metadata.cipher_kind == envio::cipher::CipherKind::PASSPHRASE {
-                    self.current_screen = Box::new(GetKeyScreen::new(profile_name));
-                } else {
-                    let profile_path = get_profile_path(&profile_name)?;
-                    let profile = envio::get_profile(profile_path, None::<fn() -> String>)?;
-                    self.current_screen = Box::new(EditScreen::new(profile));
-                }
-            }
-
-            Action::NewProfile => {
-                self.current_screen = Box::new(CreateProfileScreen::new()?);
-            }
-
-            Action::EditProfile(profile_name) => {
-                self.current_screen = Box::new(EditProfileScreen::new(profile_name)?);
-            }
-
+    fn handle_key(&mut self, key: KeyEvent) -> AppResult<()> {
+        match self.current_screen.handle_key_event(key)? {
+            Action::Exit => self.exit = true,
+            Action::OpenProfile(name) => self.open_profile(&name)?,
+            Action::NewProfile => self.navigation.push(ScreenId::CreateProfile)?,
+            Action::EditProfile(name) => self.navigation.push(ScreenId::EditProfile(name))?,
             Action::Back => {
-                self.current_screen = Box::new(SelectScreen::new()?);
+                let _ = self.navigation.pop();
             }
-
             _ => {}
         }
+        Ok(())
+    }
+
+    fn open_profile(&mut self, name: &str) -> AppResult<()> {
+        let metadata = get_profile_metadata(name)?;
+
+        match metadata.cipher_kind {
+            envio::cipher::CipherKind::PASSPHRASE => {
+                if self.ctx.cache.has_profile(name) {
+                    self.navigation.push(ScreenId::Edit(name.to_string()))?;
+                } else {
+                    self.navigation
+                        .push_overlay(ScreenId::GetKey(name.to_string()))?;
+                }
+            }
+            _ => self.open_unencrypted_profile(name)?,
+        }
+
+        Ok(())
+    }
+
+    fn open_unencrypted_profile(&mut self, name: &str) -> AppResult<()> {
+        let path = get_profile_path(name)?;
+        let profile = envio::get_profile(path, None::<fn() -> String>)?;
+
+        self.ctx.cache.insert_profile(name.to_string(), profile);
+        self.navigation.push(ScreenId::Edit(name.to_string()))?;
 
         Ok(())
     }

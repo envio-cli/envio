@@ -1,7 +1,3 @@
-use crate::{
-    error::AppResult,
-    utils::{get_configdir, get_profile_metadata},
-};
 use envio::{cipher::CipherKind, ProfileMetadata};
 use ratatui::{
     crossterm::event::{KeyCode, KeyEvent},
@@ -12,7 +8,11 @@ use ratatui::{
     Frame,
 };
 
-use super::screen::{Action, Screen};
+use super::{Action, Screen, ScreenId};
+use crate::{
+    error::AppResult,
+    utils::{get_configdir, get_profile_metadata},
+};
 
 fn styled_span(content: impl Into<String>, fg: Color, bold: bool) -> Span<'static> {
     let mut style = Style::default().fg(fg);
@@ -106,6 +106,10 @@ impl Screen for SelectScreen {
 
             _ => Ok(Action::None),
         }
+    }
+
+    fn id(&self) -> ScreenId {
+        ScreenId::Select
     }
 }
 

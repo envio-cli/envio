@@ -9,8 +9,8 @@ use ratatui::{
 };
 use std::thread::{self, JoinHandle};
 
-use super::screen::{Action, Screen};
-use crate::{error::AppResult, tui::screen::ScreenEvent};
+use super::{Action, Screen, ScreenEvent, ScreenId};
+use crate::{error::AppResult, tui::context::AppContext};
 
 enum EditMode {
     None,
@@ -33,6 +33,7 @@ pub struct EditScreen {
     edit_buffer: String,
     status: Status,
     save_handle: Option<JoinHandle<AppResult<()>>>,
+    pending_cache_update: Option<Profile>,
 }
 
 impl Screen for EditScreen {
@@ -145,19 +146,32 @@ impl Screen for EditScreen {
 
     fn tick(&mut self) -> AppResult<Option<ScreenEvent>> {
         self.check_save();
+
+        if let Some(profile) = self.pending_cache_update.take() {
+            return Ok(Some(ScreenEvent::ProfileUpdated(profile)));
+        }
+
         Ok(None)
+    }
+
+    fn id(&self) -> ScreenId {
+        ScreenId::Edit(self.profile.metadata.name.clone())
     }
 }
 
 impl EditScreen {
-    pub fn new(profile: Profile) -> Self {
+    pub fn new(profile_name: String, ctx: &mut AppContext) -> AppResult<Self> {
+        let profile = ctx.cache.get_profile(&profile_name).ok_or_else(|| {
+            crate::error::AppError::Msg(format!("Profile {} not found in cache", profile_name))
+        })?;
+
         let envs: Vec<Env> = profile.envs.iter().cloned().collect();
         let mut list_state = ListState::default();
         if !envs.is_empty() {
             list_state.select(Some(0));
         }
 
-        Self {
+        Ok(Self {
             profile,
             envs,
             list_state,
@@ -165,7 +179,8 @@ impl EditScreen {
             edit_buffer: String::new(),
             status: Status::Idle,
             save_handle: None,
-        }
+            pending_cache_update: None,
+        })
     }
 
     fn get_selected_index(&self) -> Option<usize> {
@@ -281,6 +296,7 @@ impl EditScreen {
         self.profile.envs = self.envs.clone().into();
 
         let mut profile = self.profile.clone();
+        self.pending_cache_update = Some(profile.clone());
 
         self.status = Status::Saving;
         self.save_handle = Some(thread::spawn(move || {
