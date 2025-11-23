@@ -36,6 +36,7 @@ pub struct SelectScreen {
     list_state: ListState,
     search_input: String,
     search_mode: bool,
+    delete_confirmation: Option<String>,
 }
 
 impl Screen for SelectScreen {
@@ -53,9 +54,17 @@ impl Screen for SelectScreen {
         self.draw_header(frame, chunks[0]);
         self.draw_profile_list(frame, chunks[1]);
         self.draw_footer(frame, chunks[2]);
+
+        if let Some(profile_name) = &self.delete_confirmation {
+            self.draw_delete_confirmation(frame, area, profile_name);
+        }
     }
 
     fn handle_key_event(&mut self, key: KeyEvent) -> AppResult<Action> {
+        if let Some(profile_name) = &self.delete_confirmation {
+            return self.handle_delete_confirmation_key(key, profile_name.clone());
+        }
+
         if self.search_mode {
             return self.handle_search_key(key);
         }
@@ -82,9 +91,12 @@ impl Screen for SelectScreen {
                 .get_selected_profile()
                 .map_or(Action::None, |p| Action::EditProfile(p.name.clone()))),
 
-            KeyCode::Char('d') => Ok(self
-                .get_selected_profile()
-                .map_or(Action::None, |p| Action::DeleteProfile(p.name.clone()))),
+            KeyCode::Char('d') => {
+                if let Some(profile) = self.get_selected_profile() {
+                    self.delete_confirmation = Some(profile.name.clone());
+                }
+                Ok(Action::None)
+            }
 
             KeyCode::Enter => Ok(self
                 .get_selected_profile()
@@ -105,6 +117,7 @@ impl SelectScreen {
             list_state: ListState::default(),
             search_input: String::new(),
             search_mode: false,
+            delete_confirmation: None,
         };
 
         screen.load_profiles()?;
@@ -325,5 +338,108 @@ impl SelectScreen {
             .selected()
             .and_then(|idx| self.filtered_profiles.get(idx))
             .map(|&i| &self.profiles[i])
+    }
+
+    fn draw_delete_confirmation(&self, frame: &mut Frame, area: Rect, profile_name: &str) {
+        let vertical_chunks = Layout::default()
+            .direction(Direction::Vertical)
+            .constraints([
+                Constraint::Percentage(40),
+                Constraint::Length(5),
+                Constraint::Percentage(40),
+            ])
+            .split(area);
+
+        let center_area = vertical_chunks[1];
+        let horizontal_chunks = Layout::default()
+            .direction(Direction::Horizontal)
+            .constraints([
+                Constraint::Percentage(20),
+                Constraint::Percentage(60),
+                Constraint::Percentage(20),
+            ])
+            .split(center_area);
+
+        let content_area = horizontal_chunks[1];
+
+        let message = format!("Delete profile '{}'?", profile_name);
+        let message_line = Line::from(vec![
+            Span::styled(
+                "⚠ ",
+                Style::default().fg(Color::Red).add_modifier(Modifier::BOLD),
+            ),
+            Span::styled(
+                message,
+                Style::default().fg(Color::Red).add_modifier(Modifier::BOLD),
+            ),
+        ]);
+
+        let key_hints = Line::from(vec![
+            Span::styled("Press ", Style::default().fg(Color::DarkGray)),
+            Span::styled(
+                "Y",
+                Style::default()
+                    .fg(Color::Green)
+                    .add_modifier(Modifier::BOLD),
+            ),
+            Span::styled(" to confirm, ", Style::default().fg(Color::DarkGray)),
+            Span::styled(
+                "N",
+                Style::default()
+                    .fg(Color::Yellow)
+                    .add_modifier(Modifier::BOLD),
+            ),
+            Span::styled(" or ", Style::default().fg(Color::DarkGray)),
+            Span::styled(
+                "Esc",
+                Style::default()
+                    .fg(Color::Yellow)
+                    .add_modifier(Modifier::BOLD),
+            ),
+            Span::styled(" to cancel", Style::default().fg(Color::DarkGray)),
+        ]);
+
+        let content = vec![message_line, Line::from(""), key_hints];
+        let prompt = Paragraph::new(content)
+            .alignment(ratatui::layout::Alignment::Center)
+            .block(
+                Block::default()
+                    .borders(Borders::ALL)
+                    .border_style(Style::default().fg(Color::Red))
+                    .title(Span::styled(
+                        " Confirm Delete ",
+                        Style::default().fg(Color::Red).add_modifier(Modifier::BOLD),
+                    )),
+            );
+
+        frame.render_widget(prompt, content_area);
+    }
+
+    fn handle_delete_confirmation_key(
+        &mut self,
+        key: KeyEvent,
+        profile_name: String,
+    ) -> AppResult<Action> {
+        match key.code {
+            KeyCode::Char('y') | KeyCode::Char('Y') => {
+                self.delete_confirmation = None;
+                crate::ops::delete_profile(&profile_name)?;
+                self.load_profiles()?;
+                self.update_filter();
+                if !self.filtered_profiles.is_empty() {
+                    let max_idx = self.filtered_profiles.len().saturating_sub(1);
+                    let current_idx = self.list_state.selected().unwrap_or(0);
+                    self.list_state.select(Some(current_idx.min(max_idx)));
+                }
+                Ok(Action::None)
+            }
+
+            KeyCode::Char('n') | KeyCode::Char('N') | KeyCode::Esc => {
+                self.delete_confirmation = None;
+                Ok(Action::None)
+            }
+
+            _ => Ok(Action::None),
+        }
     }
 }

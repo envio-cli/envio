@@ -73,10 +73,25 @@ impl ClapApp {
                             return Err(AppError::Msg("No GPG keys found".to_string()));
                         }
 
-                        Some(prompts::select_prompt(prompts::SelectPromptOptions {
-                            title: "Select the GPG key you want to use for encryption:".to_string(),
-                            options: available_keys.iter().map(|(s, _)| s.clone()).collect(),
-                        })?)
+                        let labels: Vec<String> = available_keys
+                            .iter()
+                            .map(|(label, _)| label.clone())
+                            .collect();
+
+                        let selected_label =
+                            prompts::select_prompt(prompts::SelectPromptOptions {
+                                title: "Select the GPG key you want to use for encryption:"
+                                    .to_string(),
+                                options: labels,
+                            })?;
+
+                        let fingerprint = available_keys
+                            .into_iter()
+                            .find(|(label, _)| *label == selected_label)
+                            .map(|(_, fingerprint)| fingerprint)
+                            .unwrap();
+
+                        Some(fingerprint)
                     }
 
                     CipherKind::PASSPHRASE => {
