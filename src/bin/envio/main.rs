@@ -100,13 +100,14 @@ fn run() -> AppResult<()> {
     #[cfg(target_family = "unix")]
     initialize_config()?;
 
-    ClapApp::parse().run()?;
-
-    Ok(())
+    ClapApp::parse().run()
 }
 
 fn main() {
-    color_eyre::install().unwrap();
+    better_panic::Settings::debug()
+        .message("Uh oh! Something went wrong!")
+        .backtrace_first(false)
+        .install();
 
     match run() {
         Ok(_) => std::process::exit(0),
