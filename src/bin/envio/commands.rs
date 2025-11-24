@@ -362,6 +362,7 @@ impl ClapApp {
 
             Command::Profile(ProfileCommand::Delete { profile_name }) => {
                 ops::delete_profile(profile_name)?;
+                success("Deleted profile");
             }
 
             Command::Profile(ProfileCommand::List { no_pretty_print }) => {

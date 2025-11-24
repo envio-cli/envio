@@ -31,11 +31,7 @@ pub fn create_profile(
     let profile_dir = config_dir.join("profiles");
 
     if !profile_dir.exists() {
-        println!(
-            "{}",
-            "Profiles directory does not exist creating it now..".bold()
-        );
-        std::fs::create_dir_all(&profile_dir).unwrap();
+        std::fs::create_dir_all(&profile_dir)?;
     }
 
     let profile_file_path = profile_dir.join(name.clone() + ".env");
@@ -156,7 +152,6 @@ pub fn list_envs(profile: &Profile, show_comments: bool, show_expiration: bool) 
 
 pub fn delete_profile(profile_name: &str) -> AppResult<()> {
     std::fs::remove_file(get_profile_path(profile_name)?)?;
-    success("Deleted profile");
 
     Ok(())
 }
