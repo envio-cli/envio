@@ -30,6 +30,9 @@ _envio() {
             envio,set)
                 cmd="envio__set"
                 ;;
+            envio,tui)
+                cmd="envio__tui"
+                ;;
             envio,unload)
                 cmd="envio__unload"
                 ;;
@@ -58,7 +61,7 @@ _envio() {
 
     case "${cmd}" in
         envio)
-            opts="-h --help profile set unset load unload run import export version"
+            opts="-h --help profile set unset load unload run import export tui version"
             if [[ ${cur} == -* || ${COMP_CWORD} -eq 1 ]] ; then
                 COMPREPLY=( $(compgen -W "${opts}" -- "${cur}") )
                 return 0
@@ -255,6 +258,20 @@ _envio() {
             ;;
         envio__set)
             opts="-c -x -h --comments --expires --help <PROFILE_NAME> <ENVS>..."
+            if [[ ${cur} == -* || ${COMP_CWORD} -eq 2 ]] ; then
+                COMPREPLY=( $(compgen -W "${opts}" -- "${cur}") )
+                return 0
+            fi
+            case "${prev}" in
+                *)
+                    COMPREPLY=()
+                    ;;
+            esac
+            COMPREPLY=( $(compgen -W "${opts}" -- "${cur}") )
+            return 0
+            ;;
+        envio__tui)
+            opts="-h --help"
             if [[ ${cur} == -* || ${COMP_CWORD} -eq 2 ]] ; then
                 COMPREPLY=( $(compgen -W "${opts}" -- "${cur}") )
                 return 0

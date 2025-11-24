@@ -47,7 +47,7 @@ where
     let profile = get_profile(file_path, key_provider)?;
 
     for env in &profile.envs {
-        std::env::set_var(&env.name, &env.value);
+        std::env::set_var(&env.key, &env.value);
     }
 
     Ok(profile)

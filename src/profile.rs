@@ -22,6 +22,7 @@ pub struct ProfileMetadata {
     pub updated_at: DateTime<Local>,
 }
 
+#[derive(Clone)]
 pub struct Profile {
     pub metadata: ProfileMetadata,
     pub envs: EnvMap,

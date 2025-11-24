@@ -4,19 +4,19 @@ mod error;
 mod ops;
 mod output;
 mod prompts;
+mod tui;
 mod utils;
 mod version;
 
 use clap::Parser;
 use clap_app::ClapApp;
-use error::AppResult;
 use output::{error, warning};
 use semver::Version;
 #[cfg(target_family = "unix")]
 use utils::initalize_config;
 use version::get_latest_version;
 
-fn main() -> AppResult<()> {
+fn main() {
     color_eyre::install().unwrap();
 
     let latest_version = get_latest_version();
@@ -42,6 +42,4 @@ fn main() -> AppResult<()> {
     if let Err(e) = app.run() {
         error(e);
     }
-
-    Ok(())
 }

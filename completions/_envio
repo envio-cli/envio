@@ -150,6 +150,12 @@ _arguments "${_arguments_options[@]}" \
 ':profile_name -- name of the profile:' \
 && ret=0
 ;;
+(tui)
+_arguments "${_arguments_options[@]}" \
+'-h[Print help]' \
+'--help[Print help]' \
+&& ret=0
+;;
 (version)
 _arguments "${_arguments_options[@]}" \
 '-v[show verbose version information]' \
@@ -174,6 +180,7 @@ _envio_commands() {
 'run:Run a command with profile environment variables' \
 'import:Import a profile from a file or url' \
 'export:Export the environment variables of a profile to a file' \
+'tui:launch the interactive TUI application' \
 'version:Print version information' \
     )
     _describe -t commands 'envio commands' commands "$@"
@@ -232,6 +239,11 @@ _envio__set_commands() {
 _envio__profile__show_commands() {
     local commands; commands=()
     _describe -t commands 'envio profile show commands' commands "$@"
+}
+(( $+functions[_envio__tui_commands] )) ||
+_envio__tui_commands() {
+    local commands; commands=()
+    _describe -t commands 'envio tui commands' commands "$@"
 }
 (( $+functions[_envio__unload_commands] )) ||
 _envio__unload_commands() {

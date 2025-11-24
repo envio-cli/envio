@@ -37,6 +37,9 @@ serde_json = "1.0.145"
 strum = "0.27"
 strum_macros = "0.27"
 indexmap = { version = "2.11.4", features = ["serde"] }
+ratatui = "0.29.0"
+crossterm = "0.29.0"
+dyn-clone = "1.0.20"
 
 [target.'cfg(unix)'.dependencies]
 gpgme = "0.11"

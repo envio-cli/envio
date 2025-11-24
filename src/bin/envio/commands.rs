@@ -16,8 +16,9 @@ use crate::{
     clap_app::{ClapApp, Command, ProfileCommand},
     error::{AppError, AppResult},
     ops,
-    output::error,
+    output::{error, success},
     prompts,
+    tui::TuiApp,
     utils::{self, get_configdir},
 };
 
@@ -66,31 +67,31 @@ impl ClapApp {
 
                 let key = match selected_cipher_kind {
                     CipherKind::GPG => {
-                        let available_keys;
-
-                        #[cfg(target_family = "unix")]
-                        {
-                            available_keys = get_gpg_keys()?;
-                        }
-
-                        #[cfg(target_family = "windows")]
-                        {
-                            available_keys = match get_gpg_keys() {
-                                Some(keys) => keys,
-                                None => {
-                                    return Err(AppError::Msg("No GPG keys found".to_string()));
-                                }
-                            };
-                        }
+                        let available_keys = get_gpg_keys()?;
 
                         if available_keys.is_empty() {
                             return Err(AppError::Msg("No GPG keys found".to_string()));
                         }
 
-                        Some(prompts::select_prompt(prompts::SelectPromptOptions {
-                            title: "Select the GPG key you want to use for encryption:".to_string(),
-                            options: available_keys.iter().map(|(s, _)| s.clone()).collect(),
-                        })?)
+                        let labels: Vec<String> = available_keys
+                            .iter()
+                            .map(|(label, _)| label.clone())
+                            .collect();
+
+                        let selected_label =
+                            prompts::select_prompt(prompts::SelectPromptOptions {
+                                title: "Select the GPG key you want to use for encryption:"
+                                    .to_string(),
+                                options: labels,
+                            })?;
+
+                        let fingerprint = available_keys
+                            .into_iter()
+                            .find(|(label, _)| *label == selected_label)
+                            .map(|(_, fingerprint)| fingerprint)
+                            .unwrap();
+
+                        Some(fingerprint)
                     }
 
                     CipherKind::PASSPHRASE => {
@@ -136,7 +137,7 @@ impl ClapApp {
                         default_indices: Some(default_options),
                     })?;
 
-                    envs_map.retain(|env| selected_keys.contains(&env.name));
+                    envs_map.retain(|env| selected_keys.contains(&env.key));
                 } else if envs.is_some() {
                     envs_map = EnvMap::new();
 
@@ -177,7 +178,7 @@ impl ClapApp {
                 for env in envs_map.iter_mut() {
                     if *add_comments {
                         env.comment = Some(prompts::text_prompt(prompts::TextPromptOptions {
-                            title: format!("Enter a comment for '{}':", env.name),
+                            title: format!("Enter a comment for '{}':", env.key),
                             default: None,
                         })?);
                     }
@@ -185,7 +186,7 @@ impl ClapApp {
                     if *add_expires {
                         env.expiration_date =
                             Some(prompts::date_prompt(prompts::DatePromptOptions {
-                                title: format!("Select an expiration date for '{}':", env.name),
+                                title: format!("Select an expiration date for '{}':", env.key),
                                 default: Some(Local::now().date_naive()),
                             })?);
                     }
@@ -197,6 +198,8 @@ impl ClapApp {
                     envs_map,
                     cipher,
                 )?;
+
+                success("Profile created");
             }
 
             Command::Set {
@@ -255,7 +258,7 @@ impl ClapApp {
                 for mut env in set_envs {
                     if *add_comments {
                         env.comment = Some(prompts::text_prompt(prompts::TextPromptOptions {
-                            title: format!("Enter a comment for '{}':", env.name),
+                            title: format!("Enter a comment for '{}':", env.key),
                             default: None,
                         })?);
                     }
@@ -263,7 +266,7 @@ impl ClapApp {
                     if *add_expires {
                         env.expiration_date =
                             Some(prompts::date_prompt(prompts::DatePromptOptions {
-                                title: format!("Select an expiration date for '{}':", env.name),
+                                title: format!("Select an expiration date for '{}':", env.key),
                                 default: Some(Local::now().date_naive()),
                             })?);
                     }
@@ -377,7 +380,7 @@ impl ClapApp {
 
                 if *no_pretty_print {
                     for env in profile.envs {
-                        println!("{}={}", env.name, env.value);
+                        println!("{}={}", env.key, env.value);
                     }
                 } else {
                     ops::list_envs(&profile, *show_comments, *show_expiration);
@@ -454,6 +457,12 @@ impl ClapApp {
                 serialized_profile.metadata.file_path = location.clone();
 
                 envio::utils::save_serialized_profile(&location, serialized_profile)?;
+            }
+
+            Command::Tui => {
+                let mut terminal = ratatui::init();
+                TuiApp::default()?.run(&mut terminal)?;
+                ratatui::restore();
             }
 
             Command::Version { verbose } => {

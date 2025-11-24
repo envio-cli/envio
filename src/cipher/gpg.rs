@@ -22,7 +22,7 @@ struct GPGMetadata {
     key_fingerprint: String,
 }
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Clone)]
 pub struct GPG {
     key_fingerprint: String,
 }
@@ -174,8 +174,23 @@ impl Cipher for GPG {
     }
 }
 
-#[cfg(target_family = "unix")]
 pub fn get_gpg_keys() -> Result<Vec<(String, String)>> {
+    #[cfg(target_family = "unix")]
+    {
+        get_gpg_keys_unix()
+    }
+
+    #[cfg(target_family = "windows")]
+    {
+        match get_gpg_keys_windows() {
+            Some(keys) => Ok(keys),
+            None => Err(Error::Msg("No GPG keys found".to_string())),
+        }
+    }
+}
+
+#[cfg(target_family = "unix")]
+fn get_gpg_keys_unix() -> Result<Vec<(String, String)>> {
     let mut context = Context::from_protocol(Protocol::OpenPgp).unwrap();
     let mut available_keys: Vec<(String, String)> = Vec::new();
 
@@ -221,7 +236,7 @@ pub fn get_gpg_keys() -> Result<Vec<(String, String)>> {
 }
 
 #[cfg(target_family = "windows")]
-pub fn get_gpg_keys() -> Option<Vec<(String, String)>> {
+fn get_gpg_keys_windows() -> Option<Vec<(String, String)>> {
     let output = Command::new("gpg")
         .args(["--list-keys", "--keyid-format", "LONG"])
         .output()

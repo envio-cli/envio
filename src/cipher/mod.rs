@@ -2,19 +2,19 @@ pub mod gpg;
 pub mod none;
 pub mod passphrase;
 
-use std::{any::Any, path::Path};
-
 // re-export the cipher types
 pub use gpg::GPG;
 pub use none::NONE;
 pub use passphrase::PASSPHRASE;
 
+use dyn_clone::DynClone;
 use serde::{Deserialize, Serialize};
+use std::{any::Any, path::Path};
 use strum_macros::{Display, EnumIter, EnumString};
 
 use crate::{error::Result, utils};
 
-#[derive(Clone, PartialEq, Serialize, Deserialize, Display, EnumIter, EnumString)]
+#[derive(Copy, Clone, PartialEq, Serialize, Deserialize, Display, EnumIter, EnumString)]
 #[serde(rename_all = "lowercase")]
 pub enum CipherKind {
     #[strum(ascii_case_insensitive, to_string = "none")]
@@ -25,7 +25,7 @@ pub enum CipherKind {
     GPG,
 }
 
-pub trait Cipher: Any {
+pub trait Cipher: Any + Send + DynClone {
     fn encrypt(&self, data: &[u8]) -> Result<Vec<u8>>;
     fn decrypt(&self, encrypted_data: &[u8]) -> Result<Vec<u8>>;
     fn kind(&self) -> CipherKind;
@@ -41,6 +41,12 @@ pub trait Cipher: Any {
 
     fn as_any(&self) -> &dyn Any;
     fn as_any_mut(&mut self) -> &mut dyn Any;
+}
+
+impl Clone for Box<dyn Cipher> {
+    fn clone(&self) -> Box<dyn Cipher> {
+        dyn_clone::clone_box(self.as_ref())
+    }
 }
 
 pub fn create_cipher(cipher_kind: CipherKind, key: Option<&str>) -> Result<Box<dyn Cipher>> {
