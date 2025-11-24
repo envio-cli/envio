@@ -90,6 +90,10 @@ pub fn get_configdir() -> PathBuf {
     homedir.join(".envio")
 }
 
+pub fn get_profile_dir() -> PathBuf {
+    get_configdir().join("profiles")
+}
+
 pub fn contains_path_separator(s: &str) -> bool {
     s.contains('/') || s.contains('\\')
 }
@@ -98,10 +102,15 @@ pub fn get_cwd() -> PathBuf {
     std::env::current_dir().unwrap()
 }
 
+// use this to get the path of a profile that does not exist yet
+// like when creating a new profile
+pub fn build_profile_path(profile_name: &str) -> PathBuf {
+    get_profile_dir().join(format!("{}.env", profile_name))
+}
+
+// use this to get the path of a profile that exists
 pub fn get_profile_path(profile_name: &str) -> AppResult<PathBuf> {
-    let path = get_configdir()
-        .join("profiles")
-        .join(format!("{}.env", profile_name));
+    let path = build_profile_path(profile_name);
 
     if !path.exists() {
         return Err(AppError::ProfileDoesNotExist(profile_name.to_string()));

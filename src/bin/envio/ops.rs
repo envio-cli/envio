@@ -14,10 +14,10 @@ use envio::{cipher::Cipher, profile::ProfileMetadata, EnvMap, Profile};
 use crate::utils::get_shell_config;
 use crate::{
     error::{AppError, AppResult},
-    output::{success, warning},
+    output::warning,
     utils::{
-        contains_path_separator, download_file, get_configdir, get_cwd, get_profile_metadata,
-        get_profile_path,
+        build_profile_path, contains_path_separator, download_file, get_configdir, get_cwd,
+        get_profile_dir, get_profile_metadata, get_profile_path,
     },
 };
 
@@ -27,8 +27,7 @@ pub fn create_profile(
     envs: EnvMap,
     cipher: Box<dyn Cipher>,
 ) -> AppResult<()> {
-    let config_dir = get_configdir();
-    let profile_dir = config_dir.join("profiles");
+    let profile_dir = get_profile_dir();
 
     if !profile_dir.exists() {
         std::fs::create_dir_all(&profile_dir)?;
@@ -157,8 +156,7 @@ pub fn delete_profile(profile_name: &str) -> AppResult<()> {
 }
 
 pub fn list_profiles(no_pretty_print: bool) -> AppResult<()> {
-    let configdir = get_configdir();
-    let profile_dir = configdir.join("profiles");
+    let profile_dir = get_profile_dir();
 
     if !profile_dir.exists() {
         return Err(AppError::Msg(
@@ -228,11 +226,7 @@ pub fn list_profiles(no_pretty_print: bool) -> AppResult<()> {
 }
 
 pub fn download_profile(url: String, profile_name: &String) -> AppResult<()> {
-    let configdir = get_configdir();
-
-    let location = configdir
-        .join("profiles")
-        .join(format!("{}.env", profile_name));
+    let location = build_profile_path(profile_name);
 
     if location.exists() {
         return Err(AppError::ProfileExists(profile_name.clone()));
@@ -243,8 +237,6 @@ pub fn download_profile(url: String, profile_name: &String) -> AppResult<()> {
         .build()?;
 
     runtime.block_on(download_file(url.as_str(), location.to_str().unwrap()))?;
-
-    success("Downloaded profile");
 
     Ok(())
 }
@@ -257,8 +249,6 @@ pub fn import_profile(file_path: String, profile_name: &String) -> AppResult<()>
         )));
     }
 
-    let configdir = get_configdir();
-
     let mut file = std::fs::OpenOptions::new()
         .read(true)
         .open(&file_path)
@@ -267,17 +257,13 @@ pub fn import_profile(file_path: String, profile_name: &String) -> AppResult<()>
     let mut contents = String::new();
     file.read_to_string(&mut contents).unwrap();
 
-    let location = configdir
-        .join("profiles")
-        .join(format!("{}.env", profile_name));
+    let location = build_profile_path(profile_name);
 
     if location.exists() {
         return Err(AppError::ProfileExists(profile_name.clone()));
     }
 
     std::fs::write(location, contents)?;
-
-    success("Imported profile");
 
     Ok(())
 }

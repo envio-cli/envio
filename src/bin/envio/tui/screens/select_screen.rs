@@ -11,7 +11,7 @@ use ratatui::{
 use super::{Action, Screen, ScreenId};
 use crate::{
     error::AppResult,
-    utils::{get_configdir, get_profile_metadata},
+    utils::{get_profile_dir, get_profile_metadata},
 };
 
 fn styled_span(content: impl Into<String>, fg: Color, bold: bool) -> Span<'static> {
@@ -138,7 +138,7 @@ impl SelectScreen {
 
     pub fn load_profiles(&mut self) -> AppResult<()> {
         self.profiles.clear();
-        let profile_dir = get_configdir().join("profiles");
+        let profile_dir = get_profile_dir();
 
         if !profile_dir.exists() {
             return Ok(());

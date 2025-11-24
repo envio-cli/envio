@@ -19,7 +19,7 @@ use crate::{
     output::{error, success},
     prompts,
     tui::TuiApp,
-    utils::{self, get_configdir},
+    utils,
 };
 
 fn get_userkey() -> String {
@@ -447,9 +447,9 @@ impl ClapApp {
                     ));
                 }
 
-                let location = get_configdir()
-                    .join("profiles")
-                    .join(format!("{}.env", &profile_name));
+                success("Imported profile");
+
+                let location = utils::build_profile_path(&profile_name);
 
                 let mut serialized_profile: SerializedProfile =
                     envio::utils::get_serialized_profile(&location)?;

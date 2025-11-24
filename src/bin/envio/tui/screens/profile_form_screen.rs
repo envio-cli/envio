@@ -17,7 +17,7 @@ use super::{Action, Screen, ScreenEvent, ScreenId};
 use crate::{
     error::AppResult,
     ops,
-    utils::{get_configdir, get_profile_metadata, get_profile_path},
+    utils::{build_profile_path, get_profile_metadata, get_profile_path},
 };
 
 enum Status {
@@ -943,10 +943,8 @@ impl EditProfileScreen {
         } else {
             Some(self.description.trim().to_string())
         };
-        let new_file_path = get_configdir()
-            .join("profiles")
-            .join(format!("{}.env", new_profile_name));
 
+        let new_file_path = build_profile_path(&new_profile_name);
         let old_file_path = get_profile_path(&self.profile_name)?;
 
         let mut serialized_profile = envio::utils::get_serialized_profile(&old_file_path)?;
