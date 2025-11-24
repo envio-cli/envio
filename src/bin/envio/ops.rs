@@ -11,13 +11,13 @@ use comfy_table::{Attribute, Cell, ContentArrangement, Table};
 use envio::{cipher::Cipher, profile::ProfileMetadata, EnvMap, Profile};
 
 #[cfg(target_family = "unix")]
-use crate::utils::get_shell_config;
+use crate::utils::get_shell_config_path;
 use crate::{
     error::{AppError, AppResult},
     output::warning,
     utils::{
-        build_profile_path, contains_path_separator, download_file, get_configdir, get_cwd,
-        get_profile_dir, get_profile_metadata, get_profile_path,
+        build_profile_path, contains_path_separator, download_file, get_cwd, get_profile_dir,
+        get_profile_metadata, get_profile_path,
     },
 };
 
@@ -28,11 +28,6 @@ pub fn create_profile(
     cipher: Box<dyn Cipher>,
 ) -> AppResult<()> {
     let profile_dir = get_profile_dir();
-
-    if !profile_dir.exists() {
-        std::fs::create_dir_all(&profile_dir)?;
-    }
-
     let profile_file_path = profile_dir.join(name.clone() + ".env");
 
     if profile_file_path.exists() {
@@ -158,12 +153,6 @@ pub fn delete_profile(profile_name: &str) -> AppResult<()> {
 pub fn list_profiles(no_pretty_print: bool) -> AppResult<()> {
     let profile_dir = get_profile_dir();
 
-    if !profile_dir.exists() {
-        return Err(AppError::Msg(
-            "Profiles directory does not exist".to_string(),
-        ));
-    }
-
     let mut profiles = Vec::new();
     for entry in std::fs::read_dir(profile_dir).unwrap() {
         let entry = entry.unwrap();
@@ -270,8 +259,9 @@ pub fn import_profile(file_path: String, profile_name: &String) -> AppResult<()>
 
 #[cfg(target_family = "unix")]
 pub fn create_shellscript(profile: &str) -> AppResult<()> {
-    let configdir = get_configdir();
-    let shellscript_path = configdir.join("setenv.sh");
+    use crate::utils::get_shellscript_path;
+
+    let shellscript_path = get_shellscript_path();
 
     let mut file = std::fs::OpenOptions::new()
         .write(true)
@@ -312,14 +302,14 @@ done <<< "$ENV_VARS"
 pub fn load_profile(profile_name: &str) -> AppResult<()> {
     get_profile_path(profile_name)?; // will error if the profile does not exist
 
-    let shell_config = get_shell_config()?;
+    let shell_config = get_shell_config_path(false)?;
 
     create_shellscript(profile_name)?;
 
-    if !shell_config.is_empty() {
+    if shell_config.exists() {
         println!(
             "Reload your shell to apply changes or run `source {}`",
-            format_args!("~/{}", shell_config)
+            format_args!("~/{}", shell_config.display())
         );
     } else {
         println!("Reload your shell to apply changes");
@@ -354,10 +344,12 @@ pub fn load_profile(profile: Profile) -> AppResult<()> {
 
 #[cfg(target_family = "unix")]
 pub fn unload_profile() -> AppResult<()> {
+    use crate::utils::get_shellscript_path;
+
     let file = std::fs::OpenOptions::new()
         .write(true)
         .append(false)
-        .open(get_configdir().join("setenv.sh"))
+        .open(get_shellscript_path())
         .unwrap();
 
     file.set_len(0)?;

@@ -9,109 +9,35 @@ use reqwest::Client;
 
 use crate::error::{AppError, AppResult};
 
-#[cfg(target_family = "unix")]
-pub fn initalize_config() -> AppResult<()> {
-    use std::path::Path;
-
-    use colored::Colorize;
-    use inquire::Text;
-
-    let configdir = get_configdir();
-    let homedir = dirs::home_dir().unwrap();
-
-    if !Path::new(&configdir).exists() {
-        println!("{}", "Creating config directory".bold());
-
-        std::fs::create_dir(&configdir)?;
-        std::fs::create_dir(configdir.join("profiles"))?;
-    }
-
-    if !Path::new(&configdir.join("setenv.sh")).exists() {
-        println!("{}", "Creating shellscript".bold());
-        std::fs::write(configdir.join("setenv.sh"), "")?;
-
-        let shellconfig = get_shell_config()?;
-
-        let mut file_path =
-            PathBuf::from(&(homedir.to_str().unwrap().to_owned() + &format!("/{}", shellconfig)));
-        if !file_path.exists() {
-            let input = Text::new(
-                "Shell config file not found, please enter the path to your shell config file:",
-            )
-            .prompt()?;
-
-            file_path = PathBuf::from(input);
-
-            if !file_path.exists() {
-                return Err(AppError::Msg(
-                    "Specified shell config file does not exist".to_string(),
-                ));
-            }
-        }
-
-        let mut file = std::fs::OpenOptions::new()
-            .append(true)
-            .open(file_path)
-            .unwrap();
-
-        let shellscript_path = &configdir.join("setenv.sh");
-
-        let buffer = if shellconfig.contains("fish") {
-            println!(
-                    "To use the shellscript properly you need to install the {}(https://github.com/edc/bass) plugin for fish",
-                    "bass".bold()
-                );
-            format!(
-                "
-# envio DO NOT MODIFY
-bass source {}
-",
-                shellscript_path.to_str().unwrap()
-            )
-        } else {
-            format!(
-                "
-#envio DO NOT MODIFY
-source {}
-",
-                shellscript_path.to_str().unwrap()
-            )
-        };
-
-        writeln!(file, "{}", buffer)?
-    }
-
-    Ok(())
-}
-
 pub fn get_configdir() -> PathBuf {
-    let homedir = dirs::home_dir().unwrap();
-
-    homedir.join(".envio")
+    dirs::home_dir().unwrap().join(".envio")
 }
 
 pub fn get_profile_dir() -> PathBuf {
     get_configdir().join("profiles")
 }
 
-pub fn contains_path_separator(s: &str) -> bool {
-    s.contains('/') || s.contains('\\')
+#[cfg(target_family = "unix")]
+pub fn get_shellscript_path() -> PathBuf {
+    get_configdir().join("setenv.sh")
 }
 
 pub fn get_cwd() -> PathBuf {
     std::env::current_dir().unwrap()
 }
 
-// use this to get the path of a profile that does not exist yet
-// like when creating a new profile
+pub fn contains_path_separator(s: &str) -> bool {
+    s.contains('/') || s.contains('\\')
+}
+
+/// returns the path for a profile that does **not** exist yet
 pub fn build_profile_path(profile_name: &str) -> PathBuf {
     get_profile_dir().join(format!("{}.env", profile_name))
 }
 
-// use this to get the path of a profile that exists
+/// returns the path for a profile that **must exist**
 pub fn get_profile_path(profile_name: &str) -> AppResult<PathBuf> {
     let path = build_profile_path(profile_name);
-
     if !path.exists() {
         return Err(AppError::ProfileDoesNotExist(profile_name.to_string()));
     }
@@ -128,35 +54,25 @@ pub fn get_profile_metadata(profile_name: &str) -> AppResult<ProfileMetadata> {
 pub fn parse_envs_from_string(buffer: &str) -> AppResult<EnvMap> {
     let mut envs_vec = EnvMap::new();
 
-    for buf in buffer.lines() {
-        if buf.is_empty() || !buf.contains('=') {
+    for line in buffer.lines() {
+        if line.is_empty() || !line.contains('=') {
             continue;
         }
 
-        let mut split = buf.splitn(2, '=');
+        let mut split = line.splitn(2, '=');
+        let key = split
+            .next()
+            .ok_or_else(|| AppError::Msg("Cannot parse key from buffer".to_string()))?;
+        let value = split
+            .next()
+            .ok_or_else(|| AppError::Msg(format!("Cannot parse value for key: `{}`", key)))?;
 
-        let key = split.next();
-        let value = split.next();
-
-        if key.is_none() {
-            return Err(AppError::Msg("Can not parse key from buffer".to_string()));
-        }
-
-        if value.is_none() {
-            return Err(AppError::Msg(format!(
-                "Can not parse value from buffer for key: `{}`",
-                key.unwrap()
-            )));
-        }
-
-        envs_vec.insert(Env::from_key_value(
-            key.unwrap().to_string(),
-            value.unwrap().to_string(),
-        ));
+        envs_vec.insert(Env::from_key_value(key.to_string(), value.to_string()));
     }
 
     Ok(envs_vec)
 }
+
 pub async fn download_file(url: &str, file_name: &str) -> AppResult<()> {
     let client = Client::new();
 
@@ -172,24 +88,21 @@ pub async fn download_file(url: &str, file_name: &str) -> AppResult<()> {
     let mut resp = client.get(url).send().await?;
     let mut file = File::create(file_name)?;
 
-    let content_length = resp.content_length();
-    let style = match content_length {
-        Some(total) => {
-            pb.set_length(total);
-            ProgressStyle::default_bar()
-                .template("[{elapsed_precise}] [{bar:40.cyan/blue}] {bytes}/{total_bytes} ({eta})")
-                .unwrap()
-                .with_key(
-                    "eta",
-                    |state: &ProgressState, w: &mut dyn std::fmt::Write| {
-                        write!(w, "{:.1}s", state.eta().as_secs_f64()).unwrap()
-                    },
-                )
-                .progress_chars("#>-")
-        }
-        None => return Err(AppError::Msg("content length is not available".to_string())),
-    };
+    let content_length = resp
+        .content_length()
+        .ok_or_else(|| AppError::Msg("Content length not available".to_string()))?;
+    pb.set_length(content_length);
 
+    let style = ProgressStyle::default_bar()
+        .template("[{elapsed_precise}] [{bar:40.cyan/blue}] {bytes}/{total_bytes} ({eta})")
+        .unwrap()
+        .with_key(
+            "eta",
+            |state: &ProgressState, w: &mut dyn std::fmt::Write| {
+                write!(w, "{:.1}s", state.eta().as_secs_f64()).unwrap();
+            },
+        )
+        .progress_chars("#>-");
     pb.set_style(style);
 
     let mut downloaded = 0u64;
@@ -204,24 +117,30 @@ pub async fn download_file(url: &str, file_name: &str) -> AppResult<()> {
 }
 
 #[cfg(target_family = "unix")]
-pub fn get_shell_config() -> AppResult<&'static str> {
-    let shell_env_value = if let Ok(e) = std::env::var("SHELL") {
-        e
+pub fn get_shell_config_path(full_path: bool) -> AppResult<PathBuf> {
+    use colored::Colorize;
+
+    let shell_env_value = std::env::var("SHELL")
+        .map_err(|_| AppError::Msg("Failed to get SHELL environment variable".into()))?;
+
+    let shell = shell_env_value.rsplit('/').next().unwrap_or("");
+
+    let shell_config_path = if shell.contains("bash") {
+        ".bashrc"
+    } else if shell.contains("zsh") {
+        ".zshrc"
+    } else if shell.contains("fish") {
+        ".config/fish/config.fish"
     } else {
-        return Err(AppError::Msg("Failed to get shell".to_string()));
+        return Err(AppError::Msg(format!(
+            "Unsupported shell: {}",
+            shell.bold()
+        )));
     };
 
-    let shell_as_vec = shell_env_value.split('/').collect::<Vec<&str>>();
-    let shell = shell_as_vec[shell_as_vec.len() - 1];
-
-    let mut shell_config = "";
-    if shell.contains("bash") {
-        shell_config = ".bashrc";
-    } else if shell.contains("zsh") {
-        shell_config = ".zshrc";
-    } else if shell.contains("fish") {
-        shell_config = ".config/fish/config.fish"
+    if full_path {
+        Ok(dirs::home_dir().unwrap().join(shell_config_path))
+    } else {
+        Ok(PathBuf::from(shell_config_path))
     }
-
-    Ok(shell_config)
 }
