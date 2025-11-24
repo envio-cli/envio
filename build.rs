@@ -20,6 +20,8 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let build_timestamp: String = get_buildtimestamp();
     println!("cargo:rustc-env=BUILD_TIMESTAMP={}", build_timestamp);
 
+    export_build_env_vars();
+
     Ok(())
 }
 
@@ -51,4 +53,24 @@ fn get_buildtimestamp() -> String {
         .naive_local()
         .format("%Y-%m-%d %H:%M:%S")
         .to_string();
+}
+
+fn export_build_env_vars() {
+    for var in &[
+        "PROFILE",
+        "TARGET",
+        "CARGO_CFG_TARGET_FAMILY",
+        "CARGO_CFG_TARGET_OS",
+        "CARGO_CFG_TARGET_ARCH",
+        "CARGO_CFG_TARGET_POINTER_WIDTH",
+        "CARGO_CFG_TARGET_ENDIAN",
+        "CARGO_CFG_TARGET_FEATURE",
+        "HOST",
+    ] {
+        println!(
+            "cargo:rustc-env={}={}",
+            var,
+            std::env::var(var).unwrap_or_else(|_| "unknown".into())
+        );
+    }
 }

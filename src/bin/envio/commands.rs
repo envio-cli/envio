@@ -14,6 +14,7 @@ use url::Url;
 
 use crate::{
     clap_app::{ClapApp, Command, ProfileCommand},
+    diagnostic::DiagnosticReport,
     error::{AppError, AppResult},
     ops,
     output::{error, success},
@@ -40,6 +41,11 @@ fn get_userkey() -> String {
 
 impl ClapApp {
     pub fn run(&self) -> AppResult<()> {
+        if self.diagnostic {
+            DiagnosticReport::generate()?.print()?;
+            return Ok(());
+        }
+
         match &self.command {
             Command::Profile(ProfileCommand::Create {
                 profile_name,

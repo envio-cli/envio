@@ -5,6 +5,12 @@ use clap::Parser;
 pub struct ClapApp {
     #[command(subcommand)]
     pub command: Command,
+    #[arg(
+        long = "diagnostic",
+        help = "Show diagnostic information for bug reports",
+        global = true
+    )]
+    pub diagnostic: bool,
 }
 
 #[derive(clap::Subcommand, Debug)]
@@ -132,7 +138,7 @@ pub enum Command {
 
     #[command(
         name = "tui",
-        about = "launch the interactive TUI application",
+        about = "Launch the interactive TUI application",
         override_usage = "envio tui"
     )]
     Tui,

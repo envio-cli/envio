@@ -1,5 +1,6 @@
 mod clap_app;
 mod commands;
+mod diagnostic;
 mod error;
 mod ops;
 mod output;

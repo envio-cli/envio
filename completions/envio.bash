@@ -61,7 +61,7 @@ _envio() {
 
     case "${cmd}" in
         envio)
-            opts="-h --help profile set unset load unload run import export tui version"
+            opts="-h --diagnostic --help profile set unset load unload run import export tui version"
             if [[ ${cur} == -* || ${COMP_CWORD} -eq 1 ]] ; then
                 COMPREPLY=( $(compgen -W "${opts}" -- "${cur}") )
                 return 0
@@ -75,7 +75,7 @@ _envio() {
             return 0
             ;;
         envio__export)
-            opts="-o -k -h --output-file-path --keys --help <PROFILE_NAME>"
+            opts="-o -k -h --output-file-path --keys --diagnostic --help <PROFILE_NAME>"
             if [[ ${cur} == -* || ${COMP_CWORD} -eq 2 ]] ; then
                 COMPREPLY=( $(compgen -W "${opts}" -- "${cur}") )
                 return 0
@@ -105,7 +105,7 @@ _envio() {
             return 0
             ;;
         envio__import)
-            opts="-n -h --profile-name --help <SOURCE>"
+            opts="-n -h --profile-name --diagnostic --help <SOURCE>"
             if [[ ${cur} == -* || ${COMP_CWORD} -eq 2 ]] ; then
                 COMPREPLY=( $(compgen -W "${opts}" -- "${cur}") )
                 return 0
@@ -127,7 +127,7 @@ _envio() {
             return 0
             ;;
         envio__load)
-            opts="-h --help <PROFILE_NAME>"
+            opts="-h --diagnostic --help <PROFILE_NAME>"
             if [[ ${cur} == -* || ${COMP_CWORD} -eq 2 ]] ; then
                 COMPREPLY=( $(compgen -W "${opts}" -- "${cur}") )
                 return 0
@@ -141,7 +141,7 @@ _envio() {
             return 0
             ;;
         envio__profile)
-            opts="-h --help create delete list show"
+            opts="-h --diagnostic --help create delete list show"
             if [[ ${cur} == -* || ${COMP_CWORD} -eq 2 ]] ; then
                 COMPREPLY=( $(compgen -W "${opts}" -- "${cur}") )
                 return 0
@@ -155,7 +155,7 @@ _envio() {
             return 0
             ;;
         envio__profile__create)
-            opts="-d -f -e -k -c -x -h --description --from-file --envs --cipher-kind --comments --expires --help <PROFILE_NAME>"
+            opts="-d -f -e -k -c -x -h --description --from-file --envs --cipher-kind --comments --expires --diagnostic --help <PROFILE_NAME>"
             if [[ ${cur} == -* || ${COMP_CWORD} -eq 3 ]] ; then
                 COMPREPLY=( $(compgen -W "${opts}" -- "${cur}") )
                 return 0
@@ -201,7 +201,7 @@ _envio() {
             return 0
             ;;
         envio__profile__delete)
-            opts="-h --help <PROFILE_NAME>"
+            opts="-h --diagnostic --help <PROFILE_NAME>"
             if [[ ${cur} == -* || ${COMP_CWORD} -eq 3 ]] ; then
                 COMPREPLY=( $(compgen -W "${opts}" -- "${cur}") )
                 return 0
@@ -215,7 +215,7 @@ _envio() {
             return 0
             ;;
         envio__profile__list)
-            opts="-h --no-pretty-print --help"
+            opts="-h --no-pretty-print --diagnostic --help"
             if [[ ${cur} == -* || ${COMP_CWORD} -eq 3 ]] ; then
                 COMPREPLY=( $(compgen -W "${opts}" -- "${cur}") )
                 return 0
@@ -229,7 +229,7 @@ _envio() {
             return 0
             ;;
         envio__profile__show)
-            opts="-c -x -h --show-comments --show-expiration --no-pretty-print --help <PROFILE_NAME>"
+            opts="-c -x -h --show-comments --show-expiration --no-pretty-print --diagnostic --help <PROFILE_NAME>"
             if [[ ${cur} == -* || ${COMP_CWORD} -eq 3 ]] ; then
                 COMPREPLY=( $(compgen -W "${opts}" -- "${cur}") )
                 return 0
@@ -243,7 +243,7 @@ _envio() {
             return 0
             ;;
         envio__run)
-            opts="-h --help <PROFILE_NAME> <COMMAND>..."
+            opts="-h --diagnostic --help <PROFILE_NAME> <COMMAND>..."
             if [[ ${cur} == -* || ${COMP_CWORD} -eq 2 ]] ; then
                 COMPREPLY=( $(compgen -W "${opts}" -- "${cur}") )
                 return 0
@@ -257,7 +257,7 @@ _envio() {
             return 0
             ;;
         envio__set)
-            opts="-c -x -h --comments --expires --help <PROFILE_NAME> <ENVS>..."
+            opts="-c -x -h --comments --expires --diagnostic --help <PROFILE_NAME> <ENVS>..."
             if [[ ${cur} == -* || ${COMP_CWORD} -eq 2 ]] ; then
                 COMPREPLY=( $(compgen -W "${opts}" -- "${cur}") )
                 return 0
@@ -271,7 +271,7 @@ _envio() {
             return 0
             ;;
         envio__tui)
-            opts="-h --help"
+            opts="-h --diagnostic --help"
             if [[ ${cur} == -* || ${COMP_CWORD} -eq 2 ]] ; then
                 COMPREPLY=( $(compgen -W "${opts}" -- "${cur}") )
                 return 0
@@ -285,7 +285,7 @@ _envio() {
             return 0
             ;;
         envio__unload)
-            opts="-h --help"
+            opts="-h --diagnostic --help"
             if [[ ${cur} == -* || ${COMP_CWORD} -eq 2 ]] ; then
                 COMPREPLY=( $(compgen -W "${opts}" -- "${cur}") )
                 return 0
@@ -299,7 +299,7 @@ _envio() {
             return 0
             ;;
         envio__unset)
-            opts="-h --help <PROFILE_NAME> <KEYS>..."
+            opts="-h --diagnostic --help <PROFILE_NAME> <KEYS>..."
             if [[ ${cur} == -* || ${COMP_CWORD} -eq 2 ]] ; then
                 COMPREPLY=( $(compgen -W "${opts}" -- "${cur}") )
                 return 0
@@ -313,7 +313,7 @@ _envio() {
             return 0
             ;;
         envio__version)
-            opts="-v -h --verbose --help"
+            opts="-v -h --verbose --diagnostic --help"
             if [[ ${cur} == -* || ${COMP_CWORD} -eq 2 ]] ; then
                 COMPREPLY=( $(compgen -W "${opts}" -- "${cur}") )
                 return 0

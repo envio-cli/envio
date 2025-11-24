@@ -15,6 +15,7 @@ _envio() {
 
     local context curcontext="$curcontext" state line
     _arguments "${_arguments_options[@]}" \
+'--diagnostic[Show diagnostic information for bug reports]' \
 '-h[Print help]' \
 '--help[Print help]' \
 ":: :_envio_commands" \
@@ -28,6 +29,7 @@ _envio() {
         case $line[1] in
             (profile)
 _arguments "${_arguments_options[@]}" \
+'--diagnostic[Show diagnostic information for bug reports]' \
 '-h[Print help]' \
 '--help[Print help]' \
 ":: :_envio__profile_commands" \
@@ -54,6 +56,7 @@ _arguments "${_arguments_options[@]}" \
 '--comments[add comments to the provided environment variables]' \
 '-x[add expiration dates to the provided environment variables]' \
 '--expires[add expiration dates to the provided environment variables]' \
+'--diagnostic[Show diagnostic information for bug reports]' \
 '-h[Print help]' \
 '--help[Print help]' \
 ':profile_name -- name of the profile:' \
@@ -61,6 +64,7 @@ _arguments "${_arguments_options[@]}" \
 ;;
 (delete)
 _arguments "${_arguments_options[@]}" \
+'--diagnostic[Show diagnostic information for bug reports]' \
 '-h[Print help]' \
 '--help[Print help]' \
 ':profile_name -- name of the profile:' \
@@ -69,6 +73,7 @@ _arguments "${_arguments_options[@]}" \
 (list)
 _arguments "${_arguments_options[@]}" \
 '--no-pretty-print[disable pretty printing]' \
+'--diagnostic[Show diagnostic information for bug reports]' \
 '-h[Print help]' \
 '--help[Print help]' \
 && ret=0
@@ -80,6 +85,7 @@ _arguments "${_arguments_options[@]}" \
 '-x[display expiration dates]' \
 '--show-expiration[display expiration dates]' \
 '--no-pretty-print[disable pretty printing]' \
+'--diagnostic[Show diagnostic information for bug reports]' \
 '-h[Print help]' \
 '--help[Print help]' \
 ':profile_name -- name of the profile:' \
@@ -95,6 +101,7 @@ _arguments "${_arguments_options[@]}" \
 '--comments[add comments to the provided environment variables]' \
 '-x[add expiration dates to the provided environment variables]' \
 '--expires[add expiration dates to the provided environment variables]' \
+'--diagnostic[Show diagnostic information for bug reports]' \
 '-h[Print help]' \
 '--help[Print help]' \
 ':profile_name -- name of the profile:' \
@@ -103,6 +110,7 @@ _arguments "${_arguments_options[@]}" \
 ;;
 (unset)
 _arguments "${_arguments_options[@]}" \
+'--diagnostic[Show diagnostic information for bug reports]' \
 '-h[Print help]' \
 '--help[Print help]' \
 ':profile_name -- name of the profile:' \
@@ -111,6 +119,7 @@ _arguments "${_arguments_options[@]}" \
 ;;
 (load)
 _arguments "${_arguments_options[@]}" \
+'--diagnostic[Show diagnostic information for bug reports]' \
 '-h[Print help]' \
 '--help[Print help]' \
 ':profile_name -- name of the profile:' \
@@ -118,12 +127,14 @@ _arguments "${_arguments_options[@]}" \
 ;;
 (unload)
 _arguments "${_arguments_options[@]}" \
+'--diagnostic[Show diagnostic information for bug reports]' \
 '-h[Print help]' \
 '--help[Print help]' \
 && ret=0
 ;;
 (run)
 _arguments "${_arguments_options[@]}" \
+'--diagnostic[Show diagnostic information for bug reports]' \
 '-h[Print help]' \
 '--help[Print help]' \
 ':profile_name -- name of the profile:' \
@@ -134,6 +145,7 @@ _arguments "${_arguments_options[@]}" \
 _arguments "${_arguments_options[@]}" \
 '-n+[name for the imported profile]:PROFILE_NAME: ' \
 '--profile-name=[name for the imported profile]:PROFILE_NAME: ' \
+'--diagnostic[Show diagnostic information for bug reports]' \
 '-h[Print help]' \
 '--help[Print help]' \
 ':source -- source file or url:' \
@@ -145,6 +157,7 @@ _arguments "${_arguments_options[@]}" \
 '--output-file-path=[output file path (default\: .env)]:OUTPUT_FILE_PATH: ' \
 '*-k+[comma-separated list of keys to export (type '\''select'\'' to choose interactively)]:KEYS: ' \
 '*--keys=[comma-separated list of keys to export (type '\''select'\'' to choose interactively)]:KEYS: ' \
+'--diagnostic[Show diagnostic information for bug reports]' \
 '-h[Print help]' \
 '--help[Print help]' \
 ':profile_name -- name of the profile:' \
@@ -152,6 +165,7 @@ _arguments "${_arguments_options[@]}" \
 ;;
 (tui)
 _arguments "${_arguments_options[@]}" \
+'--diagnostic[Show diagnostic information for bug reports]' \
 '-h[Print help]' \
 '--help[Print help]' \
 && ret=0
@@ -160,6 +174,7 @@ _arguments "${_arguments_options[@]}" \
 _arguments "${_arguments_options[@]}" \
 '-v[show verbose version information]' \
 '--verbose[show verbose version information]' \
+'--diagnostic[Show diagnostic information for bug reports]' \
 '-h[Print help]' \
 '--help[Print help]' \
 && ret=0
@@ -180,7 +195,7 @@ _envio_commands() {
 'run:Run a command with profile environment variables' \
 'import:Import a profile from a file or url' \
 'export:Export the environment variables of a profile to a file' \
-'tui:launch the interactive TUI application' \
+'tui:Launch the interactive TUI application' \
 'version:Print version information' \
     )
     _describe -t commands 'envio commands' commands "$@"

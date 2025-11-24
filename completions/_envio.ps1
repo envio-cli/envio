@@ -21,6 +21,7 @@ Register-ArgumentCompleter -Native -CommandName 'envio' -ScriptBlock {
 
     $completions = @(switch ($command) {
         'envio' {
+            [CompletionResult]::new('--diagnostic', 'diagnostic', [CompletionResultType]::ParameterName, 'Show diagnostic information for bug reports')
             [CompletionResult]::new('-h', 'h', [CompletionResultType]::ParameterName, 'Print help')
             [CompletionResult]::new('--help', 'help', [CompletionResultType]::ParameterName, 'Print help')
             [CompletionResult]::new('profile', 'profile', [CompletionResultType]::ParameterValue, 'Manage profiles')
@@ -31,11 +32,12 @@ Register-ArgumentCompleter -Native -CommandName 'envio' -ScriptBlock {
             [CompletionResult]::new('run', 'run', [CompletionResultType]::ParameterValue, 'Run a command with profile environment variables')
             [CompletionResult]::new('import', 'import', [CompletionResultType]::ParameterValue, 'Import a profile from a file or url')
             [CompletionResult]::new('export', 'export', [CompletionResultType]::ParameterValue, 'Export the environment variables of a profile to a file')
-            [CompletionResult]::new('tui', 'tui', [CompletionResultType]::ParameterValue, 'launch the interactive TUI application')
+            [CompletionResult]::new('tui', 'tui', [CompletionResultType]::ParameterValue, 'Launch the interactive TUI application')
             [CompletionResult]::new('version', 'version', [CompletionResultType]::ParameterValue, 'Print version information')
             break
         }
         'envio;profile' {
+            [CompletionResult]::new('--diagnostic', 'diagnostic', [CompletionResultType]::ParameterName, 'Show diagnostic information for bug reports')
             [CompletionResult]::new('-h', 'h', [CompletionResultType]::ParameterName, 'Print help')
             [CompletionResult]::new('--help', 'help', [CompletionResultType]::ParameterName, 'Print help')
             [CompletionResult]::new('create', 'create', [CompletionResultType]::ParameterValue, 'Create a new profile')
@@ -57,17 +59,20 @@ Register-ArgumentCompleter -Native -CommandName 'envio' -ScriptBlock {
             [CompletionResult]::new('--comments', 'comments', [CompletionResultType]::ParameterName, 'add comments to the provided environment variables')
             [CompletionResult]::new('-x', 'x', [CompletionResultType]::ParameterName, 'add expiration dates to the provided environment variables')
             [CompletionResult]::new('--expires', 'expires', [CompletionResultType]::ParameterName, 'add expiration dates to the provided environment variables')
+            [CompletionResult]::new('--diagnostic', 'diagnostic', [CompletionResultType]::ParameterName, 'Show diagnostic information for bug reports')
             [CompletionResult]::new('-h', 'h', [CompletionResultType]::ParameterName, 'Print help')
             [CompletionResult]::new('--help', 'help', [CompletionResultType]::ParameterName, 'Print help')
             break
         }
         'envio;profile;delete' {
+            [CompletionResult]::new('--diagnostic', 'diagnostic', [CompletionResultType]::ParameterName, 'Show diagnostic information for bug reports')
             [CompletionResult]::new('-h', 'h', [CompletionResultType]::ParameterName, 'Print help')
             [CompletionResult]::new('--help', 'help', [CompletionResultType]::ParameterName, 'Print help')
             break
         }
         'envio;profile;list' {
             [CompletionResult]::new('--no-pretty-print', 'no-pretty-print', [CompletionResultType]::ParameterName, 'disable pretty printing')
+            [CompletionResult]::new('--diagnostic', 'diagnostic', [CompletionResultType]::ParameterName, 'Show diagnostic information for bug reports')
             [CompletionResult]::new('-h', 'h', [CompletionResultType]::ParameterName, 'Print help')
             [CompletionResult]::new('--help', 'help', [CompletionResultType]::ParameterName, 'Print help')
             break
@@ -78,6 +83,7 @@ Register-ArgumentCompleter -Native -CommandName 'envio' -ScriptBlock {
             [CompletionResult]::new('-x', 'x', [CompletionResultType]::ParameterName, 'display expiration dates')
             [CompletionResult]::new('--show-expiration', 'show-expiration', [CompletionResultType]::ParameterName, 'display expiration dates')
             [CompletionResult]::new('--no-pretty-print', 'no-pretty-print', [CompletionResultType]::ParameterName, 'disable pretty printing')
+            [CompletionResult]::new('--diagnostic', 'diagnostic', [CompletionResultType]::ParameterName, 'Show diagnostic information for bug reports')
             [CompletionResult]::new('-h', 'h', [CompletionResultType]::ParameterName, 'Print help')
             [CompletionResult]::new('--help', 'help', [CompletionResultType]::ParameterName, 'Print help')
             break
@@ -87,26 +93,31 @@ Register-ArgumentCompleter -Native -CommandName 'envio' -ScriptBlock {
             [CompletionResult]::new('--comments', 'comments', [CompletionResultType]::ParameterName, 'add comments to the provided environment variables')
             [CompletionResult]::new('-x', 'x', [CompletionResultType]::ParameterName, 'add expiration dates to the provided environment variables')
             [CompletionResult]::new('--expires', 'expires', [CompletionResultType]::ParameterName, 'add expiration dates to the provided environment variables')
+            [CompletionResult]::new('--diagnostic', 'diagnostic', [CompletionResultType]::ParameterName, 'Show diagnostic information for bug reports')
             [CompletionResult]::new('-h', 'h', [CompletionResultType]::ParameterName, 'Print help')
             [CompletionResult]::new('--help', 'help', [CompletionResultType]::ParameterName, 'Print help')
             break
         }
         'envio;unset' {
+            [CompletionResult]::new('--diagnostic', 'diagnostic', [CompletionResultType]::ParameterName, 'Show diagnostic information for bug reports')
             [CompletionResult]::new('-h', 'h', [CompletionResultType]::ParameterName, 'Print help')
             [CompletionResult]::new('--help', 'help', [CompletionResultType]::ParameterName, 'Print help')
             break
         }
         'envio;load' {
+            [CompletionResult]::new('--diagnostic', 'diagnostic', [CompletionResultType]::ParameterName, 'Show diagnostic information for bug reports')
             [CompletionResult]::new('-h', 'h', [CompletionResultType]::ParameterName, 'Print help')
             [CompletionResult]::new('--help', 'help', [CompletionResultType]::ParameterName, 'Print help')
             break
         }
         'envio;unload' {
+            [CompletionResult]::new('--diagnostic', 'diagnostic', [CompletionResultType]::ParameterName, 'Show diagnostic information for bug reports')
             [CompletionResult]::new('-h', 'h', [CompletionResultType]::ParameterName, 'Print help')
             [CompletionResult]::new('--help', 'help', [CompletionResultType]::ParameterName, 'Print help')
             break
         }
         'envio;run' {
+            [CompletionResult]::new('--diagnostic', 'diagnostic', [CompletionResultType]::ParameterName, 'Show diagnostic information for bug reports')
             [CompletionResult]::new('-h', 'h', [CompletionResultType]::ParameterName, 'Print help')
             [CompletionResult]::new('--help', 'help', [CompletionResultType]::ParameterName, 'Print help')
             break
@@ -114,6 +125,7 @@ Register-ArgumentCompleter -Native -CommandName 'envio' -ScriptBlock {
         'envio;import' {
             [CompletionResult]::new('-n', 'n', [CompletionResultType]::ParameterName, 'name for the imported profile')
             [CompletionResult]::new('--profile-name', 'profile-name', [CompletionResultType]::ParameterName, 'name for the imported profile')
+            [CompletionResult]::new('--diagnostic', 'diagnostic', [CompletionResultType]::ParameterName, 'Show diagnostic information for bug reports')
             [CompletionResult]::new('-h', 'h', [CompletionResultType]::ParameterName, 'Print help')
             [CompletionResult]::new('--help', 'help', [CompletionResultType]::ParameterName, 'Print help')
             break
@@ -123,11 +135,13 @@ Register-ArgumentCompleter -Native -CommandName 'envio' -ScriptBlock {
             [CompletionResult]::new('--output-file-path', 'output-file-path', [CompletionResultType]::ParameterName, 'output file path (default: .env)')
             [CompletionResult]::new('-k', 'k', [CompletionResultType]::ParameterName, 'comma-separated list of keys to export (type ''select'' to choose interactively)')
             [CompletionResult]::new('--keys', 'keys', [CompletionResultType]::ParameterName, 'comma-separated list of keys to export (type ''select'' to choose interactively)')
+            [CompletionResult]::new('--diagnostic', 'diagnostic', [CompletionResultType]::ParameterName, 'Show diagnostic information for bug reports')
             [CompletionResult]::new('-h', 'h', [CompletionResultType]::ParameterName, 'Print help')
             [CompletionResult]::new('--help', 'help', [CompletionResultType]::ParameterName, 'Print help')
             break
         }
         'envio;tui' {
+            [CompletionResult]::new('--diagnostic', 'diagnostic', [CompletionResultType]::ParameterName, 'Show diagnostic information for bug reports')
             [CompletionResult]::new('-h', 'h', [CompletionResultType]::ParameterName, 'Print help')
             [CompletionResult]::new('--help', 'help', [CompletionResultType]::ParameterName, 'Print help')
             break
@@ -135,6 +149,7 @@ Register-ArgumentCompleter -Native -CommandName 'envio' -ScriptBlock {
         'envio;version' {
             [CompletionResult]::new('-v', 'v', [CompletionResultType]::ParameterName, 'show verbose version information')
             [CompletionResult]::new('--verbose', 'verbose', [CompletionResultType]::ParameterName, 'show verbose version information')
+            [CompletionResult]::new('--diagnostic', 'diagnostic', [CompletionResultType]::ParameterName, 'Show diagnostic information for bug reports')
             [CompletionResult]::new('-h', 'h', [CompletionResultType]::ParameterName, 'Print help')
             [CompletionResult]::new('--help', 'help', [CompletionResultType]::ParameterName, 'Print help')
             break

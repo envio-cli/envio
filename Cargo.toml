@@ -40,6 +40,9 @@ indexmap = { version = "2.11.4", features = ["serde"] }
 ratatui = "0.29.0"
 crossterm = "0.29.0"
 dyn-clone = "1.0.20"
+git-version = "0.3.9"
+sysinfo = "0.36.1"
+shell-escape = "0.1.5"
 
 [target.'cfg(unix)'.dependencies]
 gpgme = "0.11"
