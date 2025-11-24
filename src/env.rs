@@ -6,7 +6,7 @@ use crate::error::{Error, Result};
 
 #[derive(Serialize, Deserialize, Clone)]
 pub struct Env {
-    pub name: String,
+    pub key: String,
     pub value: String,
     pub comment: Option<String>,
     pub expiration_date: Option<NaiveDate>,
@@ -14,21 +14,21 @@ pub struct Env {
 
 impl Env {
     pub fn new(
-        name: impl Into<String>,
+        key: impl Into<String>,
         value: impl Into<String>,
         comment: Option<String>,
         expiration_date: Option<NaiveDate>,
     ) -> Self {
         Self {
-            name: name.into(),
+            key: key.into(),
             value: value.into(),
             comment,
             expiration_date,
         }
     }
 
-    pub fn from_key_value(name: impl Into<String>, value: impl Into<String>) -> Self {
-        Self::new(name, value, None, None)
+    pub fn from_key_value(key: impl Into<String>, value: impl Into<String>) -> Self {
+        Self::new(key, value, None, None)
     }
 }
 
@@ -45,7 +45,7 @@ impl EnvMap {
     }
 
     pub fn insert(&mut self, env: Env) {
-        self.envs.insert(env.name.clone(), env);
+        self.envs.insert(env.key.clone(), env);
     }
 
     pub fn insert_from_key_value(&mut self, key: impl Into<String>, value: impl Into<String>) {

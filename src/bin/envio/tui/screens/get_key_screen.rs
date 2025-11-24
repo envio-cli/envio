@@ -58,7 +58,6 @@ impl Screen for GetKeyScreen {
             ])
             .split(content_area);
 
-        // Prompt
         let prompt = Paragraph::new(format!("Key for Profile: {}", self.profile_name))
             .style(
                 Style::default()
@@ -119,24 +118,23 @@ impl Screen for GetKeyScreen {
             KeyCode::Enter => {
                 self.feedback = Some(Feedback::Decrypting);
                 self.spawn_decrypt()?;
-                Ok(Action::None)
             }
 
             KeyCode::Char(c) => {
                 self.key.push(c);
                 self.feedback = None;
-                Ok(Action::None)
             }
 
             KeyCode::Backspace => {
                 self.key.pop();
                 self.feedback = None;
-                Ok(Action::None)
             }
 
-            KeyCode::Esc => Ok(Action::Back),
-            _ => Ok(Action::None),
+            KeyCode::Esc => return Ok(Action::Back),
+            _ => {}
         }
+
+        Ok(Action::None)
     }
 
     fn tick(&mut self) -> AppResult<Option<ScreenEvent>> {

@@ -137,7 +137,7 @@ impl ClapApp {
                         default_indices: Some(default_options),
                     })?;
 
-                    envs_map.retain(|env| selected_keys.contains(&env.name));
+                    envs_map.retain(|env| selected_keys.contains(&env.key));
                 } else if envs.is_some() {
                     envs_map = EnvMap::new();
 
@@ -178,7 +178,7 @@ impl ClapApp {
                 for env in envs_map.iter_mut() {
                     if *add_comments {
                         env.comment = Some(prompts::text_prompt(prompts::TextPromptOptions {
-                            title: format!("Enter a comment for '{}':", env.name),
+                            title: format!("Enter a comment for '{}':", env.key),
                             default: None,
                         })?);
                     }
@@ -186,7 +186,7 @@ impl ClapApp {
                     if *add_expires {
                         env.expiration_date =
                             Some(prompts::date_prompt(prompts::DatePromptOptions {
-                                title: format!("Select an expiration date for '{}':", env.name),
+                                title: format!("Select an expiration date for '{}':", env.key),
                                 default: Some(Local::now().date_naive()),
                             })?);
                     }
@@ -258,7 +258,7 @@ impl ClapApp {
                 for mut env in set_envs {
                     if *add_comments {
                         env.comment = Some(prompts::text_prompt(prompts::TextPromptOptions {
-                            title: format!("Enter a comment for '{}':", env.name),
+                            title: format!("Enter a comment for '{}':", env.key),
                             default: None,
                         })?);
                     }
@@ -266,7 +266,7 @@ impl ClapApp {
                     if *add_expires {
                         env.expiration_date =
                             Some(prompts::date_prompt(prompts::DatePromptOptions {
-                                title: format!("Select an expiration date for '{}':", env.name),
+                                title: format!("Select an expiration date for '{}':", env.key),
                                 default: Some(Local::now().date_naive()),
                             })?);
                     }
@@ -380,7 +380,7 @@ impl ClapApp {
 
                 if *no_pretty_print {
                     for env in profile.envs {
-                        println!("{}={}", env.name, env.value);
+                        println!("{}={}", env.key, env.value);
                     }
                 } else {
                     ops::list_envs(&profile, *show_comments, *show_expiration);

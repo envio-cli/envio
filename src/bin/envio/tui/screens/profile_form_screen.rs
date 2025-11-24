@@ -214,86 +214,71 @@ impl Screen for CreateProfileScreen {
             CreateField::CipherKind => match key.code {
                 KeyCode::Up | KeyCode::Char('k') => {
                     self.move_cipher_selection(-1);
-                    Ok(Action::None)
                 }
 
                 KeyCode::Down | KeyCode::Char('j') => {
                     self.move_cipher_selection(1);
-                    Ok(Action::None)
                 }
 
                 KeyCode::Tab | KeyCode::Enter => {
                     self.move_to_next_field();
-                    Ok(Action::None)
                 }
 
                 KeyCode::BackTab => {
                     self.move_to_previous_field();
-                    Ok(Action::None)
                 }
 
-                KeyCode::Esc => Ok(Action::Back),
+                KeyCode::Esc => return Ok(Action::Back),
 
-                _ => Ok(Action::None),
+                _ => {}
             },
 
             CreateField::Key => match self.get_selected_cipher_kind() {
                 CipherKind::GPG => match key.code {
                     KeyCode::Up | KeyCode::Char('k') => {
                         self.move_gpg_selection(-1);
-                        Ok(Action::None)
                     }
 
                     KeyCode::Down | KeyCode::Char('j') => {
                         self.move_gpg_selection(1);
-                        Ok(Action::None)
                     }
 
                     KeyCode::Tab | KeyCode::Enter => {
                         self.move_to_next_field();
-                        Ok(Action::None)
                     }
 
                     KeyCode::BackTab => {
                         self.move_to_previous_field();
-                        Ok(Action::None)
                     }
 
-                    KeyCode::Esc => Ok(Action::Back),
+                    KeyCode::Esc => return Ok(Action::Back),
 
-                    _ => Ok(Action::None),
+                    _ => {}
                 },
 
                 CipherKind::PASSPHRASE => match key.code {
-                    KeyCode::Tab | KeyCode::Enter => {
-                        match self.key_sub_field {
-                            KeySubField::Passphrase => {
-                                if !self.passphrase.is_empty() {
-                                    self.key_sub_field = KeySubField::PassphraseConfirm;
-                                }
+                    KeyCode::Tab | KeyCode::Enter => match self.key_sub_field {
+                        KeySubField::Passphrase => {
+                            if !self.passphrase.is_empty() {
+                                self.key_sub_field = KeySubField::PassphraseConfirm;
                             }
-
-                            KeySubField::PassphraseConfirm => {
-                                self.move_to_next_field();
-                            }
-                            _ => {}
                         }
 
-                        Ok(Action::None)
-                    }
-
-                    KeyCode::BackTab => {
-                        match self.key_sub_field {
-                            KeySubField::PassphraseConfirm => {
-                                self.key_sub_field = KeySubField::Passphrase;
-                            }
-                            KeySubField::Passphrase => {
-                                self.move_to_previous_field();
-                            }
-                            _ => {}
+                        KeySubField::PassphraseConfirm => {
+                            self.move_to_next_field();
                         }
-                        Ok(Action::None)
-                    }
+                        _ => {}
+                    },
+
+                    KeyCode::BackTab => match self.key_sub_field {
+                        KeySubField::PassphraseConfirm => {
+                            self.key_sub_field = KeySubField::Passphrase;
+                        }
+                        KeySubField::Passphrase => {
+                            self.move_to_previous_field();
+                        }
+                        _ => {}
+                    },
 
                     KeyCode::Char('s')
                         if key
@@ -301,52 +286,43 @@ impl Screen for CreateProfileScreen {
                             .contains(ratatui::crossterm::event::KeyModifiers::CONTROL) =>
                     {
                         self.save()?;
-                        Ok(Action::None)
                     }
 
-                    KeyCode::Char(c) => {
-                        match self.key_sub_field {
-                            KeySubField::Passphrase => {
-                                self.passphrase.push(c);
-                            }
-                            KeySubField::PassphraseConfirm => {
-                                self.passphrase_confirm.push(c);
-                            }
-                            _ => {}
+                    KeyCode::Char(c) => match self.key_sub_field {
+                        KeySubField::Passphrase => {
+                            self.passphrase.push(c);
                         }
-                        Ok(Action::None)
-                    }
-
-                    KeyCode::Backspace => {
-                        match self.key_sub_field {
-                            KeySubField::Passphrase => {
-                                self.passphrase.pop();
-                            }
-                            KeySubField::PassphraseConfirm => {
-                                self.passphrase_confirm.pop();
-                            }
-                            _ => {}
+                        KeySubField::PassphraseConfirm => {
+                            self.passphrase_confirm.push(c);
                         }
-                        Ok(Action::None)
-                    }
+                        _ => {}
+                    },
 
-                    KeyCode::Esc => Ok(Action::Back),
+                    KeyCode::Backspace => match self.key_sub_field {
+                        KeySubField::Passphrase => {
+                            self.passphrase.pop();
+                        }
+                        KeySubField::PassphraseConfirm => {
+                            self.passphrase_confirm.pop();
+                        }
+                        _ => {}
+                    },
 
-                    _ => Ok(Action::None),
+                    KeyCode::Esc => return Ok(Action::Back),
+
+                    _ => {}
                 },
 
-                _ => Ok(Action::None),
+                _ => {}
             },
 
             CreateField::Name | CreateField::Description => match key.code {
                 KeyCode::Tab | KeyCode::Enter => {
                     self.move_to_next_field();
-                    Ok(Action::None)
                 }
 
                 KeyCode::BackTab => {
                     self.move_to_previous_field();
-                    Ok(Action::None)
                 }
 
                 KeyCode::Char('s')
@@ -355,43 +331,37 @@ impl Screen for CreateProfileScreen {
                         .contains(ratatui::crossterm::event::KeyModifiers::CONTROL) =>
                 {
                     self.save()?;
-                    Ok(Action::None)
                 }
 
-                KeyCode::Char(c) => {
-                    match self.current_field {
-                        CreateField::Name => {
-                            if c != ' ' {
-                                self.name.push(c);
-                            }
+                KeyCode::Char(c) => match self.current_field {
+                    CreateField::Name => {
+                        if c != ' ' {
+                            self.name.push(c);
                         }
-
-                        CreateField::Description => self.description.push(c),
-                        _ => {}
-                    }
-                    Ok(Action::None)
-                }
-
-                KeyCode::Backspace => {
-                    match self.current_field {
-                        CreateField::Name => {
-                            self.name.pop();
-                        }
-
-                        CreateField::Description => {
-                            self.description.pop();
-                        }
-                        _ => {}
                     }
 
-                    Ok(Action::None)
-                }
+                    CreateField::Description => self.description.push(c),
+                    _ => {}
+                },
 
-                KeyCode::Esc => Ok(Action::Back),
+                KeyCode::Backspace => match self.current_field {
+                    CreateField::Name => {
+                        self.name.pop();
+                    }
 
-                _ => Ok(Action::None),
+                    CreateField::Description => {
+                        self.description.pop();
+                    }
+                    _ => {}
+                },
+
+                KeyCode::Esc => return Ok(Action::Back),
+
+                _ => {}
             },
         }
+
+        Ok(Action::None)
     }
 
     fn tick(&mut self) -> AppResult<Option<ScreenEvent>> {
@@ -884,12 +854,10 @@ impl Screen for EditProfileScreen {
         match key.code {
             KeyCode::Tab | KeyCode::Enter => {
                 self.move_to_next_field();
-                Ok(Action::None)
             }
 
             KeyCode::BackTab => {
                 self.move_to_previous_field();
-                Ok(Action::None)
             }
 
             KeyCode::Char('s')
@@ -898,37 +866,32 @@ impl Screen for EditProfileScreen {
                     .contains(ratatui::crossterm::event::KeyModifiers::CONTROL) =>
             {
                 self.save()?;
-                Ok(Action::None)
             }
 
-            KeyCode::Char(c) => {
-                match self.current_field {
-                    EditField::Name => {
-                        if c != ' ' {
-                            self.name.push(c);
-                        }
-                    }
-                    EditField::Description => self.description.push(c),
-                }
-                Ok(Action::None)
-            }
-
-            KeyCode::Backspace => {
-                match self.current_field {
-                    EditField::Name => {
-                        self.name.pop();
-                    }
-                    EditField::Description => {
-                        self.description.pop();
+            KeyCode::Char(c) => match self.current_field {
+                EditField::Name => {
+                    if c != ' ' {
+                        self.name.push(c);
                     }
                 }
-                Ok(Action::None)
-            }
+                EditField::Description => self.description.push(c),
+            },
 
-            KeyCode::Esc => Ok(Action::Back),
+            KeyCode::Backspace => match self.current_field {
+                EditField::Name => {
+                    self.name.pop();
+                }
+                EditField::Description => {
+                    self.description.pop();
+                }
+            },
 
-            _ => Ok(Action::None),
+            KeyCode::Esc => return Ok(Action::Back),
+
+            _ => {}
         }
+
+        Ok(Action::None)
     }
 
     fn id(&self) -> ScreenId {

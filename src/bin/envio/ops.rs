@@ -64,7 +64,7 @@ pub fn check_expired_envs(profile: &Profile) {
     for env in &profile.envs {
         if let Some(date) = env.expiration_date {
             if date <= Local::now().date_naive() {
-                warning(format!("environment variable '{}' has expired", env.name));
+                warning(format!("environment variable '{}' has expired", env.key));
             }
         }
     }
@@ -104,7 +104,7 @@ pub fn export_envs(
     }
 
     for env in envs_to_export {
-        writeln!(file, "{}={}", env.name, env.value)?;
+        writeln!(file, "{}={}", env.key, env.value)?;
     }
 
     println!("{}", format!("Exported envs to {}", path.display()).bold());
@@ -134,7 +134,7 @@ pub fn list_envs(profile: &Profile, show_comments: bool, show_expiration: bool) 
     let mut row;
 
     for env in &profile.envs {
-        row = vec![env.name.clone(), env.value.clone()];
+        row = vec![env.key.clone(), env.value.clone()];
 
         if show_comments {
             row.push(env.comment.clone().unwrap_or_else(|| "".to_string()));
@@ -350,14 +350,14 @@ pub fn load_profile(profile_name: &str) -> AppResult<()> {
 #[cfg(target_family = "windows")]
 pub fn load_profile(profile: Profile) -> AppResult<()> {
     for env in profile.envs {
-        let output = Command::new("setx").arg(&env.name).arg(&env.value).output();
+        let output = Command::new("setx").arg(&env.key).arg(&env.value).output();
 
         match output {
             Ok(output) => {
                 if !output.status.success() {
                     return Err(AppError::Msg(format!(
                         "Failed to execute setx for environment variable: {} with value: {}",
-                        env.name, env.value
+                        env.key, env.value
                     )));
                 }
             }
@@ -387,13 +387,13 @@ pub fn unload_profile() -> AppResult<()> {
 
 #[cfg(target_family = "windows")]
 pub fn unload_profile(profile: Profile) -> AppResult<()> {
-    for env in profile.envs.keys() {
+    for key in profile.envs.keys() {
         let status = Command::new("REG")
             .arg("delete")
             .arg("HKCU\\Environment")
             .arg("/F")
             .arg("/V")
-            .arg(&env)
+            .arg(&key)
             .status();
 
         match status {
@@ -401,7 +401,7 @@ pub fn unload_profile(profile: Profile) -> AppResult<()> {
                 if !status.success() {
                     return Err(AppError::Msg(format!(
                         "Failed to delete environment variable: {}",
-                        env
+                        key
                     )));
                 }
             }

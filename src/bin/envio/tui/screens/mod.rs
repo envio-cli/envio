@@ -1,9 +1,9 @@
-mod edit_screen;
+mod edit_envs_screen;
 mod get_key_screen;
 mod profile_form_screen;
 mod select_screen;
 
-pub use edit_screen::EditScreen;
+pub use edit_envs_screen::EditEnvsScreen;
 pub use get_key_screen::GetKeyScreen;
 pub use profile_form_screen::{CreateProfileScreen, EditProfileScreen};
 pub use select_screen::SelectScreen;
@@ -43,7 +43,7 @@ impl ScreenId {
             ScreenId::CreateProfile => Ok(Box::new(CreateProfileScreen::new()?)),
             ScreenId::EditProfile(name) => Ok(Box::new(EditProfileScreen::new(name.clone())?)),
             ScreenId::GetKey(name) => Ok(Box::new(GetKeyScreen::new(name.clone()))),
-            ScreenId::Edit(name) => Ok(Box::new(EditScreen::new(name.clone(), context)?)),
+            ScreenId::Edit(name) => Ok(Box::new(EditEnvsScreen::new(name.clone(), context)?)),
         }
     }
 }

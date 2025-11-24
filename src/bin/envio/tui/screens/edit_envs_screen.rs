@@ -1,6 +1,6 @@
 use envio::{Env, Profile};
 use ratatui::{
-    crossterm::event::{KeyCode, KeyEvent},
+    crossterm::event::{KeyCode, KeyEvent, KeyModifiers},
     layout::{Constraint, Direction, Layout, Rect},
     style::{Color, Modifier, Style},
     text::{Line, Span},
@@ -25,7 +25,7 @@ enum Status {
     Error(String, Color),
 }
 
-pub struct EditScreen {
+pub struct EditEnvsScreen {
     profile: Profile,
     envs: Vec<Env>,
     list_state: ListState,
@@ -36,7 +36,7 @@ pub struct EditScreen {
     pending_cache_update: Option<Profile>,
 }
 
-impl Screen for EditScreen {
+impl Screen for EditEnvsScreen {
     fn draw(&mut self, frame: &mut Frame) {
         let area = frame.area();
         let chunks = Layout::default()
@@ -62,12 +62,10 @@ impl Screen for EditScreen {
             EditMode::Key(_) | EditMode::Value(_) => match key.code {
                 KeyCode::Enter => {
                     self.finish_edit();
-                    Ok(Action::None)
                 }
 
                 KeyCode::Esc => {
                     self.cancel_edit();
-                    Ok(Action::None)
                 }
 
                 KeyCode::Left => {
@@ -75,8 +73,6 @@ impl Screen for EditScreen {
                         self.finish_edit();
                         self.start_edit_key();
                     }
-
-                    Ok(Action::None)
                 }
 
                 KeyCode::Right => {
@@ -84,64 +80,63 @@ impl Screen for EditScreen {
                         self.finish_edit();
                         self.start_edit_value();
                     }
-
-                    Ok(Action::None)
                 }
 
                 KeyCode::Char(c) => {
+                    if matches!(self.edit_mode, EditMode::Key(_)) {
+                        if c == ' ' {
+                            return Ok(Action::None);
+                        }
+                    }
+
                     self.edit_buffer.push(c);
-                    Ok(Action::None)
                 }
 
                 KeyCode::Backspace => {
                     self.edit_buffer.pop();
-                    Ok(Action::None)
                 }
 
-                _ => Ok(Action::None),
+                _ => {}
             },
 
             EditMode::None => match key.code {
-                KeyCode::Esc => Ok(Action::Back),
+                KeyCode::Esc => return Ok(Action::Back),
 
                 KeyCode::Up | KeyCode::Char('k') => {
                     self.move_selection(-1);
-                    Ok(Action::None)
                 }
 
                 KeyCode::Down | KeyCode::Char('j') => {
                     self.move_selection(1);
-                    Ok(Action::None)
                 }
 
                 KeyCode::Enter => {
                     self.start_edit_key();
-                    Ok(Action::None)
                 }
 
                 KeyCode::Right => {
                     self.start_edit_value();
-                    Ok(Action::None)
                 }
 
                 KeyCode::Char('a') => {
                     self.add_new_pair();
-                    Ok(Action::None)
                 }
 
                 KeyCode::Char('d') => {
                     self.delete_current();
-                    Ok(Action::None)
                 }
 
                 KeyCode::Char('s') => {
-                    self.save_changes()?;
-                    Ok(Action::None)
+                    if key.modifiers.contains(KeyModifiers::CONTROL) || key.modifiers.is_empty() {
+                        self.save_changes()?;
+                    }
                 }
 
-                _ => Ok(Action::None),
+                _ => {}
             },
         }
+
+        Ok(Action::None)
     }
 
     fn tick(&mut self) -> AppResult<Option<ScreenEvent>> {
@@ -159,7 +154,7 @@ impl Screen for EditScreen {
     }
 }
 
-impl EditScreen {
+impl EditEnvsScreen {
     pub fn new(profile_name: String, ctx: &mut AppContext) -> AppResult<Self> {
         let profile = ctx.cache.get_profile(&profile_name).ok_or_else(|| {
             crate::error::AppError::Msg(format!("Profile {} not found in cache", profile_name))
@@ -188,6 +183,10 @@ impl EditScreen {
     }
 
     fn move_selection(&mut self, delta: i32) {
+        // for cases where user creates a new pair and only provides key and no value
+        self.envs
+            .retain(|env| !env.key.is_empty() && !env.value.is_empty());
+
         if self.envs.is_empty() {
             return;
         }
@@ -200,7 +199,7 @@ impl EditScreen {
     fn start_edit_key(&mut self) {
         if let Some(idx) = self.get_selected_index() {
             if idx < self.envs.len() {
-                self.edit_buffer = self.envs[idx].name.clone();
+                self.edit_buffer = self.envs[idx].key.clone();
                 self.edit_mode = EditMode::Key(idx);
             }
         }
@@ -209,7 +208,7 @@ impl EditScreen {
     fn start_edit_value(&mut self) {
         if let Some(idx) = self.get_selected_index() {
             if idx < self.envs.len() {
-                self.edit_buffer = self.envs[idx].value.clone();
+                self.edit_buffer = self.envs[idx].value.replace("'", "").clone();
                 self.edit_mode = EditMode::Value(idx);
             }
         }
@@ -221,7 +220,7 @@ impl EditScreen {
                 let trimmed = self.edit_buffer.trim().to_string();
 
                 if trimmed.is_empty() {
-                    if self.envs[idx].name.is_empty() && self.envs[idx].value.is_empty() {
+                    if self.envs[idx].key.is_empty() && self.envs[idx].value.is_empty() {
                         self.envs.remove(idx);
 
                         if !self.envs.is_empty() {
@@ -232,12 +231,21 @@ impl EditScreen {
                         }
                     }
                 } else {
-                    self.envs[idx].name = trimmed;
+                    self.envs[idx].key = trimmed;
                 }
             }
 
             EditMode::Value(idx) if idx < self.envs.len() => {
-                self.envs[idx].value = self.edit_buffer.clone();
+                if self.edit_buffer.is_empty() {
+                    self.envs.remove(idx);
+                } else {
+                    let mut value = self.edit_buffer.trim().to_string();
+                    if value.contains(' ') {
+                        value = format!("'{}'", value);
+                    }
+
+                    self.envs[idx].value = value;
+                }
             }
 
             _ => {}
@@ -250,8 +258,7 @@ impl EditScreen {
     fn cancel_edit(&mut self) {
         if let EditMode::Key(idx) = self.edit_mode {
             if idx < self.envs.len()
-                && self.envs[idx].name.is_empty()
-                && self.envs[idx].value.is_empty()
+                && (self.envs[idx].key.is_empty() || self.envs[idx].value.is_empty())
             {
                 self.envs.remove(idx);
                 if !self.envs.is_empty() {
@@ -371,7 +378,7 @@ impl EditScreen {
                 let key_display = if is_editing_key {
                     self.edit_buffer.as_str()
                 } else {
-                    &env.name
+                    &env.key
                 };
 
                 let value_display = if is_editing_value {
@@ -435,9 +442,9 @@ impl EditScreen {
             let cursor_x = match &self.edit_mode {
                 EditMode::Key(_) => base_x + self.edit_buffer.len() as u16,
                 EditMode::Value(_) => {
-                    let key_len = self.envs[idx].name.len() as u16;
+                    let key_len = self.envs[idx].key.len() as u16;
 
-                    // base_x + key_len + 3 spacing between key and value
+                    // + 3 spacing between key and value
                     base_x + key_len + 3 + self.edit_buffer.len() as u16
                 }
                 _ => return,

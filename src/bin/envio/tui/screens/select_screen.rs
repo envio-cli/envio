@@ -72,40 +72,42 @@ impl Screen for SelectScreen {
         match key.code {
             KeyCode::Char('/') => {
                 self.search_mode = true;
-                Ok(Action::None)
             }
 
             KeyCode::Up | KeyCode::Char('k') => {
                 self.move_selection(-1);
-                Ok(Action::None)
             }
 
             KeyCode::Down | KeyCode::Char('j') => {
                 self.move_selection(1);
-                Ok(Action::None)
             }
 
-            KeyCode::Char('n') => Ok(Action::NewProfile),
+            KeyCode::Char('n') => return Ok(Action::NewProfile),
 
-            KeyCode::Char('e') => Ok(self
-                .get_selected_profile()
-                .map_or(Action::None, |p| Action::EditProfile(p.name.clone()))),
+            KeyCode::Char('e') => {
+                return Ok(self
+                    .get_selected_profile()
+                    .map_or(Action::None, |p| Action::EditProfile(p.name.clone())))
+            }
 
             KeyCode::Char('d') => {
                 if let Some(profile) = self.get_selected_profile() {
                     self.delete_confirmation = Some(profile.name.clone());
                 }
-                Ok(Action::None)
             }
 
-            KeyCode::Enter => Ok(self
-                .get_selected_profile()
-                .map_or(Action::None, |p| Action::OpenProfile(p.name.clone()))),
+            KeyCode::Enter => {
+                return Ok(self
+                    .get_selected_profile()
+                    .map_or(Action::None, |p| Action::OpenProfile(p.name.clone())))
+            }
 
-            KeyCode::Esc => Ok(Action::Exit),
+            KeyCode::Esc => return Ok(Action::Exit),
 
-            _ => Ok(Action::None),
+            _ => {}
         }
+
+        Ok(Action::None)
     }
 
     fn id(&self) -> ScreenId {
@@ -300,30 +302,29 @@ impl SelectScreen {
         match key.code {
             KeyCode::Esc => {
                 self.search_mode = false;
-                Ok(Action::None)
             }
 
             KeyCode::Enter => {
                 self.search_mode = false;
-                Ok(self
+                return Ok(self
                     .get_selected_profile()
-                    .map_or(Action::None, |p| Action::OpenProfile(p.name.clone())))
+                    .map_or(Action::None, |p| Action::OpenProfile(p.name.clone())));
             }
 
             KeyCode::Char(c) => {
                 self.search_input.push(c);
                 self.update_filter();
-                Ok(Action::None)
             }
 
             KeyCode::Backspace => {
                 self.search_input.pop();
                 self.update_filter();
-                Ok(Action::None)
             }
 
-            _ => Ok(Action::None),
+            _ => {}
         }
+
+        Ok(Action::None)
     }
 
     fn move_selection(&mut self, delta: i32) {
