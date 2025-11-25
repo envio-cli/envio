@@ -144,6 +144,20 @@ pub enum Command {
     Tui,
 
     #[command(
+        name = "completion",
+        about = "Show shell completion for the provided shell",
+        override_usage = "envio completion <SHELL>"
+    )]
+    Completion {
+        #[arg(
+            required = true,
+            help = "shell to show completion for (bash, zsh, fish, powershell)",
+            value_parser = clap::builder::PossibleValuesParser::new(&["bash", "zsh", "fish", "powershell"])
+        )]
+        shell: String,
+    },
+
+    #[command(
         name = "version",
         about = "Print version information",
         override_usage = "envio version [OPTIONS]"

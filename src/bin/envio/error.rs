@@ -30,6 +30,9 @@ pub enum AppError {
     #[error(transparent)]
     Reqwest(#[from] reqwest::Error),
 
+    #[error("Unsupported shell: {0}")]
+    UnsupportedShell(String),
+
     #[error("{0}")]
     Msg(String),
 }

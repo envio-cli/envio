@@ -12,6 +12,9 @@ _envio() {
             ",$1")
                 cmd="envio"
                 ;;
+            envio,completion)
+                cmd="envio__completion"
+                ;;
             envio,export)
                 cmd="envio__export"
                 ;;
@@ -61,8 +64,22 @@ _envio() {
 
     case "${cmd}" in
         envio)
-            opts="-h --diagnostic --help profile set unset load unload run import export tui version"
+            opts="-h --diagnostic --help profile set unset load unload run import export tui completion version"
             if [[ ${cur} == -* || ${COMP_CWORD} -eq 1 ]] ; then
+                COMPREPLY=( $(compgen -W "${opts}" -- "${cur}") )
+                return 0
+            fi
+            case "${prev}" in
+                *)
+                    COMPREPLY=()
+                    ;;
+            esac
+            COMPREPLY=( $(compgen -W "${opts}" -- "${cur}") )
+            return 0
+            ;;
+        envio__completion)
+            opts="-h --diagnostic --help bash zsh fish powershell"
+            if [[ ${cur} == -* || ${COMP_CWORD} -eq 2 ]] ; then
                 COMPREPLY=( $(compgen -W "${opts}" -- "${cur}") )
                 return 0
             fi

@@ -14,6 +14,7 @@ use url::Url;
 
 use crate::{
     clap_app::{ClapApp, Command, ProfileCommand},
+    completions,
     diagnostic::DiagnosticReport,
     error::{AppError, AppResult},
     ops,
@@ -471,6 +472,14 @@ impl ClapApp {
                 TuiApp::default()?.run(&mut terminal)?;
                 ratatui::restore();
             }
+
+            Command::Completion { shell } => match shell.as_str() {
+                "bash" => println!("{}", completions::BASH_COMPLETION),
+                "zsh" => println!("{}", completions::ZSH_COMPLETION),
+                "fish" => println!("{}", completions::FISH_COMPLETION),
+                "powershell" => println!("{}", completions::PS1_COMPLETION),
+                _ => return Err(AppError::UnsupportedShell(shell.to_string())),
+            },
 
             Command::Version { verbose } => {
                 println!("{} {}", "Version".green(), env!("CARGO_PKG_VERSION"));

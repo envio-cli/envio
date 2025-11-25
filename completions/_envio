@@ -170,6 +170,14 @@ _arguments "${_arguments_options[@]}" \
 '--help[Print help]' \
 && ret=0
 ;;
+(completion)
+_arguments "${_arguments_options[@]}" \
+'--diagnostic[Show diagnostic information for bug reports]' \
+'-h[Print help]' \
+'--help[Print help]' \
+':shell -- shell to show completion for (bash, zsh, fish, powershell):(bash zsh fish powershell)' \
+&& ret=0
+;;
 (version)
 _arguments "${_arguments_options[@]}" \
 '-v[show verbose version information]' \
@@ -196,9 +204,15 @@ _envio_commands() {
 'import:Import a profile from a file or url' \
 'export:Export the environment variables of a profile to a file' \
 'tui:Launch the interactive TUI application' \
+'completion:Show shell completion for the provided shell' \
 'version:Print version information' \
     )
     _describe -t commands 'envio commands' commands "$@"
+}
+(( $+functions[_envio__completion_commands] )) ||
+_envio__completion_commands() {
+    local commands; commands=()
+    _describe -t commands 'envio completion commands' commands "$@"
 }
 (( $+functions[_envio__profile__create_commands] )) ||
 _envio__profile__create_commands() {

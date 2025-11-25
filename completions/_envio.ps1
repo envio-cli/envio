@@ -33,6 +33,7 @@ Register-ArgumentCompleter -Native -CommandName 'envio' -ScriptBlock {
             [CompletionResult]::new('import', 'import', [CompletionResultType]::ParameterValue, 'Import a profile from a file or url')
             [CompletionResult]::new('export', 'export', [CompletionResultType]::ParameterValue, 'Export the environment variables of a profile to a file')
             [CompletionResult]::new('tui', 'tui', [CompletionResultType]::ParameterValue, 'Launch the interactive TUI application')
+            [CompletionResult]::new('completion', 'completion', [CompletionResultType]::ParameterValue, 'Show shell completion for the provided shell')
             [CompletionResult]::new('version', 'version', [CompletionResultType]::ParameterValue, 'Print version information')
             break
         }
@@ -141,6 +142,12 @@ Register-ArgumentCompleter -Native -CommandName 'envio' -ScriptBlock {
             break
         }
         'envio;tui' {
+            [CompletionResult]::new('--diagnostic', 'diagnostic', [CompletionResultType]::ParameterName, 'Show diagnostic information for bug reports')
+            [CompletionResult]::new('-h', 'h', [CompletionResultType]::ParameterName, 'Print help')
+            [CompletionResult]::new('--help', 'help', [CompletionResultType]::ParameterName, 'Print help')
+            break
+        }
+        'envio;completion' {
             [CompletionResult]::new('--diagnostic', 'diagnostic', [CompletionResultType]::ParameterName, 'Show diagnostic information for bug reports')
             [CompletionResult]::new('-h', 'h', [CompletionResultType]::ParameterName, 'Print help')
             [CompletionResult]::new('--help', 'help', [CompletionResultType]::ParameterName, 'Print help')

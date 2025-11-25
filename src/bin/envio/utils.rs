@@ -118,8 +118,6 @@ pub async fn download_file(url: &str, file_name: &str) -> AppResult<()> {
 
 #[cfg(target_family = "unix")]
 pub fn get_shell_config_path(full_path: bool) -> AppResult<PathBuf> {
-    use colored::Colorize;
-
     let shell_env_value = std::env::var("SHELL")
         .map_err(|_| AppError::Msg("Failed to get SHELL environment variable".into()))?;
 
@@ -132,10 +130,7 @@ pub fn get_shell_config_path(full_path: bool) -> AppResult<PathBuf> {
     } else if shell.contains("fish") {
         ".config/fish/config.fish"
     } else {
-        return Err(AppError::Msg(format!(
-            "Unsupported shell: {}",
-            shell.bold()
-        )));
+        return Err(AppError::UnsupportedShell(shell.to_string()));
     };
 
     if full_path {
