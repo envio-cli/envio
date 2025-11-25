@@ -174,23 +174,8 @@ impl Cipher for GPG {
     }
 }
 
-pub fn get_gpg_keys() -> Result<Vec<(String, String)>> {
-    #[cfg(target_family = "unix")]
-    {
-        get_gpg_keys_unix()
-    }
-
-    #[cfg(target_family = "windows")]
-    {
-        match get_gpg_keys_windows() {
-            Some(keys) => Ok(keys),
-            None => Err(Error::Msg("No GPG keys found".to_string())),
-        }
-    }
-}
-
 #[cfg(target_family = "unix")]
-fn get_gpg_keys_unix() -> Result<Vec<(String, String)>> {
+pub fn get_gpg_keys() -> Result<Vec<(String, String)>> {
     let mut context = Context::from_protocol(Protocol::OpenPgp).unwrap();
     let mut available_keys: Vec<(String, String)> = Vec::new();
 
@@ -236,68 +221,68 @@ fn get_gpg_keys_unix() -> Result<Vec<(String, String)>> {
 }
 
 #[cfg(target_family = "windows")]
-fn get_gpg_keys_windows() -> Option<Vec<(String, String)>> {
+pub fn get_gpg_keys() -> Result<Vec<(String, String)>> {
     let output = Command::new("gpg")
         .args(["--list-keys", "--keyid-format", "LONG"])
         .output()
-        .expect("Failed to execute command");
+        .map_err(|_| Error::Msg("Failed to execute GPG command".to_string()))?;
 
-    let stdout = String::from_utf8(output.stdout).unwrap();
+    let stdout = String::from_utf8(output.stdout)
+        .map_err(|_| Error::Msg("Failed to parse GPG output as UTF-8".to_string()))?;
 
     if stdout.trim().is_empty() {
-        return Some(vec![]);
+        return Ok(vec![]);
     }
 
     let mut lines: VecDeque<_> = stdout.lines().collect();
 
-    lines.pop_front()?;
-    if lines
-        .pop_front()?
-        .bytes()
-        .filter(|&b| b != b'-')
-        .take(1)
-        .count()
-        > 0
-    {
-        return None;
+    lines.pop_front(); // remove first line
+    if let Some(line) = lines.pop_front() {
+        if line.bytes().filter(|&b| b != b'-').take(1).count() > 0 {
+            return Err(Error::Msg("Unexpected GPG output format".to_string()));
+        }
     }
 
     let re_fingerprint = Regex::new(r"^[0-9A-F]{16,}$").unwrap();
     let re_user_id = Regex::new(r"^uid\s*\[[a-z ]+\]\s*(.*)$").unwrap();
 
-    let mut available_keys: Vec<(String, String)> = Vec::new();
+    let mut available_keys = Vec::new();
+
     while !lines.is_empty() {
-        match lines.pop_front()? {
-            l if l.starts_with("pub ") || l.starts_with("sec ") => {
-                let fingerprint = format_fingerprint(lines.pop_front()?.trim());
-                if !re_fingerprint.is_match(&fingerprint) {
-                    return None;
-                }
+        let line = lines.pop_front().unwrap();
+        if line.starts_with("pub ") || line.starts_with("sec ") {
+            let fingerprint_line = lines
+                .pop_front()
+                .ok_or_else(|| Error::Msg("Missing fingerprint".to_string()))?;
+            let fingerprint = format_fingerprint(fingerprint_line.trim());
 
-                let mut user_ids = Vec::new();
-                while !lines.is_empty() {
-                    match lines.pop_front()? {
-                        l if l.starts_with("uid ") => {
-                            let captures = re_user_id.captures(l)?;
-                            user_ids.push(captures[1].to_string());
-                        }
-
-                        l if l.trim().is_empty() => break,
-
-                        _ => {}
-                    }
-                }
-
-                available_keys.push((user_ids[0].clone(), fingerprint))
+            if !re_fingerprint.is_match(&fingerprint) {
+                return Err(Error::Msg("Invalid fingerprint format".to_string()));
             }
 
-            l if l.trim().is_empty() => {}
+            let mut user_ids = Vec::new();
+            while let Some(uid_line) = lines.front() {
+                if uid_line.starts_with("uid ") {
+                    let uid_line = lines.pop_front().unwrap();
+                    let captures = re_user_id
+                        .captures(&uid_line)
+                        .ok_or_else(|| Error::Msg("Failed to parse user ID".to_string()))?;
+                    user_ids.push(captures[1].to_string());
+                } else if uid_line.trim().is_empty() {
+                    lines.pop_front();
+                    break;
+                } else {
+                    break;
+                }
+            }
 
-            _ => return None,
+            if let Some(first_user) = user_ids.get(0) {
+                available_keys.push((first_user.clone(), fingerprint));
+            }
         }
     }
 
-    Some(available_keys)
+    Ok(available_keys)
 }
 
 #[cfg(target_family = "windows")]
