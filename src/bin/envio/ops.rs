@@ -196,6 +196,7 @@ pub fn list_profiles(no_pretty_print: bool) -> AppResult<()> {
     table.set_header(vec![
         Cell::new("Name").add_attribute(Attribute::Bold),
         Cell::new("Description").add_attribute(Attribute::Bold),
+        Cell::new("Cipher Kind").add_attribute(Attribute::Bold),
         Cell::new("Created At").add_attribute(Attribute::Bold),
         Cell::new("Updated At").add_attribute(Attribute::Bold),
     ]);
@@ -205,6 +206,7 @@ pub fn list_profiles(no_pretty_print: bool) -> AppResult<()> {
         table.add_row(vec![
             &profile,
             &metadata.description.unwrap_or("".to_string()),
+            &metadata.cipher_kind.to_string(),
             &metadata.created_at.format("%Y-%m-%d %H:%M:%S").to_string(),
             &metadata.updated_at.format("%Y-%m-%d %H:%M:%S").to_string(),
         ]);
