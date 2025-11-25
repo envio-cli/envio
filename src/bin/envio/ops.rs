@@ -11,6 +11,8 @@ use comfy_table::{Attribute, Cell, ContentArrangement, Table};
 use envio::{cipher::Cipher, profile::ProfileMetadata, EnvMap, Profile};
 
 #[cfg(target_family = "unix")]
+use crate::utils::get_shellscript_path;
+
 use crate::{
     error::{AppError, AppResult},
     output::warning,
@@ -26,8 +28,7 @@ pub fn create_profile(
     envs: EnvMap,
     cipher: Box<dyn Cipher>,
 ) -> AppResult<()> {
-    let profile_dir = get_profile_dir();
-    let profile_file_path = profile_dir.join(name.clone() + ".env");
+    let profile_file_path = build_profile_path(&name);
 
     if profile_file_path.exists() {
         return Err(AppError::ProfileExists(name));
@@ -258,15 +259,15 @@ pub fn import_profile(file_path: String, profile_name: &String) -> AppResult<()>
 
 #[cfg(target_family = "unix")]
 pub fn create_shellscript(profile: &str) -> AppResult<()> {
-    use crate::utils::get_shellscript_path;
-
-    let shellscript_path = get_shellscript_path();
-
     let mut file = std::fs::OpenOptions::new()
         .write(true)
-        .truncate(true)
-        .append(false)
-        .open(shellscript_path)?;
+        .open(get_shellscript_path())?;
+
+    if file.metadata()?.len() > 0 {
+        return Err(AppError::Msg(
+            "There is already a profile loaded".to_string(),
+        ));
+    }
 
     let shellscript = format!(
         r#"#!/bin/bash
@@ -331,13 +332,9 @@ pub fn load_profile(profile: Profile) -> AppResult<()> {
 
 #[cfg(target_family = "unix")]
 pub fn unload_profile() -> AppResult<()> {
-    use crate::utils::get_shellscript_path;
-
     let file = std::fs::OpenOptions::new()
         .write(true)
-        .append(false)
-        .open(get_shellscript_path())
-        .unwrap();
+        .open(get_shellscript_path())?;
 
     if file.metadata()?.len() == 0 {
         return Err(AppError::Msg("No profile has been loaded".to_string()));
