@@ -24,12 +24,15 @@ Register-ArgumentCompleter -Native -CommandName 'envio' -ScriptBlock {
             [CompletionResult]::new('--diagnostic', 'diagnostic', [CompletionResultType]::ParameterName, 'Show diagnostic information for bug reports')
             [CompletionResult]::new('-h', 'h', [CompletionResultType]::ParameterName, 'Print help')
             [CompletionResult]::new('--help', 'help', [CompletionResultType]::ParameterName, 'Print help')
-            [CompletionResult]::new('profile', 'profile', [CompletionResultType]::ParameterValue, 'Manage profiles')
+            [CompletionResult]::new('create', 'create', [CompletionResultType]::ParameterValue, 'Create a new profile')
+            [CompletionResult]::new('delete', 'delete', [CompletionResultType]::ParameterValue, 'Delete a profile')
+            [CompletionResult]::new('list', 'list', [CompletionResultType]::ParameterValue, 'List all profiles')
+            [CompletionResult]::new('show', 'show', [CompletionResultType]::ParameterValue, 'Show environment variables in a profile')
             [CompletionResult]::new('set', 'set', [CompletionResultType]::ParameterValue, 'Set or update environment variables in a profile')
             [CompletionResult]::new('unset', 'unset', [CompletionResultType]::ParameterValue, 'Remove environment variables from a profile')
-            [CompletionResult]::new('load', 'load', [CompletionResultType]::ParameterValue, 'Load environment variables from a profile for use in the current terminal session')
-            [CompletionResult]::new('unload', 'unload', [CompletionResultType]::ParameterValue, 'Unload a profile from the current terminal session')
-            [CompletionResult]::new('run', 'run', [CompletionResultType]::ParameterValue, 'Run a command with profile environment variables')
+            [CompletionResult]::new('load', 'load', [CompletionResultType]::ParameterValue, 'Load environment variables from a profile for use in terminal sessions')
+            [CompletionResult]::new('unload', 'unload', [CompletionResultType]::ParameterValue, 'Unload previously loaded environment variables from terminal sessions')
+            [CompletionResult]::new('run', 'run', [CompletionResultType]::ParameterValue, 'Run a command using environment variables from a profile')
             [CompletionResult]::new('import', 'import', [CompletionResultType]::ParameterValue, 'Import a profile from a file or url')
             [CompletionResult]::new('export', 'export', [CompletionResultType]::ParameterValue, 'Export the environment variables of a profile to a file')
             [CompletionResult]::new('tui', 'tui', [CompletionResultType]::ParameterValue, 'Launch the interactive TUI application')
@@ -37,17 +40,7 @@ Register-ArgumentCompleter -Native -CommandName 'envio' -ScriptBlock {
             [CompletionResult]::new('version', 'version', [CompletionResultType]::ParameterValue, 'Print version information')
             break
         }
-        'envio;profile' {
-            [CompletionResult]::new('--diagnostic', 'diagnostic', [CompletionResultType]::ParameterName, 'Show diagnostic information for bug reports')
-            [CompletionResult]::new('-h', 'h', [CompletionResultType]::ParameterName, 'Print help')
-            [CompletionResult]::new('--help', 'help', [CompletionResultType]::ParameterName, 'Print help')
-            [CompletionResult]::new('create', 'create', [CompletionResultType]::ParameterValue, 'Create a new profile')
-            [CompletionResult]::new('delete', 'delete', [CompletionResultType]::ParameterValue, 'Delete a profile')
-            [CompletionResult]::new('list', 'list', [CompletionResultType]::ParameterValue, 'List all profiles')
-            [CompletionResult]::new('show', 'show', [CompletionResultType]::ParameterValue, 'Show environment variables in a profile')
-            break
-        }
-        'envio;profile;create' {
+        'envio;create' {
             [CompletionResult]::new('-d', 'd', [CompletionResultType]::ParameterName, 'optional note or description of the profile')
             [CompletionResult]::new('--description', 'description', [CompletionResultType]::ParameterName, 'optional note or description of the profile')
             [CompletionResult]::new('-f', 'f', [CompletionResultType]::ParameterName, 'file path to load environment variables from')
@@ -65,20 +58,20 @@ Register-ArgumentCompleter -Native -CommandName 'envio' -ScriptBlock {
             [CompletionResult]::new('--help', 'help', [CompletionResultType]::ParameterName, 'Print help')
             break
         }
-        'envio;profile;delete' {
+        'envio;delete' {
             [CompletionResult]::new('--diagnostic', 'diagnostic', [CompletionResultType]::ParameterName, 'Show diagnostic information for bug reports')
             [CompletionResult]::new('-h', 'h', [CompletionResultType]::ParameterName, 'Print help')
             [CompletionResult]::new('--help', 'help', [CompletionResultType]::ParameterName, 'Print help')
             break
         }
-        'envio;profile;list' {
+        'envio;list' {
             [CompletionResult]::new('--no-pretty-print', 'no-pretty-print', [CompletionResultType]::ParameterName, 'disable pretty printing')
             [CompletionResult]::new('--diagnostic', 'diagnostic', [CompletionResultType]::ParameterName, 'Show diagnostic information for bug reports')
             [CompletionResult]::new('-h', 'h', [CompletionResultType]::ParameterName, 'Print help')
             [CompletionResult]::new('--help', 'help', [CompletionResultType]::ParameterName, 'Print help')
             break
         }
-        'envio;profile;show' {
+        'envio;show' {
             [CompletionResult]::new('-c', 'c', [CompletionResultType]::ParameterName, 'display comments')
             [CompletionResult]::new('--show-comments', 'show-comments', [CompletionResultType]::ParameterName, 'display comments')
             [CompletionResult]::new('-x', 'x', [CompletionResultType]::ParameterName, 'display expiration dates')

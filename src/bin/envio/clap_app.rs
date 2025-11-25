@@ -15,8 +15,92 @@ pub struct ClapApp {
 
 #[derive(clap::Subcommand, Debug)]
 pub enum Command {
-    #[command(subcommand, about = "Manage profiles")]
-    Profile(ProfileCommand),
+    #[command(
+        name = "create",
+        about = "Create a new profile",
+        visible_aliases = &["new"],
+        override_usage = "envio create <PROFILE_NAME> [OPTIONS]"
+    )]
+    Create {
+        #[arg(required = true, help = "name of the profile")]
+        profile_name: String,
+        #[arg(
+            long = "description",
+            short = 'd',
+            help = "optional note or description of the profile"
+        )]
+        description: Option<String>,
+        #[arg(
+            long = "from-file",
+            short = 'f',
+            help = "file path to load environment variables from"
+        )]
+        envs_file: Option<String>,
+        #[arg(
+            long = "envs",
+            short = 'e',
+            value_delimiter = ' ',
+            num_args = 1..,
+            help = "environment variables to add (format: KEY=VALUE or only provide KEY and the value will be prompted for)"
+        )]
+        envs: Option<Vec<String>>,
+        #[arg(long = "cipher-kind", short = 'k', help = "encryption cipher to use")]
+        cipher_kind: Option<String>,
+        #[arg(
+            long = "comments",
+            short = 'c',
+            help = "add comments to the provided environment variables"
+        )]
+        comments: bool,
+        #[arg(
+            long = "expires",
+            short = 'x',
+            help = "add expiration dates to the provided environment variables"
+        )]
+        expires: bool,
+    },
+
+    #[command(
+        name = "delete",
+        about = "Delete a profile",
+        visible_aliases = &["remove"],
+        override_usage = "envio delete <PROFILE_NAME>"
+    )]
+    Delete {
+        #[arg(required = true, help = "name of the profile")]
+        profile_name: String,
+    },
+
+    #[command(
+        name = "list",
+        about = "List all profiles",
+        visible_aliases = &["ls"],
+        override_usage = "envio list [OPTIONS]"
+    )]
+    List {
+        #[arg(long = "no-pretty-print", help = "disable pretty printing")]
+        no_pretty_print: bool,
+    },
+
+    #[command(
+        name = "show",
+        about = "Show environment variables in a profile",
+        override_usage = "envio show <PROFILE_NAME> [OPTIONS]"
+    )]
+    Show {
+        #[arg(required = true, help = "name of the profile")]
+        profile_name: String,
+        #[arg(long = "show-comments", short = 'c', help = "display comments")]
+        show_comments: bool,
+        #[arg(
+            long = "show-expiration",
+            short = 'x',
+            help = "display expiration dates"
+        )]
+        show_expiration: bool,
+        #[arg(long = "no-pretty-print", help = "disable pretty printing")]
+        no_pretty_print: bool,
+    },
 
     #[command(
         name = "set",
@@ -56,7 +140,7 @@ pub enum Command {
 
     #[command(
         name = "load",
-        about = "Load environment variables from a profile for use in the current terminal session",
+        about = "Load environment variables from a profile for use in terminal sessions",
         override_usage = "envio load <PROFILE_NAME>"
     )]
     Load {
@@ -67,7 +151,7 @@ pub enum Command {
     #[cfg(target_family = "unix")]
     #[command(
         name = "unload",
-        about = "Unload a profile from the current terminal session",
+        about = "Unload previously loaded environment variables from terminal sessions",
         override_usage = "envio unload"
     )]
     Unload,
@@ -75,7 +159,7 @@ pub enum Command {
     #[cfg(target_family = "windows")]
     #[command(
         name = "unload",
-        about = "Unload a profile from the current terminal session",
+        about = "Unload previously loaded environment variables from terminal sessions",
         override_usage = "envio unload <PROFILE_NAME>"
     )]
     Unload {
@@ -85,8 +169,8 @@ pub enum Command {
 
     #[command(
         name = "run",
-        about = "Run a command with profile environment variables",
-        aliases = &["exec"],
+        about = "Run a command using environment variables from a profile",
+        visible_aliases = &["exec"],
         override_usage = "envio run <PROFILE_NAME> -- <COMMAND>"
     )]
     Run {
@@ -169,95 +253,5 @@ pub enum Command {
             help = "show verbose version information"
         )]
         verbose: bool,
-    },
-}
-
-#[derive(clap::Subcommand, Debug)]
-pub enum ProfileCommand {
-    #[command(
-        name = "create",
-        about = "Create a new profile",
-        aliases = &["new"],
-        override_usage = "envio profile create <PROFILE_NAME> [OPTIONS]"
-    )]
-    Create {
-        #[arg(required = true, help = "name of the profile")]
-        profile_name: String,
-        #[arg(
-            long = "description",
-            short = 'd',
-            help = "optional note or description of the profile"
-        )]
-        description: Option<String>,
-        #[arg(
-            long = "from-file",
-            short = 'f',
-            help = "file path to load environment variables from"
-        )]
-        envs_file: Option<String>,
-        #[arg(
-            long = "envs",
-            short = 'e',
-            value_delimiter = ' ',
-            num_args = 1..,
-            help = "environment variables to add (format: KEY=VALUE or only provide KEY and the value will be prompted for)"
-        )]
-        envs: Option<Vec<String>>,
-        #[arg(long = "cipher-kind", short = 'k', help = "encryption cipher to use")]
-        cipher_kind: Option<String>,
-        #[arg(
-            long = "comments",
-            short = 'c',
-            help = "add comments to the provided environment variables"
-        )]
-        comments: bool,
-        #[arg(
-            long = "expires",
-            short = 'x',
-            help = "add expiration dates to the provided environment variables"
-        )]
-        expires: bool,
-    },
-
-    #[command(
-        name = "delete",
-        about = "Delete a profile",
-        aliases = &["remove"],
-        override_usage = "envio profile delete <PROFILE_NAME>"
-    )]
-    Delete {
-        #[arg(required = true, help = "name of the profile")]
-        profile_name: String,
-    },
-
-    #[command(
-        name = "list",
-        about = "List all profiles",
-        aliases = &["ls"],
-        override_usage = "envio profile list [OPTIONS]"
-    )]
-    List {
-        #[arg(long = "no-pretty-print", help = "disable pretty printing")]
-        no_pretty_print: bool,
-    },
-
-    #[command(
-        name = "show",
-        about = "Show environment variables in a profile",
-        override_usage = "envio profile show <PROFILE_NAME> [OPTIONS]"
-    )]
-    Show {
-        #[arg(required = true, help = "name of the profile")]
-        profile_name: String,
-        #[arg(long = "show-comments", short = 'c', help = "display comments")]
-        show_comments: bool,
-        #[arg(
-            long = "show-expiration",
-            short = 'x',
-            help = "display expiration dates"
-        )]
-        show_expiration: bool,
-        #[arg(long = "no-pretty-print", help = "disable pretty printing")]
-        no_pretty_print: bool,
     },
 }

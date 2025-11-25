@@ -13,7 +13,7 @@ use strum::IntoEnumIterator;
 use url::Url;
 
 use crate::{
-    clap_app::{ClapApp, Command, ProfileCommand},
+    clap_app::{ClapApp, Command},
     completions,
     diagnostic::DiagnosticReport,
     error::{AppError, AppResult},
@@ -48,7 +48,7 @@ impl ClapApp {
         }
 
         match &self.command {
-            Command::Profile(ProfileCommand::Create {
+            Command::Create {
                 profile_name,
                 description,
                 envs,
@@ -56,7 +56,7 @@ impl ClapApp {
                 cipher_kind,
                 comments: add_comments,
                 expires: add_expires,
-            }) => {
+            } => {
                 let selected_cipher_kind = if let Some(kind) = cipher_kind {
                     kind.parse::<CipherKind>()
                         .map_err(|e| AppError::Msg(e.to_string()))?
@@ -367,21 +367,21 @@ impl ClapApp {
                 }
             }
 
-            Command::Profile(ProfileCommand::Delete { profile_name }) => {
+            Command::Delete { profile_name } => {
                 ops::delete_profile(profile_name)?;
                 success("Deleted profile");
             }
 
-            Command::Profile(ProfileCommand::List { no_pretty_print }) => {
+            Command::List { no_pretty_print } => {
                 ops::list_profiles(*no_pretty_print)?;
             }
 
-            Command::Profile(ProfileCommand::Show {
+            Command::Show {
                 profile_name,
                 no_pretty_print,
                 show_comments,
                 show_expiration,
-            }) => {
+            } => {
                 let profile =
                     get_profile(utils::get_profile_path(profile_name)?, Some(get_userkey))?;
                 ops::check_expired_envs(&profile);

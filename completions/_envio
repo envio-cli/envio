@@ -27,21 +27,6 @@ _envio() {
         (( CURRENT += 1 ))
         curcontext="${curcontext%:*:*}:envio-command-$line[1]:"
         case $line[1] in
-            (profile)
-_arguments "${_arguments_options[@]}" \
-'--diagnostic[Show diagnostic information for bug reports]' \
-'-h[Print help]' \
-'--help[Print help]' \
-":: :_envio__profile_commands" \
-"*::: :->profile" \
-&& ret=0
-
-    case $state in
-    (profile)
-        words=($line[1] "${words[@]}")
-        (( CURRENT += 1 ))
-        curcontext="${curcontext%:*:*}:envio-profile-command-$line[1]:"
-        case $line[1] in
             (create)
 _arguments "${_arguments_options[@]}" \
 '-d+[optional note or description of the profile]:DESCRIPTION: ' \
@@ -90,10 +75,6 @@ _arguments "${_arguments_options[@]}" \
 '--help[Print help]' \
 ':profile_name -- name of the profile:' \
 && ret=0
-;;
-        esac
-    ;;
-esac
 ;;
 (set)
 _arguments "${_arguments_options[@]}" \
@@ -195,12 +176,19 @@ esac
 (( $+functions[_envio_commands] )) ||
 _envio_commands() {
     local commands; commands=(
-'profile:Manage profiles' \
+'create:Create a new profile' \
+'new:Create a new profile' \
+'delete:Delete a profile' \
+'remove:Delete a profile' \
+'list:List all profiles' \
+'ls:List all profiles' \
+'show:Show environment variables in a profile' \
 'set:Set or update environment variables in a profile' \
 'unset:Remove environment variables from a profile' \
-'load:Load environment variables from a profile for use in the current terminal session' \
-'unload:Unload a profile from the current terminal session' \
-'run:Run a command with profile environment variables' \
+'load:Load environment variables from a profile for use in terminal sessions' \
+'unload:Unload previously loaded environment variables from terminal sessions' \
+'run:Run a command using environment variables from a profile' \
+'exec:Run a command using environment variables from a profile' \
 'import:Import a profile from a file or url' \
 'export:Export the environment variables of a profile to a file' \
 'tui:Launch the interactive TUI application' \
@@ -214,15 +202,15 @@ _envio__completion_commands() {
     local commands; commands=()
     _describe -t commands 'envio completion commands' commands "$@"
 }
-(( $+functions[_envio__profile__create_commands] )) ||
-_envio__profile__create_commands() {
+(( $+functions[_envio__create_commands] )) ||
+_envio__create_commands() {
     local commands; commands=()
-    _describe -t commands 'envio profile create commands' commands "$@"
+    _describe -t commands 'envio create commands' commands "$@"
 }
-(( $+functions[_envio__profile__delete_commands] )) ||
-_envio__profile__delete_commands() {
+(( $+functions[_envio__delete_commands] )) ||
+_envio__delete_commands() {
     local commands; commands=()
-    _describe -t commands 'envio profile delete commands' commands "$@"
+    _describe -t commands 'envio delete commands' commands "$@"
 }
 (( $+functions[_envio__export_commands] )) ||
 _envio__export_commands() {
@@ -234,25 +222,15 @@ _envio__import_commands() {
     local commands; commands=()
     _describe -t commands 'envio import commands' commands "$@"
 }
-(( $+functions[_envio__profile__list_commands] )) ||
-_envio__profile__list_commands() {
+(( $+functions[_envio__list_commands] )) ||
+_envio__list_commands() {
     local commands; commands=()
-    _describe -t commands 'envio profile list commands' commands "$@"
+    _describe -t commands 'envio list commands' commands "$@"
 }
 (( $+functions[_envio__load_commands] )) ||
 _envio__load_commands() {
     local commands; commands=()
     _describe -t commands 'envio load commands' commands "$@"
-}
-(( $+functions[_envio__profile_commands] )) ||
-_envio__profile_commands() {
-    local commands; commands=(
-'create:Create a new profile' \
-'delete:Delete a profile' \
-'list:List all profiles' \
-'show:Show environment variables in a profile' \
-    )
-    _describe -t commands 'envio profile commands' commands "$@"
 }
 (( $+functions[_envio__run_commands] )) ||
 _envio__run_commands() {
@@ -264,10 +242,10 @@ _envio__set_commands() {
     local commands; commands=()
     _describe -t commands 'envio set commands' commands "$@"
 }
-(( $+functions[_envio__profile__show_commands] )) ||
-_envio__profile__show_commands() {
+(( $+functions[_envio__show_commands] )) ||
+_envio__show_commands() {
     local commands; commands=()
-    _describe -t commands 'envio profile show commands' commands "$@"
+    _describe -t commands 'envio show commands' commands "$@"
 }
 (( $+functions[_envio__tui_commands] )) ||
 _envio__tui_commands() {

@@ -15,8 +15,17 @@ Show diagnostic information for bug reports
 Print help
 .SH SUBCOMMANDS
 .TP
-envio\-profile(1)
-Manage profiles
+envio\-create(1)
+Create a new profile
+.TP
+envio\-delete(1)
+Delete a profile
+.TP
+envio\-list(1)
+List all profiles
+.TP
+envio\-show(1)
+Show environment variables in a profile
 .TP
 envio\-set(1)
 Set or update environment variables in a profile
@@ -25,13 +34,13 @@ envio\-unset(1)
 Remove environment variables from a profile
 .TP
 envio\-load(1)
-Load environment variables from a profile for use in the current terminal session
+Load environment variables from a profile for use in terminal sessions
 .TP
 envio\-unload(1)
-Unload a profile from the current terminal session
+Unload previously loaded environment variables from terminal sessions
 .TP
 envio\-run(1)
-Run a command with profile environment variables
+Run a command using environment variables from a profile
 .TP
 envio\-import(1)
 Import a profile from a file or url
