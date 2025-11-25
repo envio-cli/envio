@@ -11,7 +11,6 @@ use comfy_table::{Attribute, Cell, ContentArrangement, Table};
 use envio::{cipher::Cipher, profile::ProfileMetadata, EnvMap, Profile};
 
 #[cfg(target_family = "unix")]
-use crate::utils::get_shell_config_path;
 use crate::{
     error::{AppError, AppResult},
     output::warning,
@@ -302,18 +301,7 @@ done <<< "$ENV_VARS"
 pub fn load_profile(profile_name: &str) -> AppResult<()> {
     get_profile_path(profile_name)?; // will error if the profile does not exist
 
-    let shell_config = get_shell_config_path(false)?;
-
     create_shellscript(profile_name)?;
-
-    if shell_config.exists() {
-        println!(
-            "Reload your shell to apply changes or run `source {}`",
-            format_args!("~/{}", shell_config.display())
-        );
-    } else {
-        println!("Reload your shell to apply changes");
-    }
 
     Ok(())
 }
@@ -338,7 +326,6 @@ pub fn load_profile(profile: Profile) -> AppResult<()> {
         }
     }
 
-    println!("Reload your shell to apply changes");
     Ok(())
 }
 
@@ -352,9 +339,12 @@ pub fn unload_profile() -> AppResult<()> {
         .open(get_shellscript_path())
         .unwrap();
 
+    if file.metadata()?.len() == 0 {
+        return Err(AppError::Msg("No profile has been loaded".to_string()));
+    }
+
     file.set_len(0)?;
 
-    println!("Reload your shell to apply changes");
     Ok(())
 }
 
@@ -383,8 +373,6 @@ pub fn unload_profile(profile: Profile) -> AppResult<()> {
             }
         }
     }
-
-    println!("Reload your shell to apply changes");
 
     Ok(())
 }

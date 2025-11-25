@@ -47,7 +47,7 @@ pub fn initialize_config() -> AppResult<()> {
         println!("{}", "Creating shellscript".bold());
         fs::write(&shellscript_path, "")?;
 
-        let mut shellconfig_path = get_shell_config_path(true)?;
+        let mut shellconfig_path = get_shell_config_path()?;
 
         if !shellconfig_path.exists() {
             let input = Text::new(

@@ -303,6 +303,17 @@ impl ClapApp {
                 #[cfg(target_family = "unix")]
                 {
                     ops::load_profile(profile_name)?;
+
+                    let shell_config = utils::get_shell_config_path()?;
+
+                    if shell_config.exists() {
+                        success(format!(
+                            "Reload your shell to apply changes or run `source {}`",
+                            utils::shorten_home(&shell_config)
+                        ));
+                    } else {
+                        success("Reload your shell to apply changes");
+                    }
                 }
 
                 #[cfg(target_family = "windows")]
@@ -311,12 +322,16 @@ impl ClapApp {
                         get_profile(utils::get_profile_path(profile_name)?, Some(get_userkey))?;
 
                     ops::load_profile(profile)?;
+
+                    success("Restart your shell to apply changes");
                 }
             }
 
             #[cfg(target_family = "unix")]
             Command::Unload => {
                 ops::unload_profile()?;
+
+                success("Restart your shell to apply changes");
             }
 
             #[cfg(target_family = "windows")]
@@ -325,6 +340,8 @@ impl ClapApp {
                     get_profile(utils::get_profile_path(profile_name)?, Some(get_userkey))?;
 
                 ops::unload_profile(profile)?;
+
+                success("Restart your shell to apply changes");
             }
 
             Command::Run {
