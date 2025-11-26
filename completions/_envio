@@ -14,7 +14,7 @@ _envio() {
     fi
 
     local context curcontext="$curcontext" state line
-    _arguments "${_arguments_options[@]}" \
+    _arguments "${_arguments_options[@]}" : \
 '--diagnostic[Show diagnostic information for bug reports]' \
 '-h[Print help]' \
 '--help[Print help]' \
@@ -28,15 +28,15 @@ _envio() {
         curcontext="${curcontext%:*:*}:envio-command-$line[1]:"
         case $line[1] in
             (create)
-_arguments "${_arguments_options[@]}" \
-'-d+[optional note or description of the profile]:DESCRIPTION: ' \
-'--description=[optional note or description of the profile]:DESCRIPTION: ' \
-'-f+[file path to load environment variables from]:ENVS_FILE: ' \
-'--from-file=[file path to load environment variables from]:ENVS_FILE: ' \
-'*-e+[environment variables to add (format\: KEY=VALUE or only provide KEY and the value will be prompted for)]:ENVS: ' \
-'*--envs=[environment variables to add (format\: KEY=VALUE or only provide KEY and the value will be prompted for)]:ENVS: ' \
-'-k+[encryption cipher to use]:CIPHER_KIND: ' \
-'--cipher-kind=[encryption cipher to use]:CIPHER_KIND: ' \
+_arguments "${_arguments_options[@]}" : \
+'-d+[optional note or description of the profile]:DESCRIPTION:_default' \
+'--description=[optional note or description of the profile]:DESCRIPTION:_default' \
+'-f+[file path to load environment variables from]:ENVS_FILE:_default' \
+'--from-file=[file path to load environment variables from]:ENVS_FILE:_default' \
+'*-e+[environment variables to add (format\: KEY=VALUE or only provide KEY and the value will be prompted for)]:ENVS:_default' \
+'*--envs=[environment variables to add (format\: KEY=VALUE or only provide KEY and the value will be prompted for)]:ENVS:_default' \
+'-k+[encryption cipher to use]:CIPHER_KIND:_default' \
+'--cipher-kind=[encryption cipher to use]:CIPHER_KIND:_default' \
 '-c[add comments to the provided environment variables]' \
 '--comments[add comments to the provided environment variables]' \
 '-x[add expiration dates to the provided environment variables]' \
@@ -44,19 +44,55 @@ _arguments "${_arguments_options[@]}" \
 '--diagnostic[Show diagnostic information for bug reports]' \
 '-h[Print help]' \
 '--help[Print help]' \
-':profile_name -- name of the profile:' \
+':profile_name -- name of the profile:_default' \
 && ret=0
 ;;
-(delete)
-_arguments "${_arguments_options[@]}" \
+(new)
+_arguments "${_arguments_options[@]}" : \
+'-d+[optional note or description of the profile]:DESCRIPTION:_default' \
+'--description=[optional note or description of the profile]:DESCRIPTION:_default' \
+'-f+[file path to load environment variables from]:ENVS_FILE:_default' \
+'--from-file=[file path to load environment variables from]:ENVS_FILE:_default' \
+'*-e+[environment variables to add (format\: KEY=VALUE or only provide KEY and the value will be prompted for)]:ENVS:_default' \
+'*--envs=[environment variables to add (format\: KEY=VALUE or only provide KEY and the value will be prompted for)]:ENVS:_default' \
+'-k+[encryption cipher to use]:CIPHER_KIND:_default' \
+'--cipher-kind=[encryption cipher to use]:CIPHER_KIND:_default' \
+'-c[add comments to the provided environment variables]' \
+'--comments[add comments to the provided environment variables]' \
+'-x[add expiration dates to the provided environment variables]' \
+'--expires[add expiration dates to the provided environment variables]' \
 '--diagnostic[Show diagnostic information for bug reports]' \
 '-h[Print help]' \
 '--help[Print help]' \
-':profile_name -- name of the profile:' \
+':profile_name -- name of the profile:_default' \
+&& ret=0
+;;
+(delete)
+_arguments "${_arguments_options[@]}" : \
+'--diagnostic[Show diagnostic information for bug reports]' \
+'-h[Print help]' \
+'--help[Print help]' \
+':profile_name -- name of the profile:_default' \
+&& ret=0
+;;
+(remove)
+_arguments "${_arguments_options[@]}" : \
+'--diagnostic[Show diagnostic information for bug reports]' \
+'-h[Print help]' \
+'--help[Print help]' \
+':profile_name -- name of the profile:_default' \
 && ret=0
 ;;
 (list)
-_arguments "${_arguments_options[@]}" \
+_arguments "${_arguments_options[@]}" : \
+'--no-pretty-print[disable pretty printing]' \
+'--diagnostic[Show diagnostic information for bug reports]' \
+'-h[Print help]' \
+'--help[Print help]' \
+&& ret=0
+;;
+(ls)
+_arguments "${_arguments_options[@]}" : \
 '--no-pretty-print[disable pretty printing]' \
 '--diagnostic[Show diagnostic information for bug reports]' \
 '-h[Print help]' \
@@ -64,7 +100,7 @@ _arguments "${_arguments_options[@]}" \
 && ret=0
 ;;
 (show)
-_arguments "${_arguments_options[@]}" \
+_arguments "${_arguments_options[@]}" : \
 '-c[display comments]' \
 '--show-comments[display comments]' \
 '-x[display expiration dates]' \
@@ -73,11 +109,11 @@ _arguments "${_arguments_options[@]}" \
 '--diagnostic[Show diagnostic information for bug reports]' \
 '-h[Print help]' \
 '--help[Print help]' \
-':profile_name -- name of the profile:' \
+':profile_name -- name of the profile:_default' \
 && ret=0
 ;;
 (set)
-_arguments "${_arguments_options[@]}" \
+_arguments "${_arguments_options[@]}" : \
 '-c[add comments to the provided environment variables]' \
 '--comments[add comments to the provided environment variables]' \
 '-x[add expiration dates to the provided environment variables]' \
@@ -85,74 +121,83 @@ _arguments "${_arguments_options[@]}" \
 '--diagnostic[Show diagnostic information for bug reports]' \
 '-h[Print help]' \
 '--help[Print help]' \
-':profile_name -- name of the profile:' \
-'*::envs -- environment variables to set (format\: KEY=VALUE or only provide KEY and the value will be prompted for):' \
+':profile_name -- name of the profile:_default' \
+'*::envs -- environment variables to set (format\: KEY=VALUE or only provide KEY and the value will be prompted for):_default' \
 && ret=0
 ;;
 (unset)
-_arguments "${_arguments_options[@]}" \
+_arguments "${_arguments_options[@]}" : \
 '--diagnostic[Show diagnostic information for bug reports]' \
 '-h[Print help]' \
 '--help[Print help]' \
-':profile_name -- name of the profile:' \
-'*::keys -- keys of environment variables to remove:' \
+':profile_name -- name of the profile:_default' \
+'*::keys -- keys of environment variables to remove:_default' \
 && ret=0
 ;;
 (load)
-_arguments "${_arguments_options[@]}" \
+_arguments "${_arguments_options[@]}" : \
 '--diagnostic[Show diagnostic information for bug reports]' \
 '-h[Print help]' \
 '--help[Print help]' \
-':profile_name -- name of the profile:' \
+':profile_name -- name of the profile:_default' \
 && ret=0
 ;;
 (unload)
-_arguments "${_arguments_options[@]}" \
+_arguments "${_arguments_options[@]}" : \
 '--diagnostic[Show diagnostic information for bug reports]' \
 '-h[Print help]' \
 '--help[Print help]' \
 && ret=0
 ;;
 (run)
-_arguments "${_arguments_options[@]}" \
+_arguments "${_arguments_options[@]}" : \
 '--diagnostic[Show diagnostic information for bug reports]' \
 '-h[Print help]' \
 '--help[Print help]' \
-':profile_name -- name of the profile:' \
-'*::command -- command to run:' \
+':profile_name -- name of the profile:_default' \
+'*::command -- command to run:_default' \
+&& ret=0
+;;
+(exec)
+_arguments "${_arguments_options[@]}" : \
+'--diagnostic[Show diagnostic information for bug reports]' \
+'-h[Print help]' \
+'--help[Print help]' \
+':profile_name -- name of the profile:_default' \
+'*::command -- command to run:_default' \
 && ret=0
 ;;
 (import)
-_arguments "${_arguments_options[@]}" \
-'-n+[name for the imported profile]:PROFILE_NAME: ' \
-'--profile-name=[name for the imported profile]:PROFILE_NAME: ' \
+_arguments "${_arguments_options[@]}" : \
+'-n+[name for the imported profile]:PROFILE_NAME:_default' \
+'--profile-name=[name for the imported profile]:PROFILE_NAME:_default' \
 '--diagnostic[Show diagnostic information for bug reports]' \
 '-h[Print help]' \
 '--help[Print help]' \
-':source -- source file or url:' \
+':source -- source file or url:_default' \
 && ret=0
 ;;
 (export)
-_arguments "${_arguments_options[@]}" \
-'-o+[output file path (default\: .env)]:OUTPUT_FILE_PATH: ' \
-'--output-file-path=[output file path (default\: .env)]:OUTPUT_FILE_PATH: ' \
-'*-k+[comma-separated list of keys to export (type '\''select'\'' to choose interactively)]:KEYS: ' \
-'*--keys=[comma-separated list of keys to export (type '\''select'\'' to choose interactively)]:KEYS: ' \
+_arguments "${_arguments_options[@]}" : \
+'-o+[output file path (default\: .env)]:OUTPUT_FILE_PATH:_default' \
+'--output-file-path=[output file path (default\: .env)]:OUTPUT_FILE_PATH:_default' \
+'*-k+[comma-separated list of keys to export (type '\''select'\'' to choose interactively)]:KEYS:_default' \
+'*--keys=[comma-separated list of keys to export (type '\''select'\'' to choose interactively)]:KEYS:_default' \
 '--diagnostic[Show diagnostic information for bug reports]' \
 '-h[Print help]' \
 '--help[Print help]' \
-':profile_name -- name of the profile:' \
+':profile_name -- name of the profile:_default' \
 && ret=0
 ;;
 (tui)
-_arguments "${_arguments_options[@]}" \
+_arguments "${_arguments_options[@]}" : \
 '--diagnostic[Show diagnostic information for bug reports]' \
 '-h[Print help]' \
 '--help[Print help]' \
 && ret=0
 ;;
 (completion)
-_arguments "${_arguments_options[@]}" \
+_arguments "${_arguments_options[@]}" : \
 '--diagnostic[Show diagnostic information for bug reports]' \
 '-h[Print help]' \
 '--help[Print help]' \
@@ -160,7 +205,7 @@ _arguments "${_arguments_options[@]}" \
 && ret=0
 ;;
 (version)
-_arguments "${_arguments_options[@]}" \
+_arguments "${_arguments_options[@]}" : \
 '-v[show verbose version information]' \
 '--verbose[show verbose version information]' \
 '--diagnostic[Show diagnostic information for bug reports]' \
