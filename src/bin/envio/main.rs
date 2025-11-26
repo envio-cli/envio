@@ -85,7 +85,7 @@ pub fn initialize_config() -> AppResult<()> {
 }
 
 fn check_for_updates() -> AppResult<()> {
-    let latest_version = get_latest_version();
+    let latest_version = get_latest_version()?;
     let current_version = Version::parse(env!("CARGO_PKG_VERSION"))?;
 
     if latest_version > current_version {

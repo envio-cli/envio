@@ -1,9 +1,10 @@
 use std::{
     any::Any,
     io::{Read, Write},
+    iter,
 };
 
-use age::secrecy::Secret;
+use age::{scrypt::Identity, secrecy::SecretString, Decryptor, Encryptor};
 use serde::{Deserialize, Serialize};
 
 use crate::{
@@ -36,15 +37,12 @@ impl Cipher for PASSPHRASE {
     }
 
     fn encrypt(&self, data: &[u8]) -> Result<Vec<u8>> {
-        let encryptor = age::Encryptor::with_user_passphrase(Secret::new(self.key.to_owned()));
+        let encryptor = Encryptor::with_user_passphrase(SecretString::from(self.key.to_owned()));
 
         let mut encrypted = vec![];
-        let mut writer = match encryptor.wrap_output(&mut encrypted) {
-            Ok(writer) => writer,
-            Err(e) => {
-                return Err(Error::Cipher(e.to_string()));
-            }
-        };
+        let mut writer = encryptor
+            .wrap_output(&mut encrypted)
+            .map_err(|e| Error::Cipher(e.to_string()))?;
 
         writer.write_all(data)?;
         writer.finish()?;
@@ -53,18 +51,14 @@ impl Cipher for PASSPHRASE {
     }
 
     fn decrypt(&self, encrypted_data: &[u8]) -> Result<Vec<u8>> {
-        let decryptor = match age::Decryptor::new(encrypted_data).unwrap() {
-            age::Decryptor::Passphrase(d) => d,
-            _ => unreachable!(),
-        };
+        let decryptor = Decryptor::new(encrypted_data).map_err(|e| Error::Cipher(e.to_string()))?;
 
         let mut decrypted = vec![];
-        let mut reader = match decryptor.decrypt(&Secret::new(self.key.to_owned()), None) {
-            Ok(reader) => reader,
-            Err(e) => {
-                return Err(Error::Cipher(e.to_string()));
-            }
-        };
+        let mut reader = decryptor
+            .decrypt(iter::once(
+                &Identity::new(SecretString::from(self.key.to_owned())) as _,
+            ))
+            .map_err(|e| Error::Cipher(e.to_string()))?;
 
         reader.read_to_end(&mut decrypted)?;
 

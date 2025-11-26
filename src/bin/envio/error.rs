@@ -28,6 +28,12 @@ pub enum AppError {
     VersionParse(#[from] semver::Error),
 
     #[error(transparent)]
+    BincodeEncode(#[from] bincode::error::EncodeError),
+
+    #[error(transparent)]
+    BincodeDecode(#[from] bincode::error::DecodeError),
+
+    #[error(transparent)]
     Reqwest(#[from] reqwest::Error),
 
     #[error("Unsupported shell: {0}")]

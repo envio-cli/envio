@@ -6,7 +6,7 @@ use serde::{Deserialize, Serialize};
 use crate::{
     cipher::{Cipher, CipherKind},
     env::EnvMap,
-    error::{Error, Result},
+    error::Result,
     utils::save_serialized_profile,
 };
 
@@ -51,7 +51,8 @@ impl Profile {
 
         let decrypted_envs_bytes = cipher.decrypt(&serialized_profile.content)?;
 
-        let envs: EnvMap = bincode::deserialize(&decrypted_envs_bytes)?;
+        let (envs, _): (EnvMap, usize) =
+            bincode::serde::decode_from_slice(&decrypted_envs_bytes, bincode::config::standard())?;
 
         if let Some(cipher_metadata) = &serialized_profile.metadata.cipher_metadata {
             cipher.load_metadata(cipher_metadata.clone())?;
@@ -65,14 +66,10 @@ impl Profile {
     }
 
     pub fn save(&mut self) -> Result<()> {
-        let serialized_envs = bincode::serialize(&self.envs)?;
+        let serialized_envs =
+            bincode::serde::encode_to_vec(&self.envs, bincode::config::standard())?;
 
-        let encrypted_envs = match self.cipher.encrypt(&serialized_envs) {
-            Ok(data) => data,
-            Err(e) => {
-                return Err(Error::Cipher(e.to_string()));
-            }
-        };
+        let encrypted_envs = self.cipher.encrypt(&serialized_envs)?;
 
         self.metadata.updated_at = Local::now();
 
