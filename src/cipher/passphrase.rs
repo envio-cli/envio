@@ -16,7 +16,7 @@ use crate::{
     error::{Error, Result},
 };
 
-const CHUNK_SIZE: usize = 1024;
+const CHUNK_SIZE: usize = 16 * 1024; // 16KB
 
 #[derive(Serialize, Deserialize, Default, Clone)]
 struct Metadata {
@@ -53,10 +53,6 @@ impl Cipher for PASSPHRASE {
     }
 
     fn encrypt(&mut self, data: &[u8]) -> Result<Vec<u8>> {
-        if data.len() < CHUNK_SIZE {
-            return Err(Error::Cipher("Data is too small".to_string()));
-        }
-
         let salt = SaltString::generate(&mut OsRng);
         let mut output_key_material = [0u8; 32];
 
@@ -78,21 +74,17 @@ impl Cipher for PASSPHRASE {
         );
 
         let mut encrypted_buffer = Vec::new();
-        let mut chunks = data.chunks(CHUNK_SIZE);
+        let (chunks, remainder) = data.as_chunks::<CHUNK_SIZE>();
 
-        if let Some(mut last_chunk) = chunks.next() {
-            for chunk in chunks.by_ref() {
-                encryptor
-                    .encrypt_next_in_place(last_chunk, &mut encrypted_buffer)
-                    .map_err(|e| Error::Cipher(e.to_string()))?;
-
-                last_chunk = chunk;
-            }
-
+        for chunk in chunks {
             encryptor
-                .encrypt_last_in_place(last_chunk, &mut encrypted_buffer)
+                .encrypt_next_in_place(chunk, &mut encrypted_buffer)
                 .map_err(|e| Error::Cipher(e.to_string()))?;
         }
+
+        encryptor
+            .encrypt_last_in_place(remainder, &mut encrypted_buffer)
+            .map_err(|e| Error::Cipher(e.to_string()))?;
 
         self.metadata.salt = salt.to_string(); // already encoded in base64
         self.metadata.nonce = STANDARD.encode(nonce.as_slice());
@@ -124,21 +116,17 @@ impl Cipher for PASSPHRASE {
             DecryptorBE32::<Aes256Gcm>::from_aead(cipher, Nonce::from_slice(&nonce_bytes));
 
         let mut decrypted_buffer = Vec::new();
-        let mut chunks = encrypted_data.chunks(CHUNK_SIZE);
+        let (chunks, remainder) = encrypted_data.as_chunks::<CHUNK_SIZE>();
 
-        if let Some(mut last_chunk) = chunks.next() {
-            for chunk in chunks.by_ref() {
-                decryptor
-                    .decrypt_next_in_place(last_chunk, &mut decrypted_buffer)
-                    .map_err(|e| Error::Cipher(e.to_string()))?;
-
-                last_chunk = chunk;
-            }
-
+        for chunk in chunks {
             decryptor
-                .decrypt_last_in_place(last_chunk, &mut decrypted_buffer)
+                .decrypt_next_in_place(chunk, &mut decrypted_buffer)
                 .map_err(|e| Error::Cipher(e.to_string()))?;
         }
+
+        decryptor
+            .decrypt_last_in_place(remainder, &mut decrypted_buffer)
+            .map_err(|e| Error::Cipher(e.to_string()))?;
 
         Ok(decrypted_buffer)
     }
