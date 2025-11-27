@@ -18,7 +18,7 @@ use crate::{
 
 const CHUNK_SIZE: usize = 1024;
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Default, Clone)]
 struct Metadata {
     salt: String,
     nonce: String,
@@ -27,16 +27,14 @@ struct Metadata {
 #[derive(Serialize, Deserialize, Clone)]
 pub struct PASSPHRASE {
     key: String,
-    salt: String,
-    nonce: String,
+    metadata: Metadata,
 }
 
 impl PASSPHRASE {
     pub fn new(key: String) -> Self {
         PASSPHRASE {
             key,
-            salt: String::new(),
-            nonce: String::new(),
+            metadata: Metadata::default(),
         }
     }
 
@@ -96,8 +94,8 @@ impl Cipher for PASSPHRASE {
                 .map_err(|e| Error::Cipher(e.to_string()))?;
         }
 
-        self.salt = salt.to_string(); // already encoded in base64
-        self.nonce = STANDARD.encode(nonce.as_slice());
+        self.metadata.salt = salt.to_string(); // already encoded in base64
+        self.metadata.nonce = STANDARD.encode(nonce.as_slice());
 
         Ok(encrypted_buffer)
     }
@@ -108,7 +106,7 @@ impl Cipher for PASSPHRASE {
         Argon2::default()
             .hash_password_into(
                 self.key.as_bytes(),
-                SaltString::from_b64(&self.salt)
+                SaltString::from_b64(&self.metadata.salt)
                     .map_err(|e| Error::Cipher(e.to_string()))?
                     .as_str()
                     .as_bytes(),
@@ -117,7 +115,7 @@ impl Cipher for PASSPHRASE {
             .map_err(|e| Error::Cipher(e.to_string()))?;
 
         let nonce_bytes = STANDARD
-            .decode(&self.nonce)
+            .decode(&self.metadata.nonce)
             .map_err(|e| Error::Cipher(e.to_string()))?;
 
         let cipher = Aes256Gcm::new(Key::<Aes256Gcm>::from_slice(&output_key_material));
@@ -146,17 +144,11 @@ impl Cipher for PASSPHRASE {
     }
 
     fn export_metadata(&self) -> Option<serde_json::Value> {
-        serde_json::to_value(Metadata {
-            salt: self.salt.clone(),
-            nonce: self.nonce.clone(),
-        })
-        .ok()
+        serde_json::to_value(self.metadata.clone()).ok()
     }
 
     fn import_metadata(&mut self, data: serde_json::Value) -> Result<()> {
-        let metadata: Metadata = serde_json::from_value(data)?;
-        self.salt = metadata.salt;
-        self.nonce = metadata.nonce;
+        self.metadata = serde_json::from_value(data)?;
 
         Ok(())
     }

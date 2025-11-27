@@ -17,27 +17,29 @@ use crate::{
     error::{Error, Result},
 };
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Default, Clone)]
 struct Metadata {
     key_fingerprint: String,
 }
 
 #[derive(Serialize, Deserialize, Clone)]
 pub struct GPG {
-    key_fingerprint: String,
+    metadata: Metadata,
 }
 
 impl GPG {
     pub fn new(key_fingerprint: String) -> Self {
-        GPG { key_fingerprint }
+        GPG {
+            metadata: Metadata { key_fingerprint },
+        }
     }
 
-    pub fn set_key(&mut self, key: String) {
-        self.key_fingerprint = key;
+    pub fn set_key_fingerprint(&mut self, key_fingerprint: String) {
+        self.metadata.key_fingerprint = key_fingerprint;
     }
 
-    pub fn get_key(&self) -> String {
-        self.key_fingerprint.clone()
+    pub fn get_key_fingerprint(&self) -> String {
+        self.metadata.key_fingerprint.clone()
     }
 }
 
@@ -58,7 +60,7 @@ impl Cipher for GPG {
                 }
             };
 
-            let key = match ctx.get_key(&self.key_fingerprint) {
+            let key = match ctx.get_key(&self.metadata.key_fingerprint) {
                 Ok(key) => key,
                 Err(e) => {
                     return Err(Error::Cipher(e.to_string()));
@@ -74,7 +76,7 @@ impl Cipher for GPG {
         {
             let mut gpg_process = Command::new("gpg")
                 .arg("--recipient")
-                .arg(&self.key_fingerprint)
+                .arg(&self.metadata.key_fingerprint)
                 .arg("--encrypt")
                 .stdin(Stdio::piped())
                 .stdout(Stdio::piped())
@@ -152,15 +154,11 @@ impl Cipher for GPG {
     }
 
     fn export_metadata(&self) -> Option<serde_json::Value> {
-        serde_json::to_value(Metadata {
-            key_fingerprint: self.key_fingerprint.clone(),
-        })
-        .ok()
+        serde_json::to_value(self.metadata.clone()).ok()
     }
 
     fn import_metadata(&mut self, data: serde_json::Value) -> Result<()> {
-        let metadata: Metadata = serde_json::from_value(data)?;
-        self.key_fingerprint = metadata.key_fingerprint;
+        self.metadata = serde_json::from_value(data)?;
 
         Ok(())
     }
