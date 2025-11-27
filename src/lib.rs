@@ -10,7 +10,7 @@ pub use env::{Env, EnvMap};
 pub use profile::{Profile, ProfileMetadata};
 
 use crate::{
-    cipher::{get_profile_cipher, CipherKind, PASSPHRASE},
+    cipher::{CipherKind, PASSPHRASE, get_profile_cipher},
     error::{Error, Result},
 };
 
@@ -47,7 +47,7 @@ where
     let profile = get_profile(file_path, key_provider)?;
 
     for env in &profile.envs {
-        std::env::set_var(&env.key, &env.value);
+        unsafe { std::env::set_var(&env.key, &env.value) };
     }
 
     Ok(profile)
