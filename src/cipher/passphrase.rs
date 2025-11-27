@@ -1,25 +1,43 @@
-use std::{
-    any::Any,
-    io::{Read, Write},
-    iter,
+use aead::stream::{DecryptorBE32, EncryptorBE32};
+use aes_gcm::{
+    aead::{AeadCore, KeyInit},
+    Aes256Gcm, Key, Nonce,
 };
-
-use age::{scrypt::Identity, secrecy::SecretString, Decryptor, Encryptor};
+use argon2::{
+    password_hash::{rand_core::OsRng, SaltString},
+    Argon2,
+};
+use base64::{engine::general_purpose::STANDARD, Engine};
 use serde::{Deserialize, Serialize};
+use std::any::Any;
 
 use crate::{
     cipher::{Cipher, CipherKind},
     error::{Error, Result},
 };
 
+const CHUNK_SIZE: usize = 1024;
+
+#[derive(Serialize, Deserialize)]
+struct Metadata {
+    salt: String,
+    nonce: String,
+}
+
 #[derive(Serialize, Deserialize, Clone)]
 pub struct PASSPHRASE {
     key: String,
+    salt: String,
+    nonce: String,
 }
 
 impl PASSPHRASE {
     pub fn new(key: String) -> Self {
-        PASSPHRASE { key }
+        PASSPHRASE {
+            key,
+            salt: String::new(),
+            nonce: String::new(),
+        }
     }
 
     pub fn set_key(&mut self, key: String) {
@@ -36,33 +54,111 @@ impl Cipher for PASSPHRASE {
         CipherKind::PASSPHRASE
     }
 
-    fn encrypt(&self, data: &[u8]) -> Result<Vec<u8>> {
-        let encryptor = Encryptor::with_user_passphrase(SecretString::from(self.key.to_owned()));
+    fn encrypt(&mut self, data: &[u8]) -> Result<Vec<u8>> {
+        if data.len() < CHUNK_SIZE {
+            return Err(Error::Cipher("Data is too small".to_string()));
+        }
 
-        let mut encrypted = vec![];
-        let mut writer = encryptor
-            .wrap_output(&mut encrypted)
+        let salt = SaltString::generate(&mut OsRng);
+        let mut output_key_material = [0u8; 32];
+
+        Argon2::default()
+            .hash_password_into(
+                self.key.as_bytes(),
+                salt.as_str().as_bytes(),
+                &mut output_key_material,
+            )
             .map_err(|e| Error::Cipher(e.to_string()))?;
 
-        writer.write_all(data)?;
-        writer.finish()?;
+        // the stream encryptor expects a 7-byte base nonce (cipher nonce minus 5 bytes for the counter + flag).
+        // see: https://docs.rs/aead/0.5.2/aead/stream/struct.StreamBE32.html
+        let nonce = Aes256Gcm::generate_nonce(&mut OsRng)[0..7].to_vec();
+        let nonce = Nonce::from_slice(&nonce);
+        let mut encryptor = EncryptorBE32::<Aes256Gcm>::from_aead(
+            Aes256Gcm::new(Key::<Aes256Gcm>::from_slice(&output_key_material)),
+            nonce,
+        );
 
-        Ok(encrypted)
+        let mut encrypted_buffer = Vec::new();
+        let mut chunks = data.chunks(CHUNK_SIZE);
+
+        if let Some(mut last_chunk) = chunks.next() {
+            for chunk in chunks.by_ref() {
+                encryptor
+                    .encrypt_next_in_place(last_chunk, &mut encrypted_buffer)
+                    .map_err(|e| Error::Cipher(e.to_string()))?;
+
+                last_chunk = chunk;
+            }
+
+            encryptor
+                .encrypt_last_in_place(last_chunk, &mut encrypted_buffer)
+                .map_err(|e| Error::Cipher(e.to_string()))?;
+        }
+
+        self.salt = salt.to_string(); // already encoded in base64
+        self.nonce = STANDARD.encode(nonce.as_slice());
+
+        Ok(encrypted_buffer)
     }
 
     fn decrypt(&self, encrypted_data: &[u8]) -> Result<Vec<u8>> {
-        let decryptor = Decryptor::new(encrypted_data).map_err(|e| Error::Cipher(e.to_string()))?;
+        let mut output_key_material = [0u8; 32];
 
-        let mut decrypted = vec![];
-        let mut reader = decryptor
-            .decrypt(iter::once(
-                &Identity::new(SecretString::from(self.key.to_owned())) as _,
-            ))
+        Argon2::default()
+            .hash_password_into(
+                self.key.as_bytes(),
+                SaltString::from_b64(&self.salt)
+                    .map_err(|e| Error::Cipher(e.to_string()))?
+                    .as_str()
+                    .as_bytes(),
+                &mut output_key_material,
+            )
             .map_err(|e| Error::Cipher(e.to_string()))?;
 
-        reader.read_to_end(&mut decrypted)?;
+        let nonce_bytes = STANDARD
+            .decode(&self.nonce)
+            .map_err(|e| Error::Cipher(e.to_string()))?;
 
-        Ok(decrypted)
+        let cipher = Aes256Gcm::new(Key::<Aes256Gcm>::from_slice(&output_key_material));
+
+        let mut decryptor =
+            DecryptorBE32::<Aes256Gcm>::from_aead(cipher, Nonce::from_slice(&nonce_bytes));
+
+        let mut decrypted_buffer = Vec::new();
+        let mut chunks = encrypted_data.chunks(CHUNK_SIZE);
+
+        if let Some(mut last_chunk) = chunks.next() {
+            for chunk in chunks.by_ref() {
+                decryptor
+                    .decrypt_next_in_place(last_chunk, &mut decrypted_buffer)
+                    .map_err(|e| Error::Cipher(e.to_string()))?;
+
+                last_chunk = chunk;
+            }
+
+            decryptor
+                .decrypt_last_in_place(last_chunk, &mut decrypted_buffer)
+                .map_err(|e| Error::Cipher(e.to_string()))?;
+        }
+
+        Ok(decrypted_buffer)
+    }
+
+    fn export_metadata(&self) -> Option<serde_json::Value> {
+        serde_json::to_value(Metadata {
+            salt: self.salt.clone(),
+            nonce: self.nonce.clone(),
+        })
+        .ok()
+    }
+
+    fn import_metadata(&mut self, data: serde_json::Value) -> Result<()> {
+        let metadata: Metadata = serde_json::from_value(data)?;
+        self.salt = metadata.salt;
+        self.nonce = metadata.nonce;
+
+        Ok(())
     }
 
     fn as_any(&self) -> &dyn Any {

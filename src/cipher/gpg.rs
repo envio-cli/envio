@@ -18,7 +18,7 @@ use crate::{
 };
 
 #[derive(Serialize, Deserialize)]
-struct GPGMetadata {
+struct Metadata {
     key_fingerprint: String,
 }
 
@@ -46,7 +46,7 @@ impl Cipher for GPG {
         CipherKind::GPG
     }
 
-    fn encrypt(&self, data: &[u8]) -> Result<Vec<u8>> {
+    fn encrypt(&mut self, data: &[u8]) -> Result<Vec<u8>> {
         let mut encrypted_data = Vec::new();
 
         #[cfg(target_family = "unix")]
@@ -151,15 +151,15 @@ impl Cipher for GPG {
         }
     }
 
-    fn get_metadata(&self) -> Option<serde_json::Value> {
-        serde_json::to_value(GPGMetadata {
+    fn export_metadata(&self) -> Option<serde_json::Value> {
+        serde_json::to_value(Metadata {
             key_fingerprint: self.key_fingerprint.clone(),
         })
         .ok()
     }
 
-    fn load_metadata(&mut self, data: serde_json::Value) -> Result<()> {
-        let metadata: GPGMetadata = serde_json::from_value(data)?;
+    fn import_metadata(&mut self, data: serde_json::Value) -> Result<()> {
+        let metadata: Metadata = serde_json::from_value(data)?;
         self.key_fingerprint = metadata.key_fingerprint;
 
         Ok(())
