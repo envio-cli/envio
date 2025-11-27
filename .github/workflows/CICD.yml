@@ -73,8 +73,8 @@ jobs:
               use-cross: true,
             }
           - { target: aarch64-apple-darwin, os: macos-14 }
-          - { target: x86_64-pc-windows-gnu, os: windows-2019, arch: x86_64 }
-          - { target: i686-pc-windows-msvc, os: windows-2019, arch: x86 }
+          - { target: x86_64-pc-windows-gnu, os: windows-2025, arch: x86_64 }
+          - { target: i686-pc-windows-msvc, os: windows-2025, arch: x86 }
 
     env:
       BUILD_CMD: cargo
@@ -375,4 +375,3 @@ jobs:
             ${{ steps.debian-package.outputs.DPKG_PATH }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
