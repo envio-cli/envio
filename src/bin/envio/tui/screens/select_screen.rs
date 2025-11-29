@@ -195,7 +195,7 @@ impl SelectScreen {
             .list_state
             .selected()
             .filter(|&idx| idx <= max_index)
-            .or_else(|| {
+            .or({
                 if !self.filtered_profiles.is_empty() {
                     Some(0)
                 } else {
@@ -240,10 +240,10 @@ impl SelectScreen {
                 let p = &self.profiles[idx];
                 let mut line = vec![styled_span(&p.name, Color::White, true)];
 
-                if let Some(desc) = &p.metadata.description {
-                    if !desc.is_empty() {
-                        line.push(styled_span(&format!(" - {}", desc), Color::DarkGray, false));
-                    }
+                if let Some(desc) = &p.metadata.description
+                    && !desc.is_empty()
+                {
+                    line.push(styled_span(format!(" - {}", desc), Color::DarkGray, false));
                 }
 
                 let cipher_color = match p.metadata.cipher_kind {

@@ -292,7 +292,7 @@ impl ClapApp {
                 ops::check_expired_envs(&profile);
 
                 for key in keys {
-                    profile.envs.remove(&key)?;
+                    profile.envs.remove(key)?;
                 }
 
                 println!("{}", "Applying Changes".green());

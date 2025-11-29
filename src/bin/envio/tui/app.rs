@@ -79,10 +79,10 @@ impl TuiApp {
     }
 
     fn update_current_screen(&mut self) -> AppResult<()> {
-        if let Some(id) = self.navigation.current() {
-            if id != &self.current_screen.id() {
-                self.current_screen = id.create_screen(&mut self.ctx)?;
-            }
+        if let Some(id) = self.navigation.current()
+            && id != &self.current_screen.id()
+        {
+            self.current_screen = id.create_screen(&mut self.ctx)?;
         }
         Ok(())
     }
@@ -104,12 +104,11 @@ impl TuiApp {
     }
 
     fn handle_input_events(&mut self) -> AppResult<()> {
-        if event::poll(Duration::from_millis(0))? {
-            if let Event::Key(k) = event::read()? {
-                if k.kind == KeyEventKind::Press {
-                    self.handle_key(k)?;
-                }
-            }
+        if event::poll(Duration::from_millis(0))?
+            && let Event::Key(k) = event::read()?
+            && k.kind == KeyEventKind::Press
+        {
+            self.handle_key(k)?;
         }
         Ok(())
     }

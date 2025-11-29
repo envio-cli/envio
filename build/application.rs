@@ -10,10 +10,10 @@ pub fn gen_man_and_comp() -> Result<(), Box<dyn std::error::Error>> {
     let app_name = cmd.get_name().to_string();
 
     let completions_dir = "completions";
-    fs::create_dir_all(&completions_dir)?;
+    fs::create_dir_all(completions_dir)?;
 
     for shell in &[Shell::Bash, Shell::Zsh, Shell::Fish, Shell::PowerShell] {
-        generate_to(*shell, &mut cmd, &app_name, &completions_dir)?;
+        generate_to(*shell, &mut cmd, &app_name, completions_dir)?;
     }
 
     let completions_base = PathBuf::from("../../../completions");
@@ -35,7 +35,7 @@ pub fn gen_man_and_comp() -> Result<(), Box<dyn std::error::Error>> {
     );
 
     let manpage_dir = "man";
-    fs::create_dir_all(&manpage_dir)?;
+    fs::create_dir_all(manpage_dir)?;
     let man = clap_mangen::Man::new(cmd);
     let mut buffer: Vec<u8> = Default::default();
     man.render(&mut buffer)?;

@@ -110,7 +110,7 @@ enum CreateField {
 enum KeySubField {
     Passphrase,
     PassphraseConfirm,
-    GPG,
+    Gpg,
 }
 
 pub struct CreateProfileScreen {
@@ -419,7 +419,7 @@ impl CreateProfileScreen {
             CreateField::CipherKind => {
                 if self.needs_key_input() {
                     self.key_sub_field = match self.get_selected_cipher_kind() {
-                        CipherKind::GPG => KeySubField::GPG,
+                        CipherKind::GPG => KeySubField::Gpg,
                         _ => KeySubField::Passphrase,
                     };
                     CreateField::Key
@@ -472,7 +472,7 @@ impl CreateProfileScreen {
         self.cipher_kind_list_state.select(Some(new));
 
         if matches!(self.get_selected_cipher_kind(), CipherKind::GPG) {
-            self.key_sub_field = KeySubField::GPG;
+            self.key_sub_field = KeySubField::Gpg;
         } else {
             self.passphrase.clear();
             self.passphrase_confirm.clear();
@@ -537,7 +537,6 @@ impl CreateProfileScreen {
         let name = self.name.trim().to_string();
         let description = self.description.trim().to_string();
         let cipher_kind = self.get_selected_cipher_kind();
-        let key = key;
         self.save_handle = Some(thread::spawn(move || {
             ops::create_profile(
                 name,

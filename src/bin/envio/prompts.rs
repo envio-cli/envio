@@ -97,10 +97,10 @@ fn get_vim_mode() -> AppResult<bool> {
         .or_else(|_| env::var("EDITOR"))
         .unwrap_or_default();
 
-    if let Some(program) = editor.split_whitespace().next() {
-        if let Some(stem) = Path::new(program).file_stem().and_then(|s| s.to_str()) {
-            return Ok(Regex::new(r"n?vim?").unwrap().is_match(stem));
-        }
+    if let Some(program) = editor.split_whitespace().next()
+        && let Some(stem) = Path::new(program).file_stem().and_then(|s| s.to_str())
+    {
+        return Ok(Regex::new(r"n?vim?").unwrap().is_match(stem));
     }
 
     Ok(false)
