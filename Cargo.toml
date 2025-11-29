@@ -1,10 +1,11 @@
 [package]
 name = "envio"
-version = "0.6.1"
+version = "0.0.0"
 rust-version = "1.90.0"
 edition = "2024"
-description = "A Modern And Secure CLI Tool For Managing Environment Variables"
+description = "A secure command-line tool for managing environment variables"
 authors = ["Humble Penguin <humblepenguinn@gmail.com>"]
+homepage = "https://github.com/humblepenguinn/envio/"
 repository = "https://github.com/humblepenguinn/envio/"
 license = "MIT/Apache-2.0"
 readme = "README.md"

@@ -10,7 +10,7 @@ on:
       - ".github/**"
       - "Cargo.toml"
       - "Cargo.lock"
-      - "build.rs"
+      - "build/**"
   push:
     branches:
       - main
@@ -19,7 +19,7 @@ on:
       - ".github/**"
       - "Cargo.toml"
       - "Cargo.lock"
-      - "build.rs"
+      - "build/**"
     tags:
       - "*"
 
@@ -35,7 +35,7 @@ jobs:
         uses: actions/checkout@v4
       - name: Get the MSRV from the package metadata
         id: msrv
-        run: cargo metadata --no-deps --format-version 1 | jq -r '"version=" + (.packages[] | select(.name = "hyperfine").rust_version)' >> $GITHUB_OUTPUT
+        run: cargo metadata --no-deps --format-version 1 | jq -r '"version=" + (.packages[] | select(.name == "envio").rust_version)' >> $GITHUB_OUTPUT
       - name: Install rust toolchain (v${{ steps.msrv.outputs.version }})
         uses: dtolnay/rust-toolchain@master
         with:
@@ -87,6 +87,16 @@ jobs:
       - name: Checkout source code
         uses: actions/checkout@v4
 
+      - name: Set version
+        shell: bash
+        run: |
+          if [[ $GITHUB_REF =~ ^refs/tags/v[0-9].* ]]; then
+            TAG_VERSION=${GITHUB_REF#refs/tags/}
+            export ENVIO_VERSION=${TAG_VERSION}
+            chmod +x scripts/replace-version.sh
+            ./scripts/replace-version.sh
+          fi
+
       - name: Install prerequisites
         shell: bash
         run: |
@@ -100,12 +110,15 @@ jobs:
         run: |
           echo "PROJECT_NAME=envio" >> $GITHUB_ENV
           echo "PROJECT_VERSION=$(sed -n 's/^version = "\(.*\)"/\1/p' Cargo.toml | head -n1)" >> $GITHUB_ENV
+          echo "PROJECT_DESCRIPTION=$(sed -n 's/^description = "\(.*\)"/\1/p' Cargo.toml)" >> $GITHUB_ENV
           echo "PROJECT_MAINTAINER=$(sed -n 's/^authors = \["\(.*\)"\]/\1/p' Cargo.toml)" >> $GITHUB_ENV
           echo "PROJECT_HOMEPAGE=$(sed -n 's/^homepage = "\(.*\)"/\1/p' Cargo.toml)" >> $GITHUB_ENV
+          echo "RUST_VERSION=$(sed -n 's/^rust-version = "\(.*\)"/\1/p' Cargo.toml | head -n1)" >> $GITHUB_ENV
 
       - name: Install Rust toolchain
-        uses: dtolnay/rust-toolchain@stable
+        uses: dtolnay/rust-toolchain@master
         with:
+          toolchain: ${{ env.RUST_VERSION }}
           targets: ${{ matrix.job.target }}
 
       - name: Show version information (Rust, cargo, GCC)
@@ -312,7 +325,7 @@ jobs:
           Architecture: ${DPKG_ARCH}
           Provides: ${{ env.PROJECT_NAME }}
           Conflicts: ${DPKG_CONFLICTS}
-          Description: A command-line benchmarking tool
+          Description: ${{ env.PROJECT_DESCRIPTION }}
           EOF
           DPKG_PATH="${DPKG_STAGING}/${DPKG_NAME}"
           echo "DPKG_PATH=${DPKG_PATH}" >> $GITHUB_OUTPUT
