@@ -1,11 +1,11 @@
-use envio::{cipher::CipherKind, ProfileMetadata};
+use envio::{ProfileMetadata, cipher::CipherKind};
 use ratatui::{
+    Frame,
     crossterm::event::{KeyCode, KeyEvent},
     layout::{Constraint, Direction, Layout, Rect},
     style::{Color, Modifier, Style},
     text::{Line, Span},
     widgets::{Block, Borders, List, ListItem, ListState, Paragraph},
-    Frame,
 };
 
 use super::{Action, Screen, ScreenId};
@@ -87,7 +87,7 @@ impl Screen for SelectScreen {
             KeyCode::Char('e') => {
                 return Ok(self
                     .get_selected_profile()
-                    .map_or(Action::None, |p| Action::EditProfile(p.name.clone())))
+                    .map_or(Action::None, |p| Action::EditProfile(p.name.clone())));
             }
 
             KeyCode::Char('d') => {
@@ -99,7 +99,7 @@ impl Screen for SelectScreen {
             KeyCode::Enter => {
                 return Ok(self
                     .get_selected_profile()
-                    .map_or(Action::None, |p| Action::OpenProfile(p.name.clone())))
+                    .map_or(Action::None, |p| Action::OpenProfile(p.name.clone())));
             }
 
             KeyCode::Esc => return Ok(Action::Exit),

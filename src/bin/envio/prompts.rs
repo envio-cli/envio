@@ -1,6 +1,6 @@
 use std::{env, path::Path};
 
-use inquire::{min_length, DateSelect, MultiSelect, Password, PasswordDisplayMode, Select, Text};
+use inquire::{DateSelect, MultiSelect, Password, PasswordDisplayMode, Select, Text, min_length};
 use regex::Regex;
 
 use crate::error::AppResult;

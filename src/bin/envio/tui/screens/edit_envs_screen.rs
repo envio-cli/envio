@@ -1,11 +1,11 @@
 use envio::{Env, Profile};
 use ratatui::{
+    Frame,
     crossterm::event::{KeyCode, KeyEvent, KeyModifiers},
     layout::{Constraint, Direction, Layout, Rect},
     style::{Color, Modifier, Style},
     text::{Line, Span},
     widgets::{Block, Borders, List, ListItem, ListState, Paragraph},
-    Frame,
 };
 use std::thread::{self, JoinHandle};
 
@@ -457,9 +457,15 @@ impl EditEnvsScreen {
 
     fn draw_footer(&self, frame: &mut Frame, area: Rect) {
         let text = match self.edit_mode {
-            EditMode::Key(_) => "Editing key: Type to edit | Enter: Finish | Esc: Cancel | Left/Right: Switch",
-            EditMode::Value(_) => "Editing value: Type to edit | Enter: Finish | Esc: Cancel | Left/Right: Switch",
-            _ => "↑↓: Navigate | Enter: Edit key | →: Edit value | a: Add | d: Delete | s: Save | Esc: Back",
+            EditMode::Key(_) => {
+                "Editing key: Type to edit | Enter: Finish | Esc: Cancel | Left/Right: Switch"
+            }
+            EditMode::Value(_) => {
+                "Editing value: Type to edit | Enter: Finish | Esc: Cancel | Left/Right: Switch"
+            }
+            _ => {
+                "↑↓: Navigate | Enter: Edit key | →: Edit value | a: Add | d: Delete | s: Save | Esc: Back"
+            }
         };
 
         frame.render_widget(

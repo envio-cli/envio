@@ -9,7 +9,7 @@ pub use profile_form_screen::{CreateProfileScreen, EditProfileScreen};
 pub use select_screen::SelectScreen;
 
 use envio::Profile;
-use ratatui::{crossterm::event::KeyEvent, Frame};
+use ratatui::{Frame, crossterm::event::KeyEvent};
 
 use crate::{error::AppResult, tui::context::AppContext};
 

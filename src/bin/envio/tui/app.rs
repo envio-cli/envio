@@ -1,10 +1,10 @@
 use ratatui::{
+    DefaultTerminal, Frame,
     crossterm::event::{self, Event, KeyEvent, KeyEventKind},
     layout::{Alignment, Rect},
     style::{Color, Modifier, Style},
     text::{Line, Span},
     widgets::Paragraph,
-    DefaultTerminal, Frame,
 };
 use std::time::Duration;
 

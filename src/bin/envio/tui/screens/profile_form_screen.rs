@@ -1,14 +1,14 @@
 use envio::{
-    cipher::{create_cipher, gpg::get_gpg_keys, CipherKind},
     EnvMap,
+    cipher::{CipherKind, create_cipher, gpg::get_gpg_keys},
 };
 use ratatui::{
+    Frame,
     crossterm::event::{KeyCode, KeyEvent},
     layout::{Constraint, Direction, Layout, Rect},
     style::{Color, Modifier, Style},
     text::{Line, Span},
     widgets::{Block, Borders, List, ListItem, ListState, Paragraph},
-    Frame,
 };
 use std::thread::{self, JoinHandle};
 use strum::IntoEnumIterator;

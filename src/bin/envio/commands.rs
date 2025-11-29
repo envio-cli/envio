@@ -3,10 +3,10 @@ use std::{io::Read, path::Path};
 use chrono::Local;
 use colored::Colorize;
 use envio::{
-    cipher::{create_cipher, gpg::get_gpg_keys, CipherKind},
+    Env, EnvMap,
+    cipher::{CipherKind, create_cipher, gpg::get_gpg_keys},
     get_profile,
     profile::SerializedProfile,
-    Env, EnvMap,
 };
 use indexmap::IndexMap;
 use strum::IntoEnumIterator;
@@ -370,7 +370,7 @@ impl ClapApp {
                 let status = match cmd.wait() {
                     Ok(s) => s,
                     Err(e) => {
-                        return Err(AppError::Msg(format!("Failed to execute command: {}", e)))
+                        return Err(AppError::Msg(format!("Failed to execute command: {}", e)));
                     }
                 };
 
@@ -379,7 +379,7 @@ impl ClapApp {
                     None => {
                         return Err(AppError::Msg(
                             "The child process was terminated by a signal".to_string(),
-                        ))
+                        ));
                     }
                 }
             }

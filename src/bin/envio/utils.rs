@@ -3,8 +3,8 @@ use std::path::Path;
 use std::{fs::File, io::Write, path::PathBuf};
 
 use envio::{
-    profile::{ProfileMetadata, SerializedProfile},
     Env, EnvMap,
+    profile::{ProfileMetadata, SerializedProfile},
 };
 use indicatif::{ProgressBar, ProgressState, ProgressStyle};
 use reqwest::Client;

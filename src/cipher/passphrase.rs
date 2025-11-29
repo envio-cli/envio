@@ -4,7 +4,7 @@ use std::{
     iter,
 };
 
-use age::{scrypt::Identity, secrecy::SecretString, Decryptor, Encryptor};
+use age::{Decryptor, Encryptor, scrypt::Identity, secrecy::SecretString};
 use serde::{Deserialize, Serialize};
 
 use crate::{
