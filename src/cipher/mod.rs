@@ -60,8 +60,5 @@ pub fn create_cipher(cipher_kind: CipherKind, key: Option<&str>) -> Result<Box<d
 pub fn get_profile_cipher<P: AsRef<Path>>(profile_filepath: P) -> Result<Box<dyn Cipher>> {
     let serialized_profile = utils::get_serialized_profile(profile_filepath)?;
 
-    Ok(create_cipher(
-        serialized_profile.metadata.cipher_kind,
-        None,
-    )?)
+    create_cipher(serialized_profile.metadata.cipher_kind, None)
 }

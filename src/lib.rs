@@ -10,7 +10,7 @@ pub use env::{Env, EnvMap};
 pub use profile::{Profile, ProfileMetadata};
 
 use crate::{
-    cipher::{get_profile_cipher, CipherKind, PASSPHRASE},
+    cipher::{CipherKind, PASSPHRASE, get_profile_cipher},
     error::{Error, Result},
 };
 
@@ -21,19 +21,16 @@ where
 {
     let mut cipher = get_profile_cipher(&file_path)?;
 
-    match cipher.kind() {
-        CipherKind::PASSPHRASE => {
-            let key = key_provider.ok_or_else(|| {
-                Error::Msg("Key provider is required for passphrase-encrypted profiles".into())
-            })?;
+    if cipher.kind() == CipherKind::PASSPHRASE {
+        let key = key_provider.ok_or_else(|| {
+            Error::Msg("Key provider is required for passphrase-encrypted profiles".into())
+        })?;
 
-            cipher
-                .as_any_mut()
-                .downcast_mut::<PASSPHRASE>()
-                .unwrap()
-                .set_key(key());
-        }
-        _ => {}
+        cipher
+            .as_any_mut()
+            .downcast_mut::<PASSPHRASE>()
+            .unwrap()
+            .set_key(key());
     }
 
     Profile::from_file(file_path, cipher)
@@ -47,7 +44,7 @@ where
     let profile = get_profile(file_path, key_provider)?;
 
     for env in &profile.envs {
-        std::env::set_var(&env.key, &env.value);
+        unsafe { std::env::set_var(&env.key, &env.value) };
     }
 
     Ok(profile)

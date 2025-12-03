@@ -37,6 +37,12 @@ pub struct EnvMap {
     envs: IndexMap<String, Env>,
 }
 
+impl Default for EnvMap {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl EnvMap {
     pub fn new() -> Self {
         Self {
@@ -53,7 +59,7 @@ impl EnvMap {
     }
 
     pub fn remove(&mut self, key: &str) -> Result<()> {
-        if let None = self.envs.shift_remove(key) {
+        if self.envs.shift_remove(key).is_none() {
             return Err(Error::EnvDoesNotExist(key.to_string()));
         }
 

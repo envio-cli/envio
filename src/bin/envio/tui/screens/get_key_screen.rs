@@ -1,11 +1,11 @@
 use envio::Profile;
 use ratatui::{
+    Frame,
     crossterm::event::{KeyCode, KeyEvent},
     layout::{Alignment, Constraint, Direction, Layout},
     style::{Color, Modifier, Style},
     text::{Line, Span},
     widgets::{Block, Borders, Paragraph},
-    Frame,
 };
 use std::thread::{self, JoinHandle};
 

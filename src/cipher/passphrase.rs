@@ -3,11 +3,13 @@ use aes_gcm::{
     aead::{AeadCore, KeyInit},
     Aes256Gcm, Key, Nonce,
 };
+
 use argon2::{
     password_hash::{rand_core::OsRng, SaltString},
     Argon2,
 };
 use base64::{engine::general_purpose::STANDARD, Engine};
+
 use serde::{Deserialize, Serialize};
 use std::any::Any;
 

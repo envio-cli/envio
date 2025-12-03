@@ -1,6 +1,10 @@
 use ratatui::{
+    DefaultTerminal, Frame,
     crossterm::event::{self, Event, KeyEvent, KeyEventKind},
-    DefaultTerminal,
+    layout::{Alignment, Rect},
+    style::{Color, Modifier, Style},
+    text::{Line, Span},
+    widgets::Paragraph,
 };
 use std::time::Duration;
 
@@ -33,10 +37,13 @@ impl TuiApp {
 
     pub fn run(&mut self, terminal: &mut DefaultTerminal) -> AppResult<()> {
         while !self.exit {
-            terminal.draw(|f| self.current_screen.draw(f))?;
+            terminal.draw(|f| {
+                self.current_screen.draw(f);
+                self.draw_banner(f);
+            })?;
 
-            if let Some(ev) = self.current_screen.tick()? {
-                self.handle_screen_event(ev)?;
+            if let Some(event) = self.current_screen.tick()? {
+                self.handle_screen_event(event)?;
             }
 
             self.handle_input_events()?;
@@ -49,11 +56,33 @@ impl TuiApp {
         Ok(())
     }
 
+    fn draw_banner(&self, frame: &mut Frame) {
+        let area = frame.area();
+        let banner_text = "BETA";
+        let banner_width = banner_text.len() as u16;
+        let banner_area = Rect {
+            x: area.width.saturating_sub(banner_width),
+            y: area.height.saturating_sub(1),
+            width: banner_width,
+            height: 1,
+        };
+
+        let banner = Paragraph::new(Line::from(vec![Span::styled(
+            banner_text,
+            Style::default()
+                .fg(Color::Yellow)
+                .add_modifier(Modifier::BOLD),
+        )]))
+        .alignment(Alignment::Right);
+
+        frame.render_widget(banner, banner_area);
+    }
+
     fn update_current_screen(&mut self) -> AppResult<()> {
-        if let Some(id) = self.navigation.current() {
-            if id != &self.current_screen.id() {
-                self.current_screen = id.create_screen(&mut self.ctx)?;
-            }
+        if let Some(id) = self.navigation.current()
+            && id != &self.current_screen.id()
+        {
+            self.current_screen = id.create_screen(&mut self.ctx)?;
         }
         Ok(())
     }
@@ -75,12 +104,11 @@ impl TuiApp {
     }
 
     fn handle_input_events(&mut self) -> AppResult<()> {
-        if event::poll(Duration::from_millis(0))? {
-            if let Event::Key(k) = event::read()? {
-                if k.kind == KeyEventKind::Press {
-                    self.handle_key(k)?;
-                }
-            }
+        if event::poll(Duration::from_millis(0))?
+            && let Event::Key(k) = event::read()?
+            && k.kind == KeyEventKind::Press
+        {
+            self.handle_key(k)?;
         }
         Ok(())
     }

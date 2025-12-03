@@ -15,11 +15,11 @@ use crate::utils::get_shellscript_path;
 
 use crate::{
     error::{AppError, AppResult},
-    output::warning,
     utils::{
         build_profile_path, contains_path_separator, download_file, get_cwd, get_profile_dir,
         get_profile_metadata, get_profile_path,
     },
+    warning_msg,
 };
 
 pub fn create_profile(
@@ -41,10 +41,10 @@ pub fn create_profile(
 
 pub fn check_expired_envs(profile: &Profile) {
     for env in &profile.envs {
-        if let Some(date) = env.expiration_date {
-            if date <= Local::now().date_naive() {
-                warning(format!("environment variable '{}' has expired", env.key));
-            }
+        if let Some(date) = env.expiration_date
+            && date <= Local::now().date_naive()
+        {
+            warning_msg!("environment variable '{}' has expired", env.key);
         }
     }
 }
@@ -85,8 +85,6 @@ pub fn export_envs(
     for env in envs_to_export {
         writeln!(file, "{}={}", env.key, env.value)?;
     }
-
-    println!("{}", format!("Exported envs to {}", path.display()).bold());
 
     Ok(())
 }
@@ -205,11 +203,11 @@ pub fn list_profiles(no_pretty_print: bool) -> AppResult<()> {
     Ok(())
 }
 
-pub fn download_profile(url: String, profile_name: &String) -> AppResult<()> {
+pub fn download_profile(url: String, profile_name: &str) -> AppResult<()> {
     let location = build_profile_path(profile_name);
 
     if location.exists() {
-        return Err(AppError::ProfileExists(profile_name.clone()));
+        return Err(AppError::ProfileExists(profile_name.to_owned()));
     }
 
     let runtime = tokio::runtime::Builder::new_current_thread()
@@ -221,7 +219,7 @@ pub fn download_profile(url: String, profile_name: &String) -> AppResult<()> {
     Ok(())
 }
 
-pub fn import_profile(file_path: String, profile_name: &String) -> AppResult<()> {
+pub fn import_profile(file_path: String, profile_name: &str) -> AppResult<()> {
     if !Path::new(&file_path).exists() {
         return Err(AppError::Msg(format!(
             "File `{}` does not exist",
@@ -240,7 +238,7 @@ pub fn import_profile(file_path: String, profile_name: &String) -> AppResult<()>
     let location = build_profile_path(profile_name);
 
     if location.exists() {
-        return Err(AppError::ProfileExists(profile_name.clone()));
+        return Err(AppError::ProfileExists(profile_name.to_owned()));
     }
 
     std::fs::write(location, contents)?;

@@ -1,11 +1,11 @@
 use envio::{Env, Profile};
 use ratatui::{
+    Frame,
     crossterm::event::{KeyCode, KeyEvent, KeyModifiers},
     layout::{Constraint, Direction, Layout, Rect},
     style::{Color, Modifier, Style},
     text::{Line, Span},
     widgets::{Block, Borders, List, ListItem, ListState, Paragraph},
-    Frame,
 };
 use std::thread::{self, JoinHandle};
 
@@ -83,10 +83,8 @@ impl Screen for EditEnvsScreen {
                 }
 
                 KeyCode::Char(c) => {
-                    if matches!(self.edit_mode, EditMode::Key(_)) {
-                        if c == ' ' {
-                            return Ok(Action::None);
-                        }
+                    if matches!(self.edit_mode, EditMode::Key(_)) && c == ' ' {
+                        return Ok(Action::None);
                     }
 
                     self.edit_buffer.push(c);
@@ -197,20 +195,20 @@ impl EditEnvsScreen {
     }
 
     fn start_edit_key(&mut self) {
-        if let Some(idx) = self.get_selected_index() {
-            if idx < self.envs.len() {
-                self.edit_buffer = self.envs[idx].key.clone();
-                self.edit_mode = EditMode::Key(idx);
-            }
+        if let Some(idx) = self.get_selected_index()
+            && idx < self.envs.len()
+        {
+            self.edit_buffer = self.envs[idx].key.clone();
+            self.edit_mode = EditMode::Key(idx);
         }
     }
 
     fn start_edit_value(&mut self) {
-        if let Some(idx) = self.get_selected_index() {
-            if idx < self.envs.len() {
-                self.edit_buffer = self.envs[idx].value.replace("'", "").clone();
-                self.edit_mode = EditMode::Value(idx);
-            }
+        if let Some(idx) = self.get_selected_index()
+            && idx < self.envs.len()
+        {
+            self.edit_buffer = self.envs[idx].value.replace("'", "").clone();
+            self.edit_mode = EditMode::Value(idx);
         }
     }
 
@@ -256,17 +254,16 @@ impl EditEnvsScreen {
     }
 
     fn cancel_edit(&mut self) {
-        if let EditMode::Key(idx) = self.edit_mode {
-            if idx < self.envs.len()
-                && (self.envs[idx].key.is_empty() || self.envs[idx].value.is_empty())
-            {
-                self.envs.remove(idx);
-                if !self.envs.is_empty() {
-                    let new_idx = idx.min(self.envs.len().saturating_sub(1));
-                    self.list_state.select(Some(new_idx));
-                } else {
-                    self.list_state.select(None);
-                }
+        if let EditMode::Key(idx) = self.edit_mode
+            && idx < self.envs.len()
+            && (self.envs[idx].key.is_empty() || self.envs[idx].value.is_empty())
+        {
+            self.envs.remove(idx);
+            if !self.envs.is_empty() {
+                let new_idx = idx.min(self.envs.len().saturating_sub(1));
+                self.list_state.select(Some(new_idx));
+            } else {
+                self.list_state.select(None);
             }
         }
 
@@ -285,16 +282,16 @@ impl EditEnvsScreen {
     }
 
     fn delete_current(&mut self) {
-        if let Some(idx) = self.get_selected_index() {
-            if idx < self.envs.len() {
-                self.envs.remove(idx);
+        if let Some(idx) = self.get_selected_index()
+            && idx < self.envs.len()
+        {
+            self.envs.remove(idx);
 
-                if self.envs.is_empty() {
-                    self.list_state.select(None);
-                } else {
-                    let new_idx = (idx).min(self.envs.len().saturating_sub(1));
-                    self.list_state.select(Some(new_idx));
-                }
+            if self.envs.is_empty() {
+                self.list_state.select(None);
+            } else {
+                let new_idx = (idx).min(self.envs.len().saturating_sub(1));
+                self.list_state.select(Some(new_idx));
             }
         }
     }
@@ -410,9 +407,9 @@ impl EditEnvsScreen {
                 };
 
                 let line = vec![
-                    Span::styled(format!("{}", key_display), key_style),
+                    Span::styled(key_display.to_string(), key_style),
                     Span::styled(" = ", Style::default().fg(Color::DarkGray)),
-                    Span::styled(format!("{}", value_display), value_style),
+                    Span::styled(value_display.to_string(), value_style),
                 ];
 
                 ListItem::new(Line::from(line))
@@ -457,9 +454,15 @@ impl EditEnvsScreen {
 
     fn draw_footer(&self, frame: &mut Frame, area: Rect) {
         let text = match self.edit_mode {
-            EditMode::Key(_) => "Editing key: Type to edit | Enter: Finish | Esc: Cancel | Left/Right: Switch",
-            EditMode::Value(_) => "Editing value: Type to edit | Enter: Finish | Esc: Cancel | Left/Right: Switch",
-            _ => "↑↓: Navigate | Enter: Edit key | →: Edit value | a: Add | d: Delete | s: Save | Esc: Back",
+            EditMode::Key(_) => {
+                "Editing key: Type to edit | Enter: Finish | Esc: Cancel | Left/Right: Switch"
+            }
+            EditMode::Value(_) => {
+                "Editing value: Type to edit | Enter: Finish | Esc: Cancel | Left/Right: Switch"
+            }
+            _ => {
+                "↑↓: Navigate | Enter: Edit key | →: Edit value | a: Add | d: Delete | s: Save | Esc: Back"
+            }
         };
 
         frame.render_widget(

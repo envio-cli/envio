@@ -10,7 +10,7 @@ on:
       - ".github/**"
       - "Cargo.toml"
       - "Cargo.lock"
-      - "build.rs"
+      - "build/**"
   push:
     branches:
       - main
@@ -19,7 +19,7 @@ on:
       - ".github/**"
       - "Cargo.toml"
       - "Cargo.lock"
-      - "build.rs"
+      - "build/**"
     tags:
       - "*"
 
@@ -29,13 +29,13 @@ permissions:
 jobs:
   min_version:
     name: Minimum supported rust version
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-latest
     steps:
       - name: Checkout source code
         uses: actions/checkout@v4
       - name: Get the MSRV from the package metadata
         id: msrv
-        run: cargo metadata --no-deps --format-version 1 | jq -r '"version=" + (.packages[] | select(.name = "hyperfine").rust_version)' >> $GITHUB_OUTPUT
+        run: cargo metadata --no-deps --format-version 1 | jq -r '"version=" + (.packages[] | select(.name == "envio").rust_version)' >> $GITHUB_OUTPUT
       - name: Install rust toolchain (v${{ steps.msrv.outputs.version }})
         uses: dtolnay/rust-toolchain@master
         with:
@@ -59,22 +59,23 @@ jobs:
         job:
           - {
               target: x86_64-unknown-linux-gnu,
-              os: ubuntu-20.04,
+              os: ubuntu-latest,
               use-cross: true,
             }
           - {
               target: aarch64-unknown-linux-gnu,
-              os: ubuntu-20.04,
+              os: ubuntu-latest,
               use-cross: true,
             }
           - {
               target: i686-unknown-linux-gnu,
-              os: ubuntu-20.04,
+              os: ubuntu-latest,
               use-cross: true,
             }
-          - { target: aarch64-apple-darwin, os: macos-14 }
-          - { target: x86_64-pc-windows-gnu, os: windows-2019, arch: x86_64 }
-          - { target: i686-pc-windows-msvc, os: windows-2019, arch: x86 }
+          - { target: x86_64-apple-darwin, os: macos-15-intel  }
+          - { target: aarch64-apple-darwin, os: macos-latest  }
+          - { target: x86_64-pc-windows-gnu, os: windows-2025, arch: x86_64 }
+          - { target: i686-pc-windows-msvc, os: windows-2025, arch: x86 }
 
     env:
       BUILD_CMD: cargo
@@ -86,6 +87,16 @@ jobs:
 
       - name: Checkout source code
         uses: actions/checkout@v4
+
+      - name: Set version
+        shell: bash
+        run: |
+          if [[ $GITHUB_REF =~ ^refs/tags/v[0-9].* ]]; then
+            TAG_VERSION=${GITHUB_REF#refs/tags/}
+            export ENVIO_VERSION=${TAG_VERSION}
+            chmod +x scripts/replace-version.sh
+            ./scripts/replace-version.sh
+          fi
 
       - name: Install prerequisites
         shell: bash
@@ -100,12 +111,15 @@ jobs:
         run: |
           echo "PROJECT_NAME=envio" >> $GITHUB_ENV
           echo "PROJECT_VERSION=$(sed -n 's/^version = "\(.*\)"/\1/p' Cargo.toml | head -n1)" >> $GITHUB_ENV
+          echo "PROJECT_DESCRIPTION=$(sed -n 's/^description = "\(.*\)"/\1/p' Cargo.toml)" >> $GITHUB_ENV
           echo "PROJECT_MAINTAINER=$(sed -n 's/^authors = \["\(.*\)"\]/\1/p' Cargo.toml)" >> $GITHUB_ENV
           echo "PROJECT_HOMEPAGE=$(sed -n 's/^homepage = "\(.*\)"/\1/p' Cargo.toml)" >> $GITHUB_ENV
+          echo "RUST_VERSION=$(sed -n 's/^rust-version = "\(.*\)"/\1/p' Cargo.toml | head -n1)" >> $GITHUB_ENV
 
       - name: Install Rust toolchain
-        uses: dtolnay/rust-toolchain@stable
+        uses: dtolnay/rust-toolchain@master
         with:
+          toolchain: ${{ env.RUST_VERSION }}
           targets: ${{ matrix.job.target }}
 
       - name: Show version information (Rust, cargo, GCC)
@@ -312,7 +326,7 @@ jobs:
           Architecture: ${DPKG_ARCH}
           Provides: ${{ env.PROJECT_NAME }}
           Conflicts: ${DPKG_CONFLICTS}
-          Description: A command-line benchmarking tool
+          Description: ${{ env.PROJECT_DESCRIPTION }}
           EOF
           DPKG_PATH="${DPKG_STAGING}/${DPKG_NAME}"
           echo "DPKG_PATH=${DPKG_PATH}" >> $GITHUB_OUTPUT
@@ -375,4 +389,3 @@ jobs:
             ${{ steps.debian-package.outputs.DPKG_PATH }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-

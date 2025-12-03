@@ -1,5 +1,5 @@
 use std::{
-    fs::{create_dir_all, File},
+    fs::{File, create_dir_all},
     io::{BufReader, BufWriter, Write},
     path::PathBuf,
 };
@@ -10,7 +10,7 @@ use semver::Version;
 use serde::{Deserialize, Serialize};
 use tokio::runtime::Builder;
 
-use crate::{error::AppResult, output::error};
+use crate::{error::AppResult, error_msg};
 
 #[derive(Serialize, Deserialize)]
 struct CacheData {
@@ -78,7 +78,7 @@ async fn async_get_latest_version() -> AppResult<Version> {
 
 async fn fetch_latest_version(fallback: &str) -> Version {
     fetch_from_github_api().await.unwrap_or_else(|| {
-        error("Failed to get latest version");
+        error_msg!("Failed to get latest version");
         Version::parse(fallback).unwrap_or_else(|_| Version::parse("0.0.0").unwrap())
     })
 }

@@ -40,10 +40,10 @@ impl ProfileCache {
     }
 
     pub fn get_profile(&mut self, name: &str) -> Option<Profile> {
-        if let Some(cached) = self.profiles.get(name) {
-            if !cached.is_expired() {
-                return Some(cached.value.clone());
-            }
+        if let Some(cached) = self.profiles.get(name)
+            && !cached.is_expired()
+        {
+            return Some(cached.value.clone());
         }
 
         self.profiles.remove(name);
