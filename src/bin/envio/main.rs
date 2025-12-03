@@ -8,15 +8,15 @@ mod output;
 mod prompts;
 mod tui;
 mod utils;
+#[cfg(not(debug_assertions))]
 mod version;
 
 use clap::Parser;
-use semver::Version;
 
 use clap_app::ClapApp;
-use output::{error, warning};
+use output::error;
 
-use crate::{error::AppResult, version::get_latest_version};
+use crate::error::AppResult;
 
 #[cfg(target_family = "unix")]
 pub fn initialize_config() -> AppResult<()> {
@@ -84,7 +84,11 @@ pub fn initialize_config() -> AppResult<()> {
     Ok(())
 }
 
+#[cfg(not(debug_assertions))]
 fn check_for_updates() -> AppResult<()> {
+    use crate::{output::warning, version::get_latest_version};
+    use semver::Version;
+
     let latest_version = get_latest_version()?;
     let current_version = Version::parse(env!("CARGO_PKG_VERSION"))?;
 
@@ -96,6 +100,7 @@ fn check_for_updates() -> AppResult<()> {
 }
 
 fn run() -> AppResult<()> {
+    #[cfg(not(debug_assertions))]
     check_for_updates()?;
 
     #[cfg(target_family = "unix")]
