@@ -17,9 +17,7 @@ use crate::{
     completions,
     diagnostic::DiagnosticReport,
     error::{AppError, AppResult},
-    ops,
-    output::{error, success},
-    prompts,
+    error_msg, ops, prompts, success_msg,
     tui::TuiApp,
     utils,
 };
@@ -34,7 +32,7 @@ fn get_userkey() -> String {
     }) {
         Ok(key) => key,
         Err(e) => {
-            error(e);
+            error_msg!(e);
             std::process::exit(1);
         }
     }
@@ -206,7 +204,7 @@ impl ClapApp {
                     cipher,
                 )?;
 
-                success("Profile created");
+                success_msg!("Profile created");
             }
 
             Command::Set {
@@ -307,12 +305,12 @@ impl ClapApp {
                     let shell_config = utils::get_shell_config_path()?;
 
                     if shell_config.exists() {
-                        success(format!(
+                        success_msg!(
                             "Reload your shell to apply changes or run `source {}`",
                             utils::shorten_home(&shell_config)
-                        ));
+                        );
                     } else {
-                        success("Reload your shell to apply changes");
+                        success_msg!("Reload your shell to apply changes");
                     }
                 }
 
@@ -323,7 +321,7 @@ impl ClapApp {
 
                     ops::load_profile(profile)?;
 
-                    success("Restart your shell to apply changes");
+                    success_msg!("Restart your shell to apply changes");
                 }
             }
 
@@ -331,7 +329,7 @@ impl ClapApp {
             Command::Unload => {
                 ops::unload_profile()?;
 
-                success("Restart your shell to apply changes");
+                success_msg!("Restart your shell to apply changes");
             }
 
             #[cfg(target_family = "windows")]
@@ -341,7 +339,7 @@ impl ClapApp {
 
                 ops::unload_profile(profile)?;
 
-                success("Restart your shell to apply changes");
+                success_msg!("Restart your shell to apply changes");
             }
 
             Command::Run {
@@ -386,7 +384,7 @@ impl ClapApp {
 
             Command::Delete { profile_name } => {
                 ops::delete_profile(profile_name)?;
-                success("Deleted profile");
+                success_msg!("Deleted profile");
             }
 
             Command::List { no_pretty_print } => {
@@ -442,11 +440,10 @@ impl ClapApp {
                     None
                 };
 
-                ops::export_envs(
-                    &profile,
-                    output_file_path.as_deref().unwrap_or(".env"),
-                    &envs_selected,
-                )?;
+                let output_file_path = output_file_path.as_deref().unwrap_or(".env");
+                ops::export_envs(&profile, output_file_path, &envs_selected)?;
+
+                success_msg!("Exported envs to {}", output_file_path);
             }
 
             Command::Import {
@@ -471,7 +468,7 @@ impl ClapApp {
                     ));
                 }
 
-                success("Imported profile");
+                success_msg!("Imported profile");
 
                 let location = utils::build_profile_path(&profile_name);
 

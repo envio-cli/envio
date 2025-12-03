@@ -15,11 +15,11 @@ use crate::utils::get_shellscript_path;
 
 use crate::{
     error::{AppError, AppResult},
-    output::warning,
     utils::{
         build_profile_path, contains_path_separator, download_file, get_cwd, get_profile_dir,
         get_profile_metadata, get_profile_path,
     },
+    warning_msg,
 };
 
 pub fn create_profile(
@@ -55,7 +55,7 @@ pub fn check_expired_envs(profile: &Profile) {
         if let Some(date) = env.expiration_date
             && date <= Local::now().date_naive()
         {
-            warning(format!("environment variable '{}' has expired", env.key));
+            warning_msg!("environment variable '{}' has expired", env.key);
         }
     }
 }
@@ -96,8 +96,6 @@ pub fn export_envs(
     for env in envs_to_export {
         writeln!(file, "{}={}", env.key, env.value)?;
     }
-
-    println!("{}", format!("Exported envs to {}", path.display()).bold());
 
     Ok(())
 }

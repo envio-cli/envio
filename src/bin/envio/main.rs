@@ -4,7 +4,7 @@ mod completions;
 mod diagnostic;
 mod error;
 mod ops;
-mod output;
+mod log_macros;
 mod prompts;
 mod tui;
 mod utils;
@@ -14,7 +14,6 @@ mod version;
 use clap::Parser;
 
 use clap_app::ClapApp;
-use output::error;
 
 use crate::error::AppResult;
 
@@ -86,14 +85,14 @@ pub fn initialize_config() -> AppResult<()> {
 
 #[cfg(not(debug_assertions))]
 fn check_for_updates() -> AppResult<()> {
-    use crate::{output::warning, version::get_latest_version};
+    use crate::version::get_latest_version;
     use semver::Version;
 
     let latest_version = get_latest_version()?;
     let current_version = Version::parse(env!("CARGO_PKG_VERSION"))?;
 
     if latest_version > current_version {
-        warning(format!("{} -> {}", current_version, latest_version));
+        warning_msg!("{} -> {}", current_version, latest_version);
     }
 
     Ok(())
@@ -118,7 +117,7 @@ fn main() {
     match run() {
         Ok(_) => std::process::exit(0),
         Err(e) => {
-            error(e);
+            error_msg!(e);
             std::process::exit(1);
         }
     }
