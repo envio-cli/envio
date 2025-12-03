@@ -26,16 +26,16 @@ pub enum CipherKind {
 }
 
 pub trait Cipher: Any + Send + DynClone {
-    fn encrypt(&self, data: &[u8]) -> Result<Vec<u8>>;
+    fn encrypt(&mut self, data: &[u8]) -> Result<Vec<u8>>;
     fn decrypt(&self, encrypted_data: &[u8]) -> Result<Vec<u8>>;
     fn kind(&self) -> CipherKind;
 
-    fn get_metadata(&self) -> Option<serde_json::Value> {
+    fn export_metadata(&self) -> Option<serde_json::Value> {
         None
     }
 
     #[allow(unused)]
-    fn load_metadata(&mut self, data: serde_json::Value) -> Result<()> {
+    fn import_metadata(&mut self, data: serde_json::Value) -> Result<()> {
         Ok(())
     }
 

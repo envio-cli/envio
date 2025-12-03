@@ -8,7 +8,7 @@ use std::{
 use chrono::Local;
 use colored::Colorize;
 use comfy_table::{Attribute, Cell, ContentArrangement, Table};
-use envio::{EnvMap, Profile, cipher::Cipher, profile::ProfileMetadata};
+use envio::{cipher::Cipher, EnvMap, Profile};
 
 #[cfg(target_family = "unix")]
 use crate::utils::get_shellscript_path;
@@ -34,18 +34,7 @@ pub fn create_profile(
         return Err(AppError::ProfileExists(name));
     }
 
-    let metadata = ProfileMetadata {
-        name,
-        version: env!("CARGO_PKG_VERSION").to_string(),
-        description,
-        file_path: profile_file_path,
-        cipher_kind: cipher.kind(),
-        cipher_metadata: cipher.get_metadata(),
-        created_at: Local::now(),
-        updated_at: Local::now(),
-    };
-
-    Profile::new(metadata, cipher, envs).save()?;
+    Profile::new(name, description, profile_file_path, envs, cipher).save()?;
 
     Ok(())
 }

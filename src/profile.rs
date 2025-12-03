@@ -36,11 +36,26 @@ pub struct SerializedProfile {
 }
 
 impl Profile {
-    pub fn new(metadata: ProfileMetadata, cipher: Box<dyn Cipher>, envs: EnvMap) -> Profile {
+    pub fn new(
+        name: String,
+        description: Option<String>,
+        file_path: PathBuf,
+        envs: EnvMap,
+        cipher: Box<dyn Cipher>,
+    ) -> Profile {
         Profile {
-            metadata,
-            cipher,
+            metadata: ProfileMetadata {
+                name,
+                version: env!("CARGO_PKG_VERSION").to_string(),
+                description,
+                file_path,
+                cipher_kind: cipher.kind(),
+                cipher_metadata: cipher.export_metadata(),
+                created_at: Local::now(),
+                updated_at: Local::now(),
+            },
             envs,
+            cipher,
         }
     }
 
@@ -49,14 +64,14 @@ impl Profile {
 
         let serialized_profile: SerializedProfile = serde_json::from_slice(&file_content)?;
 
+        if let Some(cipher_metadata) = &serialized_profile.metadata.cipher_metadata {
+            cipher.import_metadata(cipher_metadata.clone())?;
+        }
+
         let decrypted_envs_bytes = cipher.decrypt(&serialized_profile.content)?;
 
         let (envs, _): (EnvMap, usize) =
             bincode::serde::decode_from_slice(&decrypted_envs_bytes, bincode::config::standard())?;
-
-        if let Some(cipher_metadata) = &serialized_profile.metadata.cipher_metadata {
-            cipher.load_metadata(cipher_metadata.clone())?;
-        }
 
         Ok(Profile {
             metadata: serialized_profile.metadata,
@@ -72,6 +87,7 @@ impl Profile {
         let encrypted_envs = self.cipher.encrypt(&serialized_envs)?;
 
         self.metadata.updated_at = Local::now();
+        self.metadata.cipher_metadata = self.cipher.export_metadata();
 
         let serialized_profile = SerializedProfile {
             metadata: self.metadata.clone(),

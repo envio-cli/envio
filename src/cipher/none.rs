@@ -1,6 +1,5 @@
-use std::any::Any;
-
 use serde::{Deserialize, Serialize};
+use std::any::Any;
 
 use crate::{
     cipher::{Cipher, CipherKind},
@@ -15,7 +14,7 @@ impl Cipher for NONE {
         CipherKind::NONE
     }
 
-    fn encrypt(&self, data: &[u8]) -> Result<Vec<u8>> {
+    fn encrypt(&mut self, data: &[u8]) -> Result<Vec<u8>> {
         Ok(data.to_vec())
     }
 
