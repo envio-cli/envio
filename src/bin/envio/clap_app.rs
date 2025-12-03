@@ -39,7 +39,6 @@ pub enum Command {
         #[arg(
             long = "envs",
             short = 'e',
-            value_delimiter = ' ',
             num_args = 1..,
             help = "environment variables to add (format: KEY=VALUE or only provide KEY and the value will be prompted for)"
         )]
@@ -110,7 +109,7 @@ pub enum Command {
     Set {
         #[arg(required = true, help = "name of the profile")]
         profile_name: String,
-        #[arg(required = true, value_delimiter = ' ', num_args = 1.., help = "environment variables to set (format: KEY=VALUE or only provide KEY and the value will be prompted for)")]
+        #[arg(required = true, num_args = 1.., help = "environment variables to set (format: KEY=VALUE or only provide KEY and the value will be prompted for)")]
         envs: Vec<String>,
         #[arg(
             long = "comments",
