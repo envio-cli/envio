@@ -503,7 +503,7 @@ impl CreateProfileScreen {
         }
 
         let key = match self.get_selected_cipher_kind() {
-            CipherKind::PASSPHRASE => {
+            CipherKind::PASSPHRASE | CipherKind::AGE => {
                 if self.passphrase.len() < 8 {
                     self.status = Status::Error(
                         "Passphrase must be at least 8 characters".to_string(),
@@ -594,6 +594,7 @@ impl CreateProfileScreen {
 
                 let cipher_color = match kind {
                     CipherKind::PASSPHRASE => Color::Yellow,
+                    CipherKind::AGE => Color::Magenta,
                     CipherKind::GPG => Color::Green,
                     CipherKind::NONE => Color::Blue,
                 };

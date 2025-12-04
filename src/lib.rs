@@ -10,7 +10,7 @@ pub use env::{Env, EnvMap};
 pub use profile::{Profile, ProfileMetadata};
 
 use crate::{
-    cipher::{CipherKind, PASSPHRASE, get_profile_cipher},
+    cipher::{AGE, CipherKind, PASSPHRASE, get_profile_cipher},
     error::{Error, Result},
 };
 
@@ -21,16 +21,26 @@ where
 {
     let mut cipher = get_profile_cipher(&file_path)?;
 
-    if cipher.kind() == CipherKind::PASSPHRASE {
+    if matches!(cipher.kind(), CipherKind::PASSPHRASE | CipherKind::AGE) {
         let key = key_provider.ok_or_else(|| {
-            Error::Msg("Key provider is required for passphrase-encrypted profiles".into())
+            Error::Msg(
+                "Key provider is required for profiles using passphrase or AGE encryption".into(),
+            )
         })?;
 
-        cipher
-            .as_any_mut()
-            .downcast_mut::<PASSPHRASE>()
-            .unwrap()
-            .set_key(key());
+        match cipher.kind() {
+            CipherKind::PASSPHRASE => cipher
+                .as_any_mut()
+                .downcast_mut::<PASSPHRASE>()
+                .expect("Failed to cast to PASSPHRASE")
+                .set_key(key()),
+            CipherKind::AGE => cipher
+                .as_any_mut()
+                .downcast_mut::<AGE>()
+                .expect("Failed to cast to AGE")
+                .set_key(key()),
+            _ => {}
+        }
     }
 
     Profile::from_file(file_path, cipher)

@@ -7,7 +7,7 @@ use crate::{
     cipher::{Cipher, CipherKind},
     env::EnvMap,
     error::Result,
-    utils::save_serialized_profile,
+    utils::{get_serialized_profile, save_serialized_profile},
 };
 
 #[derive(Clone, Serialize, Deserialize)]
@@ -60,9 +60,7 @@ impl Profile {
     }
 
     pub fn from_file<P: AsRef<Path>>(file_path: P, mut cipher: Box<dyn Cipher>) -> Result<Profile> {
-        let file_content = std::fs::read(&file_path)?;
-
-        let serialized_profile: SerializedProfile = serde_json::from_slice(&file_content)?;
+        let serialized_profile = get_serialized_profile(&file_path)?;
 
         if let Some(cipher_metadata) = &serialized_profile.metadata.cipher_metadata {
             cipher.import_metadata(cipher_metadata.clone())?;

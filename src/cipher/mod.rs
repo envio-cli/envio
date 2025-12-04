@@ -1,8 +1,10 @@
+pub mod age;
 pub mod gpg;
 pub mod none;
 pub mod passphrase;
 
 // re-export the cipher types
+pub use age::AGE;
 pub use gpg::GPG;
 pub use none::NONE;
 pub use passphrase::PASSPHRASE;
@@ -21,6 +23,8 @@ pub enum CipherKind {
     NONE,
     #[strum(ascii_case_insensitive, to_string = "passphrase")]
     PASSPHRASE,
+    #[strum(ascii_case_insensitive, to_string = "age")]
+    AGE,
     #[strum(ascii_case_insensitive, to_string = "gpg")]
     GPG,
 }
@@ -51,9 +55,10 @@ impl Clone for Box<dyn Cipher> {
 
 pub fn create_cipher(cipher_kind: CipherKind, key: Option<&str>) -> Result<Box<dyn Cipher>> {
     match cipher_kind {
-        CipherKind::PASSPHRASE => Ok(Box::new(PASSPHRASE::new(key.unwrap_or_default().into()))),
-        CipherKind::GPG => Ok(Box::new(GPG::new(key.unwrap_or_default().into()))),
         CipherKind::NONE => Ok(Box::new(NONE)),
+        CipherKind::PASSPHRASE => Ok(Box::new(PASSPHRASE::new(key.unwrap_or_default().into()))),
+        CipherKind::AGE => Ok(Box::new(AGE::new(key.unwrap_or_default().into()))),
+        CipherKind::GPG => Ok(Box::new(GPG::new(key.unwrap_or_default().into()))),
     }
 }
 

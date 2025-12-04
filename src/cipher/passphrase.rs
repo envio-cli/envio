@@ -1,14 +1,14 @@
 use aead::stream::{DecryptorBE32, EncryptorBE32};
 use aes_gcm::{
-    aead::{AeadCore, KeyInit},
     Aes256Gcm, Key, Nonce,
+    aead::{AeadCore, KeyInit},
 };
 
 use argon2::{
-    password_hash::{rand_core::OsRng, SaltString},
     Argon2,
+    password_hash::{SaltString, rand_core::OsRng},
 };
-use base64::{engine::general_purpose::STANDARD, Engine};
+use base64::{Engine, engine::general_purpose::STANDARD};
 
 use serde::{Deserialize, Serialize};
 use std::any::Any;
@@ -18,7 +18,7 @@ use crate::{
     error::{Error, Result},
 };
 
-const CHUNK_SIZE: usize = 16 * 1024; // 16KB
+const CHUNK_SIZE: usize = 1024; // 1KB
 
 #[derive(Serialize, Deserialize, Default, Clone)]
 struct Metadata {
@@ -68,28 +68,37 @@ impl Cipher for PASSPHRASE {
 
         // the stream encryptor expects a 7-byte base nonce (cipher nonce minus 5 bytes for the counter + flag).
         // see: https://docs.rs/aead/0.5.2/aead/stream/struct.StreamBE32.html
-        let nonce = Aes256Gcm::generate_nonce(&mut OsRng)[0..7].to_vec();
-        let nonce = Nonce::from_slice(&nonce);
+        let nonce_bytes = Aes256Gcm::generate_nonce(&mut OsRng)[0..7].to_vec();
         let mut encryptor = EncryptorBE32::<Aes256Gcm>::from_aead(
             Aes256Gcm::new(Key::<Aes256Gcm>::from_slice(&output_key_material)),
-            nonce,
+            Nonce::from_slice(&nonce_bytes),
         );
 
         let mut encrypted_buffer = Vec::new();
-        let (chunks, remainder) = data.as_chunks::<CHUNK_SIZE>();
+        let mut offset = 0;
 
-        for chunk in chunks {
-            encryptor
-                .encrypt_next_in_place(chunk, &mut encrypted_buffer)
-                .map_err(|e| Error::Cipher(e.to_string()))?;
+        while offset + CHUNK_SIZE < data.len() {
+            let end = usize::min(offset + CHUNK_SIZE, data.len());
+            let chunk = &data[offset..end];
+
+            encrypted_buffer.extend(
+                encryptor
+                    .encrypt_next(chunk)
+                    .map_err(|e| Error::Cipher(e.to_string()))?,
+            );
+
+            offset = end;
         }
 
-        encryptor
-            .encrypt_last_in_place(remainder, &mut encrypted_buffer)
-            .map_err(|e| Error::Cipher(e.to_string()))?;
+        let last_chunk = &data[offset..];
+        encrypted_buffer.extend(
+            encryptor
+                .encrypt_last(last_chunk)
+                .map_err(|e| Error::Cipher(e.to_string()))?,
+        );
 
         self.metadata.salt = salt.to_string(); // already encoded in base64
-        self.metadata.nonce = STANDARD.encode(nonce.as_slice());
+        self.metadata.nonce = STANDARD.encode(nonce_bytes);
 
         Ok(encrypted_buffer)
     }
@@ -100,10 +109,7 @@ impl Cipher for PASSPHRASE {
         Argon2::default()
             .hash_password_into(
                 self.key.as_bytes(),
-                SaltString::from_b64(&self.metadata.salt)
-                    .map_err(|e| Error::Cipher(e.to_string()))?
-                    .as_str()
-                    .as_bytes(),
+                self.metadata.salt.as_bytes(),
                 &mut output_key_material,
             )
             .map_err(|e| Error::Cipher(e.to_string()))?;
@@ -118,17 +124,28 @@ impl Cipher for PASSPHRASE {
             DecryptorBE32::<Aes256Gcm>::from_aead(cipher, Nonce::from_slice(&nonce_bytes));
 
         let mut decrypted_buffer = Vec::new();
-        let (chunks, remainder) = encrypted_data.as_chunks::<CHUNK_SIZE>();
+        let mut offset = 0;
 
-        for chunk in chunks {
-            decryptor
-                .decrypt_next_in_place(chunk, &mut decrypted_buffer)
-                .map_err(|e| Error::Cipher(e.to_string()))?;
+        const BUFFER_LEN: usize = CHUNK_SIZE + 16; // 16 bytes for the tag
+        while offset + BUFFER_LEN < encrypted_data.len() {
+            let end = usize::min(offset + BUFFER_LEN, encrypted_data.len());
+            let chunk = &encrypted_data[offset..end];
+
+            decrypted_buffer.extend(
+                decryptor
+                    .decrypt_next(chunk)
+                    .map_err(|e| Error::Cipher(e.to_string()))?,
+            );
+
+            offset = end;
         }
 
-        decryptor
-            .decrypt_last_in_place(remainder, &mut decrypted_buffer)
-            .map_err(|e| Error::Cipher(e.to_string()))?;
+        let last_chunk = &encrypted_data[offset..];
+        decrypted_buffer.extend(
+            decryptor
+                .decrypt_last(last_chunk)
+                .map_err(|e| Error::Cipher(e.to_string()))?,
+        );
 
         Ok(decrypted_buffer)
     }

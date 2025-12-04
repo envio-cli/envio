@@ -99,7 +99,7 @@ impl ClapApp {
                         Some(fingerprint)
                     }
 
-                    CipherKind::PASSPHRASE => {
+                    CipherKind::PASSPHRASE | CipherKind::AGE => {
                         Some(prompts::password_prompt(prompts::PasswordPromptOptions {
                             title: "Enter your encryption key:".to_string(),
                             help_message: Some(

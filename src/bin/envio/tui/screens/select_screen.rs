@@ -248,6 +248,7 @@ impl SelectScreen {
 
                 let cipher_color = match p.metadata.cipher_kind {
                     CipherKind::PASSPHRASE => Color::Yellow,
+                    CipherKind::AGE => Color::Magenta,
                     CipherKind::GPG => Color::Green,
                     CipherKind::NONE => Color::Blue,
                 };

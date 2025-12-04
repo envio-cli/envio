@@ -40,6 +40,7 @@ path = "src/lib.rs"
 doctest = false
 
 [dependencies]
+age = "0.11.1"
 aead = { version = "0.5.2", features = ["stream"] }
 aes-gcm = "0.10.3"
 argon2 = "0.5.3"

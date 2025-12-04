@@ -8,7 +8,7 @@ use std::{
 use chrono::Local;
 use colored::Colorize;
 use comfy_table::{Attribute, Cell, ContentArrangement, Table};
-use envio::{cipher::Cipher, EnvMap, Profile};
+use envio::{EnvMap, Profile, cipher::Cipher};
 
 #[cfg(target_family = "unix")]
 use crate::utils::get_shellscript_path;
