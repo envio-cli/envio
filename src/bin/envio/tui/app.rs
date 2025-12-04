@@ -131,7 +131,7 @@ impl TuiApp {
         let metadata = get_profile_metadata(name)?;
 
         match metadata.cipher_kind {
-            envio::cipher::CipherKind::PASSPHRASE => {
+            envio::cipher::CipherKind::PASSPHRASE | envio::cipher::CipherKind::AGE => {
                 if self.ctx.cache.has_profile(name) {
                     self.navigation.push(ScreenId::Edit(name.to_string()))?;
                 } else {

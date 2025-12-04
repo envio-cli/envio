@@ -5,6 +5,7 @@ pub mod passphrase;
 
 // re-export the cipher types
 pub use age::AGE;
+use colored::Colorize;
 pub use gpg::GPG;
 pub use none::NONE;
 pub use passphrase::PASSPHRASE;
@@ -12,21 +13,35 @@ pub use passphrase::PASSPHRASE;
 use dyn_clone::DynClone;
 use serde::{Deserialize, Serialize};
 use std::{any::Any, path::Path};
-use strum_macros::{Display, EnumIter, EnumString};
+use strum_macros::{AsRefStr, EnumIter, EnumString};
 
 use crate::{error::Result, utils};
 
-#[derive(Copy, Clone, PartialEq, Serialize, Deserialize, Display, EnumIter, EnumString)]
+#[derive(Copy, Clone, PartialEq, Serialize, Deserialize, EnumIter, EnumString, AsRefStr)]
 #[serde(rename_all = "lowercase")]
 pub enum CipherKind {
     #[strum(ascii_case_insensitive, to_string = "none")]
     NONE,
     #[strum(ascii_case_insensitive, to_string = "passphrase")]
     PASSPHRASE,
-    #[strum(ascii_case_insensitive, to_string = "age")]
+    #[strum(ascii_case_insensitive, to_string = "age", props(label = "BETA"))]
     AGE,
     #[strum(ascii_case_insensitive, to_string = "gpg")]
     GPG,
+}
+
+impl std::fmt::Display for CipherKind {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            CipherKind::AGE => write!(
+                f,
+                "{} {}",
+                self.as_ref(),
+                "[BETA] https://crates.io/crates/age".bold().yellow()
+            ),
+            _ => write!(f, "{}", self.as_ref()),
+        }
+    }
 }
 
 pub trait Cipher: Any + Send + DynClone {

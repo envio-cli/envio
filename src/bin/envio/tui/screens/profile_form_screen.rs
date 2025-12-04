@@ -599,10 +599,7 @@ impl CreateProfileScreen {
                     CipherKind::NONE => Color::Blue,
                 };
 
-                let line = vec![
-                    Span::styled(kind.to_string(), style),
-                    Span::styled(format!(" ({})", kind), Style::default().fg(cipher_color)),
-                ];
+                let line = vec![Span::styled(kind.to_string(), style.fg(cipher_color))];
 
                 ListItem::new(Line::from(line))
             })

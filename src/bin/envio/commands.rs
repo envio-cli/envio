@@ -59,15 +59,12 @@ impl ClapApp {
                     kind.parse::<CipherKind>()
                         .map_err(|e| AppError::Msg(e.to_string()))?
                 } else {
-                    let cipher_options: Vec<String> =
-                        CipherKind::iter().map(|k| k.to_string()).collect();
+                    let cipher_options: Vec<CipherKind> = CipherKind::iter().collect();
 
                     prompts::select_prompt(prompts::SelectPromptOptions {
                         title: "Select the encryption method:".to_string(),
                         options: cipher_options,
                     })?
-                    .parse::<CipherKind>()
-                    .unwrap() // always safe
                 };
 
                 let key = match selected_cipher_kind {

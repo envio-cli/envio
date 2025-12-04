@@ -254,7 +254,7 @@ impl SelectScreen {
                 };
 
                 line.push(styled_span(
-                    format!(" [{}]", p.metadata.cipher_kind),
+                    format!(" [{}]", p.metadata.cipher_kind.as_ref()),
                     cipher_color,
                     false,
                 ));
