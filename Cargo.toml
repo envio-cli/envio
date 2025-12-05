@@ -41,12 +41,11 @@ doctest = false
 
 [dependencies]
 age = "0.11.1"
-aead = { version = "0.5.2", features = ["stream"] }
-aes-gcm = "0.10.3"
 argon2 = "0.5.3"
 base64 = "0.22.1"
-bincode = {version = "2.0.1", features = ["serde"]}
 better-panic = { version = "0.3.0", optional = true }
+bincode = { version = "2.0.1", features = ["serde"] }
+chacha20poly1305 = { version = "0.10.1", features = ["stream"] }
 chrono = { version = "0.4.42", features = ["serde"] }
 clap = { version = "4.5.53", features = ["derive"], optional = true }
 colored = { version = "3.0.0", optional = true }
@@ -58,10 +57,12 @@ git-version = { version = "0.3.9", optional = true }
 indicatif = { version = "0.18.3", optional = true }
 indexmap = { version = "2.11.4", features = ["serde"] }
 inquire = { version = "0.9.1", features = ["date"], optional = true }
-regex = { version = "1.7", optional = true }
 ratatui = { version = "0.29.0", optional = true }
+regex = { version = "1.7", optional = true }
 reqwest = { version = "0.12.24", optional = true, features = ["rustls-tls-native-roots", "json"] }
 semver = { version = "1.0.17", optional = true }
+serde = { version = "1.0.159", features = ["derive"] }
+serde_json = "1.0.145"
 shell-escape = { version = "0.1.5", optional = true }
 strum = "0.27"
 strum_macros = "0.27"
@@ -70,8 +71,6 @@ thiserror = "2.0.17"
 tokio = { version = "1.28.0", optional = true }
 typetag = { version = "0.2", optional = true }
 url = { version = "2.3.1", optional = true }
-serde = { version = "1.0.159", features = ["derive"] }
-serde_json = "1.0.145"
 
 [target.'cfg(unix)'.dependencies]
 gpgme = "0.11.0"

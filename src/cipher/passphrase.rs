@@ -1,6 +1,6 @@
-use aead::stream::{DecryptorBE32, EncryptorBE32};
-use aes_gcm::{
-    Aes256Gcm, Key, Nonce,
+use chacha20poly1305::{
+    Key, XChaCha20Poly1305,
+    aead::stream::{DecryptorBE32, EncryptorBE32},
     aead::{AeadCore, KeyInit},
 };
 
@@ -66,12 +66,12 @@ impl Cipher for PASSPHRASE {
             )
             .map_err(|e| Error::Cipher(e.to_string()))?;
 
-        // the stream encryptor expects a 7-byte base nonce (cipher nonce minus 5 bytes for the counter + flag).
+        // the stream encryptor expects a 19-byte base nonce (cipher nonce minus 5 bytes for the counter + flag).
         // see: https://docs.rs/aead/0.5.2/aead/stream/struct.StreamBE32.html
-        let nonce_bytes = Aes256Gcm::generate_nonce(&mut OsRng)[0..7].to_vec();
-        let mut encryptor = EncryptorBE32::<Aes256Gcm>::from_aead(
-            Aes256Gcm::new(Key::<Aes256Gcm>::from_slice(&output_key_material)),
-            Nonce::from_slice(&nonce_bytes),
+        let nonce_bytes = &XChaCha20Poly1305::generate_nonce(&mut OsRng)[0..19];
+        let mut encryptor = EncryptorBE32::<XChaCha20Poly1305>::from_aead(
+            XChaCha20Poly1305::new(Key::from_slice(&output_key_material)),
+            nonce_bytes.into(),
         );
 
         let mut encrypted_buffer = Vec::new();
@@ -118,10 +118,10 @@ impl Cipher for PASSPHRASE {
             .decode(&self.metadata.nonce)
             .map_err(|e| Error::Cipher(e.to_string()))?;
 
-        let cipher = Aes256Gcm::new(Key::<Aes256Gcm>::from_slice(&output_key_material));
+        let cipher = XChaCha20Poly1305::new(Key::from_slice(&output_key_material));
 
         let mut decryptor =
-            DecryptorBE32::<Aes256Gcm>::from_aead(cipher, Nonce::from_slice(&nonce_bytes));
+            DecryptorBE32::<XChaCha20Poly1305>::from_aead(cipher, nonce_bytes.as_slice().into());
 
         let mut decrypted_buffer = Vec::new();
         let mut offset = 0;
