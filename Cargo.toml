@@ -57,6 +57,7 @@ git-version = { version = "0.3.9", optional = true }
 indicatif = { version = "0.18.3", optional = true }
 indexmap = { version = "2.11.4", features = ["serde"] }
 inquire = { version = "0.9.1", features = ["date"], optional = true }
+paste = "1.0.15"
 ratatui = { version = "0.29.0", optional = true }
 regex = { version = "1.7", optional = true }
 reqwest = { version = "0.12.24", optional = true, features = ["rustls-tls-native-roots", "json"] }
@@ -80,6 +81,8 @@ chrono = "0.4.42"
 clap = { version = "4.5.53", features = ["derive"] }
 clap_mangen = "0.2.31"
 clap_complete = "4.5.61"
+regex = "1.12.2"
+semver = "1.0.17"
 
 [profile.release]
 lto = true

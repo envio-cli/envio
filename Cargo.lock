@@ -837,6 +837,7 @@ dependencies = [
  "indexmap",
  "indicatif",
  "inquire",
+ "paste",
  "ratatui",
  "regex",
  "reqwest",
