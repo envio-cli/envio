@@ -36,7 +36,6 @@ Register-ArgumentCompleter -Native -CommandName 'envio' -ScriptBlock {
             [CompletionResult]::new('load', 'load', [CompletionResultType]::ParameterValue, 'Load environment variables from a profile for use in terminal sessions')
             [CompletionResult]::new('unload', 'unload', [CompletionResultType]::ParameterValue, 'Unload previously loaded environment variables from terminal sessions')
             [CompletionResult]::new('run', 'run', [CompletionResultType]::ParameterValue, 'Run a command using environment variables from a profile')
-            [CompletionResult]::new('exec', 'exec', [CompletionResultType]::ParameterValue, 'Run a command using environment variables from a profile')
             [CompletionResult]::new('import', 'import', [CompletionResultType]::ParameterValue, 'Import a profile from a file or url')
             [CompletionResult]::new('export', 'export', [CompletionResultType]::ParameterValue, 'Export the environment variables of a profile to a file')
             [CompletionResult]::new('tui', 'tui', [CompletionResultType]::ParameterValue, 'Launch the interactive TUI application')
@@ -146,12 +145,6 @@ Register-ArgumentCompleter -Native -CommandName 'envio' -ScriptBlock {
             break
         }
         'envio;run' {
-            [CompletionResult]::new('--diagnostic', '--diagnostic', [CompletionResultType]::ParameterName, 'Show diagnostic information for bug reports')
-            [CompletionResult]::new('-h', '-h', [CompletionResultType]::ParameterName, 'Print help')
-            [CompletionResult]::new('--help', '--help', [CompletionResultType]::ParameterName, 'Print help')
-            break
-        }
-        'envio;exec' {
             [CompletionResult]::new('--diagnostic', '--diagnostic', [CompletionResultType]::ParameterName, 'Show diagnostic information for bug reports')
             [CompletionResult]::new('-h', '-h', [CompletionResultType]::ParameterName, 'Print help')
             [CompletionResult]::new('--help', '--help', [CompletionResultType]::ParameterName, 'Print help')

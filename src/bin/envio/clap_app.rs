@@ -169,7 +169,6 @@ pub enum Command {
     #[command(
         name = "run",
         about = "Run a command using environment variables from a profile",
-        visible_aliases = &["exec"],
         override_usage = "envio run <PROFILE_NAME> -- <COMMAND>"
     )]
     Run {

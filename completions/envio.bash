@@ -25,9 +25,6 @@ _envio() {
             envio,delete)
                 cmd="envio__delete"
                 ;;
-            envio,exec)
-                cmd="envio__run"
-                ;;
             envio,export)
                 cmd="envio__export"
                 ;;
@@ -77,7 +74,7 @@ _envio() {
 
     case "${cmd}" in
         envio)
-            opts="-h --diagnostic --help create new delete remove list ls show set unset load unload run exec import export tui completion version"
+            opts="-h --diagnostic --help create new delete remove list ls show set unset load unload run import export tui completion version"
             if [[ ${cur} == -* || ${COMP_CWORD} -eq 1 ]] ; then
                 COMPREPLY=( $(compgen -W "${opts}" -- "${cur}") )
                 return 0

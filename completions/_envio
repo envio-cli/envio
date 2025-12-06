@@ -158,15 +158,6 @@ _arguments "${_arguments_options[@]}" : \
 '*::command -- command to run:_default' \
 && ret=0
 ;;
-(exec)
-_arguments "${_arguments_options[@]}" : \
-'--diagnostic[Show diagnostic information for bug reports]' \
-'-h[Print help]' \
-'--help[Print help]' \
-':profile_name -- name of the profile:_default' \
-'*::command -- command to run:_default' \
-&& ret=0
-;;
 (import)
 _arguments "${_arguments_options[@]}" : \
 '-n+[name for the imported profile]:PROFILE_NAME:_default' \
@@ -233,7 +224,6 @@ _envio_commands() {
 'load:Load environment variables from a profile for use in terminal sessions' \
 'unload:Unload previously loaded environment variables from terminal sessions' \
 'run:Run a command using environment variables from a profile' \
-'exec:Run a command using environment variables from a profile' \
 'import:Import a profile from a file or url' \
 'export:Export the environment variables of a profile to a file' \
 'tui:Launch the interactive TUI application' \

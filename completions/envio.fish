@@ -38,7 +38,6 @@ complete -c envio -n "__fish_envio_needs_command" -f -a "unset" -d 'Remove envir
 complete -c envio -n "__fish_envio_needs_command" -f -a "load" -d 'Load environment variables from a profile for use in terminal sessions'
 complete -c envio -n "__fish_envio_needs_command" -f -a "unload" -d 'Unload previously loaded environment variables from terminal sessions'
 complete -c envio -n "__fish_envio_needs_command" -f -a "run" -d 'Run a command using environment variables from a profile'
-complete -c envio -n "__fish_envio_needs_command" -f -a "exec" -d 'Run a command using environment variables from a profile'
 complete -c envio -n "__fish_envio_needs_command" -f -a "import" -d 'Import a profile from a file or url'
 complete -c envio -n "__fish_envio_needs_command" -f -a "export" -d 'Export the environment variables of a profile to a file'
 complete -c envio -n "__fish_envio_needs_command" -f -a "tui" -d 'Launch the interactive TUI application'
@@ -87,8 +86,6 @@ complete -c envio -n "__fish_envio_using_subcommand unload" -l diagnostic -d 'Sh
 complete -c envio -n "__fish_envio_using_subcommand unload" -s h -l help -d 'Print help'
 complete -c envio -n "__fish_envio_using_subcommand run" -l diagnostic -d 'Show diagnostic information for bug reports'
 complete -c envio -n "__fish_envio_using_subcommand run" -s h -l help -d 'Print help'
-complete -c envio -n "__fish_envio_using_subcommand exec" -l diagnostic -d 'Show diagnostic information for bug reports'
-complete -c envio -n "__fish_envio_using_subcommand exec" -s h -l help -d 'Print help'
 complete -c envio -n "__fish_envio_using_subcommand import" -s n -l profile-name -d 'name for the imported profile' -r
 complete -c envio -n "__fish_envio_using_subcommand import" -l diagnostic -d 'Show diagnostic information for bug reports'
 complete -c envio -n "__fish_envio_using_subcommand import" -s h -l help -d 'Print help'
