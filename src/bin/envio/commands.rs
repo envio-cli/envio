@@ -276,8 +276,8 @@ impl ClapApp {
                     profile.envs.insert(env);
                 }
 
-                println!("{}", "Applying Changes".green());
                 profile.save()?;
+                success_msg!("Changes applied");
             }
 
             Command::Unset { profile_name, keys } => {
@@ -290,8 +290,8 @@ impl ClapApp {
                     profile.envs.remove(key)?;
                 }
 
-                println!("{}", "Applying Changes".green());
                 profile.save()?;
+                success_msg!("Changes applied");
             }
 
             Command::Load { profile_name } => {
