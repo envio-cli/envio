@@ -95,7 +95,7 @@ impl Cipher for GPG {
                 }
             };
 
-            stdin.write_all(data)?;
+            stdin.write_all(&data)?;
 
             // Wait for the GPG process to finish and capture its output
             let output = gpg_process.wait_with_output()?;
@@ -148,7 +148,7 @@ impl Cipher for GPG {
                 }
             };
 
-            stdin.write_all(encrypted_data.as_bytes())?;
+            stdin.write_all(&encrypted_data.as_bytes()?)?;
 
             let output = gpg_process.wait_with_output()?;
 

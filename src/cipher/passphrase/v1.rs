@@ -42,7 +42,7 @@ pub fn encrypt(key: &str, data: &[u8]) -> Result<(Vec<u8>, MetadataV1)> {
         XChaCha20Poly1305::new(Key::from_slice(&output_key_material)),
         nonce_bytes.into(),
     );
-    
+
     output_key_material.zeroize();
 
     let mut encrypted_buffer = Vec::new();

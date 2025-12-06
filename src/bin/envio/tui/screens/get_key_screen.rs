@@ -169,8 +169,7 @@ impl GetKeyScreen {
                 }
             };
 
-            let result = envio::get_profile(profile_path, Some(|| key)).ok();
-            result
+            envio::get_profile(profile_path, Some(|| key)).ok()
         }));
 
         Ok(())

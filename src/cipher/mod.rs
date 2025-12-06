@@ -93,8 +93,8 @@ pub fn create_cipher(
 ) -> Result<Box<dyn Cipher>> {
     match cipher_kind {
         CipherKind::NONE => Ok(Box::new(NONE)),
-        CipherKind::PASSPHRASE => Ok(Box::new(PASSPHRASE::new(key.unwrap_or_default().into()))),
-        CipherKind::AGE => Ok(Box::new(AGE::new(key.unwrap_or_default().into()))),
+        CipherKind::PASSPHRASE => Ok(Box::new(PASSPHRASE::new(key.unwrap_or_default()))),
+        CipherKind::AGE => Ok(Box::new(AGE::new(key.unwrap_or_default()))),
         CipherKind::GPG => Ok(Box::new(GPG::new(key.unwrap_or_default().to_string()))),
     }
 }
