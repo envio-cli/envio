@@ -193,7 +193,7 @@ pub fn list_profiles(no_pretty_print: bool) -> AppResult<()> {
         table.add_row(vec![
             &profile,
             &metadata.description.unwrap_or("".to_string()),
-            &metadata.cipher_kind.to_string(),
+            metadata.cipher_kind.as_ref(),
             &metadata.created_at.format("%Y-%m-%d %H:%M:%S").to_string(),
             &metadata.updated_at.format("%Y-%m-%d %H:%M:%S").to_string(),
         ]);
