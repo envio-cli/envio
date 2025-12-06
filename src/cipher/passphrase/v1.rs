@@ -11,6 +11,7 @@ use argon2::{
 use base64::{Engine, engine::general_purpose::STANDARD};
 
 use serde::{Deserialize, Serialize};
+use zeroize::Zeroize;
 
 use crate::{
     error::{Error, Result},
@@ -41,6 +42,8 @@ pub fn encrypt(key: &str, data: &[u8]) -> Result<(Vec<u8>, MetadataV1)> {
         XChaCha20Poly1305::new(Key::from_slice(&output_key_material)),
         nonce_bytes.into(),
     );
+    
+    output_key_material.zeroize();
 
     let mut encrypted_buffer = Vec::new();
     let mut offset = 0;
@@ -89,6 +92,7 @@ pub fn decrypt(key: &str, metadata: &MetadataV1, encrypted_data: &[u8]) -> Resul
         .map_err(|e| Error::Cipher(e.to_string()))?;
 
     let cipher = XChaCha20Poly1305::new(Key::from_slice(&output_key_material));
+    output_key_material.zeroize();
 
     let mut decryptor =
         DecryptorBE32::<XChaCha20Poly1305>::from_aead(cipher, nonce_bytes.as_slice().into());

@@ -2,8 +2,8 @@
 mod metadata;
 mod v1;
 
-use serde::{Deserialize, Serialize};
 use std::any::Any;
+use zeroize::Zeroizing;
 
 use crate::{
     EnvMap,
@@ -19,26 +19,22 @@ include!(concat!(
 ));
 include!(concat!(env!("OUT_DIR"), "/passphrase_encrypt_generated.rs"));
 
-#[derive(Serialize, Deserialize, Clone)]
+#[derive(Clone)]
 pub struct PASSPHRASE {
-    key: String,
+    key: Zeroizing<String>,
     metadata: VersionedMetadata,
 }
 
 impl PASSPHRASE {
-    pub fn new(key: String) -> Self {
+    pub fn new(key: Zeroizing<String>) -> Self {
         PASSPHRASE {
             key,
             metadata: VersionedMetadata::default(),
         }
     }
 
-    pub fn set_key(&mut self, key: String) {
+    pub fn set_key(&mut self, key: Zeroizing<String>) {
         self.key = key;
-    }
-
-    pub fn get_key(&self) -> String {
-        self.key.clone()
     }
 }
 

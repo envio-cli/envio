@@ -12,6 +12,7 @@ use ratatui::{
 };
 use std::thread::{self, JoinHandle};
 use strum::IntoEnumIterator;
+use zeroize::Zeroizing;
 
 use super::{Action, Screen, ScreenEvent, ScreenId};
 use crate::{
@@ -118,8 +119,8 @@ pub struct CreateProfileScreen {
     description: String,
     cipher_kind_list_state: ListState,
     cipher_kinds: Vec<CipherKind>,
-    passphrase: String,
-    passphrase_confirm: String,
+    passphrase: Zeroizing<String>,
+    passphrase_confirm: Zeroizing<String>,
     gpg_keys: Vec<(String, String)>,
     gpg_key_list_state: ListState,
     current_field: CreateField,
@@ -394,8 +395,8 @@ impl CreateProfileScreen {
             description: String::new(),
             cipher_kind_list_state: list_state,
             cipher_kinds,
-            passphrase: String::new(),
-            passphrase_confirm: String::new(),
+            passphrase: Zeroizing::new(String::new()),
+            passphrase_confirm: Zeroizing::new(String::new()),
             gpg_keys,
             gpg_key_list_state,
             current_field: CreateField::Name,
@@ -522,7 +523,7 @@ impl CreateProfileScreen {
 
             CipherKind::GPG => {
                 if let Some(ref key) = self.get_selected_gpg_key() {
-                    Some(key.clone())
+                    Some(key.clone().into())
                 } else {
                     self.status = Status::Error("Please select a GPG key".to_string(), Color::Red);
                     return Ok(());
@@ -542,7 +543,7 @@ impl CreateProfileScreen {
                 name,
                 Some(description),
                 EnvMap::default(),
-                create_cipher(cipher_kind, key.as_deref())?,
+                create_cipher(cipher_kind, key)?,
             )?;
 
             Ok(())

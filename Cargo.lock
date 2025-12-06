@@ -898,6 +898,7 @@ dependencies = [
  "tokio",
  "typetag",
  "url",
+ "zeroize",
 ]
 
 [[package]]

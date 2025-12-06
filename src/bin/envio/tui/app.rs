@@ -7,6 +7,7 @@ use ratatui::{
     widgets::Paragraph,
 };
 use std::time::Duration;
+use zeroize::Zeroizing;
 
 use super::{
     context::AppContext,
@@ -147,7 +148,7 @@ impl TuiApp {
 
     fn open_unencrypted_profile(&mut self, name: &str) -> AppResult<()> {
         let path = get_profile_path(name)?;
-        let profile = envio::get_profile(path, None::<fn() -> String>)?;
+        let profile = envio::get_profile(path, None::<fn() -> Zeroizing<String>>)?;
 
         self.ctx.cache.insert_profile(name.to_string(), profile);
         self.navigation.push(ScreenId::Edit(name.to_string()))?;

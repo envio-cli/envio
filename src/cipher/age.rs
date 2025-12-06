@@ -5,7 +5,7 @@ use std::{
 };
 
 use age::{Decryptor, Encryptor, scrypt::Identity, secrecy::SecretString};
-use serde::{Deserialize, Serialize};
+use zeroize::Zeroizing;
 
 use crate::{
     EnvMap,
@@ -13,22 +13,18 @@ use crate::{
     error::{Error, Result},
 };
 
-#[derive(Serialize, Deserialize, Clone)]
+#[derive(Clone)]
 pub struct AGE {
-    key: String,
+    key: Zeroizing<String>,
 }
 
 impl AGE {
-    pub fn new(key: String) -> Self {
+    pub fn new(key: Zeroizing<String>) -> Self {
         AGE { key }
     }
 
-    pub fn set_key(&mut self, key: String) {
+    pub fn set_key(&mut self, key: Zeroizing<String>) {
         self.key = key;
-    }
-
-    pub fn get_key(&self) -> String {
-        self.key.clone()
     }
 }
 
@@ -40,7 +36,7 @@ impl Cipher for AGE {
     fn encrypt(&mut self, envs: &EnvMap) -> Result<EncryptedContent> {
         let data = envs.as_bytes()?;
 
-        let encryptor = Encryptor::with_user_passphrase(SecretString::from(self.key.to_owned()));
+        let encryptor = Encryptor::with_user_passphrase(SecretString::from(self.key.as_str()));
 
         let mut encrypted = vec![];
         let mut writer = encryptor
@@ -60,7 +56,7 @@ impl Cipher for AGE {
         let mut decrypted = vec![];
         let mut reader = decryptor
             .decrypt(iter::once(
-                &Identity::new(SecretString::from(self.key.to_owned())) as _,
+                &Identity::new(SecretString::from(self.key.as_str())) as _,
             ))
             .map_err(|e| Error::Cipher(e.to_string()))?;
 

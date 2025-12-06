@@ -8,6 +8,7 @@ use ratatui::{
     widgets::{Block, Borders, Paragraph},
 };
 use std::thread::{self, JoinHandle};
+use zeroize::Zeroizing;
 
 use super::{Action, Screen, ScreenEvent, ScreenId};
 use crate::{error::AppResult, utils::get_profile_path};
@@ -20,7 +21,7 @@ enum Feedback {
 
 pub struct GetKeyScreen {
     profile_name: String,
-    key: String,
+    key: Zeroizing<String>,
     feedback: Option<Feedback>,
     decrypt_handle: Option<JoinHandle<Option<Profile>>>,
 }
@@ -150,7 +151,7 @@ impl GetKeyScreen {
     pub fn new(profile_name: String) -> Self {
         Self {
             profile_name,
-            key: String::new(),
+            key: Zeroizing::new(String::new()),
             feedback: None,
             decrypt_handle: None,
         }
@@ -163,10 +164,13 @@ impl GetKeyScreen {
         self.decrypt_handle = Some(thread::spawn(move || {
             let profile_path = match get_profile_path(&profile_name) {
                 Ok(p) => p,
-                Err(_) => return None,
+                Err(_) => {
+                    return None;
+                }
             };
 
-            envio::get_profile(profile_path, Some(|| key)).ok()
+            let result = envio::get_profile(profile_path, Some(|| key)).ok();
+            result
         }));
 
         Ok(())

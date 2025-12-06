@@ -11,6 +11,7 @@ use envio::{
 use indexmap::IndexMap;
 use strum::IntoEnumIterator;
 use url::Url;
+use zeroize::Zeroizing;
 
 use crate::{
     clap_app::{ClapApp, Command},
@@ -22,7 +23,7 @@ use crate::{
     utils,
 };
 
-fn get_userkey() -> String {
+fn get_userkey() -> Zeroizing<String> {
     match prompts::password_prompt(prompts::PasswordPromptOptions {
         title: "Enter your encryption key:".to_string(),
         help_message: Some("OH NO! you forgot your key! just kidding... or did you?".to_string()),
@@ -30,7 +31,7 @@ fn get_userkey() -> String {
         with_confirmation: false,
         confirmation_error_message: None,
     }) {
-        Ok(key) => key,
+        Ok(key) => Zeroizing::new(key),
         Err(e) => {
             error_msg!(e);
             std::process::exit(1);
@@ -93,11 +94,11 @@ impl ClapApp {
                             .map(|(_, fingerprint)| fingerprint)
                             .unwrap();
 
-                        Some(fingerprint)
+                        Some(fingerprint.into())
                     }
 
-                    CipherKind::PASSPHRASE | CipherKind::AGE => {
-                        Some(prompts::password_prompt(prompts::PasswordPromptOptions {
+                    CipherKind::PASSPHRASE | CipherKind::AGE => Some(
+                        prompts::password_prompt(prompts::PasswordPromptOptions {
                             title: "Enter your encryption key:".to_string(),
                             help_message: Some(
                                 "Remember this key, you will need it to decrypt your profile later"
@@ -106,13 +107,14 @@ impl ClapApp {
                             min_length: Some(8),
                             with_confirmation: true,
                             confirmation_error_message: Some("The keys don't match".to_string()),
-                        })?)
-                    }
+                        })?
+                        .into(),
+                    ),
 
                     _ => None,
                 };
 
-                let cipher = create_cipher(selected_cipher_kind, key.as_deref())?;
+                let cipher = create_cipher(selected_cipher_kind, key)?;
 
                 let mut envs_map;
 

@@ -1,4 +1,3 @@
-use serde::{Deserialize, Serialize};
 use std::any::Any;
 
 use crate::{
@@ -7,7 +6,7 @@ use crate::{
     error::{Error, Result},
 };
 
-#[derive(Serialize, Deserialize, Clone)]
+#[derive(Clone)]
 pub struct NONE;
 
 impl Cipher for NONE {

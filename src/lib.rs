@@ -5,6 +5,7 @@ pub mod profile;
 pub mod utils;
 
 use std::path::Path;
+use zeroize::Zeroizing;
 
 pub use env::{Env, EnvMap};
 pub use profile::{Profile, ProfileMetadata};
@@ -17,7 +18,7 @@ use crate::{
 pub fn get_profile<P, F>(file_path: P, key_provider: Option<F>) -> Result<Profile>
 where
     P: AsRef<Path>,
-    F: FnOnce() -> String,
+    F: FnOnce() -> Zeroizing<String>,
 {
     let mut cipher = get_profile_cipher(&file_path)?;
 
@@ -49,7 +50,7 @@ where
 pub fn load_profile<P, F>(file_path: P, key_provider: Option<F>) -> Result<Profile>
 where
     P: AsRef<Path>,
-    F: FnOnce() -> String,
+    F: FnOnce() -> Zeroizing<String>,
 {
     let profile = get_profile(file_path, key_provider)?;
 

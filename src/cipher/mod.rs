@@ -15,6 +15,7 @@ use serde::{Deserialize, Serialize};
 use serde_with::{base64::Base64, serde_as};
 use std::{any::Any, path::Path};
 use strum_macros::{AsRefStr, EnumIter, EnumString};
+use zeroize::Zeroizing;
 
 use crate::{env::EnvMap, error::Result, utils};
 
@@ -86,12 +87,15 @@ impl Clone for Box<dyn Cipher> {
     }
 }
 
-pub fn create_cipher(cipher_kind: CipherKind, key: Option<&str>) -> Result<Box<dyn Cipher>> {
+pub fn create_cipher(
+    cipher_kind: CipherKind,
+    key: Option<Zeroizing<String>>,
+) -> Result<Box<dyn Cipher>> {
     match cipher_kind {
         CipherKind::NONE => Ok(Box::new(NONE)),
         CipherKind::PASSPHRASE => Ok(Box::new(PASSPHRASE::new(key.unwrap_or_default().into()))),
         CipherKind::AGE => Ok(Box::new(AGE::new(key.unwrap_or_default().into()))),
-        CipherKind::GPG => Ok(Box::new(GPG::new(key.unwrap_or_default().into()))),
+        CipherKind::GPG => Ok(Box::new(GPG::new(key.unwrap_or_default().to_string()))),
     }
 }
 
