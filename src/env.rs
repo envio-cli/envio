@@ -1,6 +1,6 @@
 use chrono::NaiveDate;
 use indexmap::IndexMap;
-use serde::{Deserialize, Serialize};
+use serde::{Deserialize, Deserializer, Serialize, Serializer};
 
 use crate::error::{Error, Result};
 
@@ -32,22 +32,37 @@ impl Env {
     }
 }
 
-#[derive(Serialize, Deserialize, Clone)]
+#[derive(Default, Clone)]
 pub struct EnvMap {
     envs: IndexMap<String, Env>,
 }
 
-impl Default for EnvMap {
-    fn default() -> Self {
-        Self::new()
+impl Serialize for EnvMap {
+    fn serialize<S>(&self, serializer: S) -> std::result::Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let envs: Vec<&Env> = self.envs.values().collect();
+        envs.serialize(serializer)
+    }
+}
+
+impl<'de> Deserialize<'de> for EnvMap {
+    fn deserialize<D>(deserializer: D) -> std::result::Result<Self, D::Error>
+    where
+        D: Deserializer<'de>,
+    {
+        let envs: Vec<Env> = Vec::deserialize(deserializer)?;
+        Ok(EnvMap::from(envs))
     }
 }
 
 impl EnvMap {
-    pub fn new() -> Self {
-        Self {
-            envs: IndexMap::new(),
-        }
+    pub fn as_bytes(&self) -> Result<Vec<u8>> {
+        Ok(bincode::serde::encode_to_vec(
+            self,
+            bincode::config::standard(),
+        )?)
     }
 
     pub fn insert(&mut self, env: Env) {
@@ -62,7 +77,6 @@ impl EnvMap {
         if self.envs.shift_remove(key).is_none() {
             return Err(Error::EnvDoesNotExist(key.to_string()));
         }
-
         Ok(())
     }
 
@@ -104,7 +118,7 @@ impl EnvMap {
 
 impl From<IndexMap<String, String>> for EnvMap {
     fn from(map: IndexMap<String, String>) -> Self {
-        let mut env_map = Self::new();
+        let mut env_map = Self::default();
         for (k, v) in map {
             env_map.insert(Env::from_key_value(k, v));
         }
@@ -113,24 +127,33 @@ impl From<IndexMap<String, String>> for EnvMap {
 }
 
 impl From<EnvMap> for IndexMap<String, String> {
-    fn from(env_map: EnvMap) -> IndexMap<String, String> {
-        env_map
-            .envs
-            .into_iter()
-            .map(|(k, v)| (k, v.value))
-            .collect()
+    fn from(val: EnvMap) -> Self {
+        val.envs.into_iter().map(|(k, v)| (k, v.value)).collect()
     }
 }
 
 impl From<Vec<Env>> for EnvMap {
     fn from(envs: Vec<Env>) -> Self {
-        let mut env_map = Self::new();
-
+        let mut env_map = Self::default();
         for env in envs {
             env_map.insert(env);
         }
-
         env_map
+    }
+}
+
+impl From<&[u8]> for EnvMap {
+    fn from(bytes: &[u8]) -> Self {
+        let (envs, _): (EnvMap, usize) =
+            bincode::serde::decode_from_slice(bytes, bincode::config::standard())
+                .expect("Failed to deserialize bytes to EnvMap");
+        envs
+    }
+}
+
+impl From<Vec<u8>> for EnvMap {
+    fn from(bytes: Vec<u8>) -> Self {
+        EnvMap::from(bytes.as_slice())
     }
 }
 

@@ -141,7 +141,7 @@ impl ClapApp {
 
                     envs_map.retain(|env| selected_keys.contains(&env.key));
                 } else if envs.is_some() {
-                    envs_map = EnvMap::new();
+                    envs_map = EnvMap::default();
 
                     for env in envs.as_ref().unwrap() {
                         if (*env).contains('=') {
@@ -174,7 +174,7 @@ impl ClapApp {
                         envs_map.insert_from_key_value(env.to_string(), value);
                     }
                 } else {
-                    envs_map = EnvMap::new(); // the user created a profile without any envs
+                    envs_map = EnvMap::default(); // the user created a profile without any envs
                 }
 
                 for env in envs_map.iter_mut() {

@@ -54,7 +54,7 @@ pub fn get_profile_metadata(profile_name: &str) -> AppResult<ProfileMetadata> {
 }
 
 pub fn parse_envs_from_string(buffer: &str) -> AppResult<EnvMap> {
-    let mut envs_vec = EnvMap::new();
+    let mut envs_vec = EnvMap::default();
 
     for line in buffer.lines() {
         if line.is_empty() || !line.contains('=') {

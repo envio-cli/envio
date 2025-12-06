@@ -12,10 +12,11 @@ pub use passphrase::PASSPHRASE;
 
 use dyn_clone::DynClone;
 use serde::{Deserialize, Serialize};
+use serde_with::{base64::Base64, serde_as};
 use std::{any::Any, path::Path};
 use strum_macros::{AsRefStr, EnumIter, EnumString};
 
-use crate::{error::Result, utils};
+use crate::{env::EnvMap, error::Result, utils};
 
 #[derive(Copy, Clone, PartialEq, Serialize, Deserialize, EnumIter, EnumString, AsRefStr)]
 #[serde(rename_all = "lowercase")]
@@ -44,9 +45,26 @@ impl std::fmt::Display for CipherKind {
     }
 }
 
+#[serde_as]
+#[derive(Serialize, Deserialize)]
+#[serde(untagged)]
+pub enum EncryptedContent {
+    Bytes(#[serde_as(as = "Base64")] Vec<u8>),
+    Json(serde_json::Value),
+}
+
+impl EncryptedContent {
+    pub fn as_bytes(&self) -> Result<Vec<u8>> {
+        match self {
+            EncryptedContent::Bytes(b) => Ok(b.clone()),
+            EncryptedContent::Json(value) => Ok(serde_json::to_vec(value)?),
+        }
+    }
+}
+
 pub trait Cipher: Any + Send + DynClone {
-    fn encrypt(&mut self, data: &[u8]) -> Result<Vec<u8>>;
-    fn decrypt(&self, encrypted_data: &[u8]) -> Result<Vec<u8>>;
+    fn encrypt(&mut self, envs: &EnvMap) -> Result<EncryptedContent>;
+    fn decrypt(&self, encrypted_data: &EncryptedContent) -> Result<EnvMap>;
     fn kind(&self) -> CipherKind;
 
     fn export_metadata(&self) -> Option<serde_json::Value> {

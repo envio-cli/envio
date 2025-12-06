@@ -2,8 +2,9 @@ use serde::{Deserialize, Serialize};
 use std::any::Any;
 
 use crate::{
-    cipher::{Cipher, CipherKind},
-    error::Result,
+    EnvMap,
+    cipher::{Cipher, CipherKind, EncryptedContent},
+    error::{Error, Result},
 };
 
 #[derive(Serialize, Deserialize, Clone)]
@@ -14,12 +15,17 @@ impl Cipher for NONE {
         CipherKind::NONE
     }
 
-    fn encrypt(&mut self, data: &[u8]) -> Result<Vec<u8>> {
-        Ok(data.to_vec())
+    fn encrypt(&mut self, envs: &EnvMap) -> Result<EncryptedContent> {
+        Ok(EncryptedContent::Json(serde_json::to_value(envs)?))
     }
 
-    fn decrypt(&self, encrypted_data: &[u8]) -> Result<Vec<u8>> {
-        Ok(encrypted_data.to_vec())
+    fn decrypt(&self, encrypted_data: &EncryptedContent) -> Result<EnvMap> {
+        match encrypted_data {
+            EncryptedContent::Json(value) => Ok(serde_json::from_value(value.clone())?),
+            _ => Err(Error::Cipher(
+                "Encrypted data is not a JSON object".to_string(),
+            )),
+        }
     }
 
     fn as_any(&self) -> &dyn Any {

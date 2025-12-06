@@ -6,7 +6,8 @@ use serde::{Deserialize, Serialize};
 use std::any::Any;
 
 use crate::{
-    cipher::{Cipher, CipherKind},
+    EnvMap,
+    cipher::{Cipher, CipherKind, EncryptedContent},
     error::Result,
 };
 
@@ -46,14 +47,16 @@ impl Cipher for PASSPHRASE {
         CipherKind::PASSPHRASE
     }
 
-    fn encrypt(&mut self, data: &[u8]) -> Result<Vec<u8>> {
-        let (encrypted, metadata) = encrypt_latest(&self.key, data)?;
+    fn encrypt(&mut self, envs: &EnvMap) -> Result<EncryptedContent> {
+        let data = envs.as_bytes()?;
+        let (encrypted, metadata) = encrypt_latest(&self.key, &data)?;
         self.metadata = metadata;
-        Ok(encrypted)
+
+        Ok(EncryptedContent::Bytes(encrypted))
     }
 
-    fn decrypt(&self, encrypted_data: &[u8]) -> Result<Vec<u8>> {
-        decrypt_match!(self, encrypted_data)
+    fn decrypt(&self, encrypted_data: &EncryptedContent) -> Result<EnvMap> {
+        Ok(decrypt_match!(self, &encrypted_data.as_bytes()?)?.into())
     }
 
     fn export_metadata(&self) -> Option<serde_json::Value> {

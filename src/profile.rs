@@ -4,7 +4,7 @@ use chrono::{DateTime, Local};
 use serde::{Deserialize, Serialize};
 
 use crate::{
-    cipher::{Cipher, CipherKind},
+    cipher::{Cipher, CipherKind, EncryptedContent},
     env::EnvMap,
     error::Result,
     utils::{get_serialized_profile, save_serialized_profile},
@@ -14,9 +14,11 @@ use crate::{
 pub struct ProfileMetadata {
     pub name: String,
     pub version: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub description: Option<String>,
     pub file_path: PathBuf,
     pub cipher_kind: CipherKind,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub cipher_metadata: Option<serde_json::Value>,
     pub created_at: DateTime<Local>,
     pub updated_at: DateTime<Local>,
@@ -32,7 +34,7 @@ pub struct Profile {
 #[derive(Serialize, Deserialize)]
 pub struct SerializedProfile {
     pub metadata: ProfileMetadata,
-    pub content: Vec<u8>,
+    pub content: EncryptedContent,
 }
 
 impl Profile {
@@ -66,23 +68,15 @@ impl Profile {
             cipher.import_metadata(cipher_metadata.clone())?;
         }
 
-        let decrypted_envs_bytes = cipher.decrypt(&serialized_profile.content)?;
-
-        let (envs, _): (EnvMap, usize) =
-            bincode::serde::decode_from_slice(&decrypted_envs_bytes, bincode::config::standard())?;
-
         Ok(Profile {
             metadata: serialized_profile.metadata,
-            envs,
+            envs: cipher.decrypt(&serialized_profile.content)?,
             cipher,
         })
     }
 
     pub fn save(&mut self) -> Result<()> {
-        let serialized_envs =
-            bincode::serde::encode_to_vec(&self.envs, bincode::config::standard())?;
-
-        let encrypted_envs = self.cipher.encrypt(&serialized_envs)?;
+        let encrypted_envs = self.cipher.encrypt(&self.envs)?;
 
         self.metadata.updated_at = Local::now();
         self.metadata.cipher_metadata = self.cipher.export_metadata();

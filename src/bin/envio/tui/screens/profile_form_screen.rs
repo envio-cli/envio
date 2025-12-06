@@ -541,7 +541,7 @@ impl CreateProfileScreen {
             ops::create_profile(
                 name,
                 Some(description),
-                EnvMap::new(),
+                EnvMap::default(),
                 create_cipher(cipher_kind, key.as_deref())?,
             )?;
 

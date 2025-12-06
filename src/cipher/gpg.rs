@@ -13,7 +13,8 @@ use regex::Regex;
 use serde::{Deserialize, Serialize};
 
 use crate::{
-    cipher::{Cipher, CipherKind},
+    EnvMap,
+    cipher::{Cipher, CipherKind, EncryptedContent},
     error::{Error, Result},
 };
 
@@ -48,7 +49,9 @@ impl Cipher for GPG {
         CipherKind::GPG
     }
 
-    fn encrypt(&mut self, data: &[u8]) -> Result<Vec<u8>> {
+    fn encrypt(&mut self, envs: &EnvMap) -> Result<EncryptedContent> {
+        let data = envs.as_bytes()?;
+
         let mut encrypted_data = Vec::new();
 
         #[cfg(target_family = "unix")]
@@ -100,10 +103,10 @@ impl Cipher for GPG {
             encrypted_data.extend_from_slice(&output.stdout);
         }
 
-        Ok(encrypted_data)
+        Ok(EncryptedContent::Bytes(encrypted_data))
     }
 
-    fn decrypt(&self, encrypted_data: &[u8]) -> Result<Vec<u8>> {
+    fn decrypt(&self, encrypted_data: &EncryptedContent) -> Result<EnvMap> {
         #[cfg(target_family = "unix")]
         {
             let mut ctx = match Context::from_protocol(Protocol::OpenPgp) {
@@ -113,7 +116,7 @@ impl Cipher for GPG {
                 }
             };
 
-            let mut cipher = match Data::from_bytes(encrypted_data) {
+            let mut cipher = match Data::from_bytes(encrypted_data.as_bytes()?) {
                 Ok(cipher) => cipher,
                 Err(e) => {
                     return Err(Error::Cipher(e.to_string()));
@@ -125,7 +128,7 @@ impl Cipher for GPG {
                 return Err(Error::Cipher(e.to_string()));
             };
 
-            Ok(plain)
+            Ok(plain.into())
         }
 
         #[cfg(target_family = "windows")]
@@ -145,11 +148,11 @@ impl Cipher for GPG {
                 }
             };
 
-            stdin.write_all(encrypted_data)?;
+            stdin.write_all(encrypted_data.as_bytes())?;
 
             let output = gpg_process.wait_with_output()?;
 
-            Ok(output.stdout)
+            Ok(output.stdout.into())
         }
     }
 

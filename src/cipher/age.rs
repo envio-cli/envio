@@ -1,6 +1,6 @@
 use std::{
     any::Any,
-    io::{Read, Write},
+    io::{Cursor, Read, Write},
     iter,
 };
 
@@ -8,7 +8,8 @@ use age::{Decryptor, Encryptor, scrypt::Identity, secrecy::SecretString};
 use serde::{Deserialize, Serialize};
 
 use crate::{
-    cipher::{Cipher, CipherKind},
+    EnvMap,
+    cipher::{Cipher, CipherKind, EncryptedContent},
     error::{Error, Result},
 };
 
@@ -36,7 +37,9 @@ impl Cipher for AGE {
         CipherKind::AGE
     }
 
-    fn encrypt(&mut self, data: &[u8]) -> Result<Vec<u8>> {
+    fn encrypt(&mut self, envs: &EnvMap) -> Result<EncryptedContent> {
+        let data = envs.as_bytes()?;
+
         let encryptor = Encryptor::with_user_passphrase(SecretString::from(self.key.to_owned()));
 
         let mut encrypted = vec![];
@@ -44,14 +47,15 @@ impl Cipher for AGE {
             .wrap_output(&mut encrypted)
             .map_err(|e| Error::Cipher(e.to_string()))?;
 
-        writer.write_all(data)?;
+        writer.write_all(&data)?;
         writer.finish()?;
 
-        Ok(encrypted)
+        Ok(EncryptedContent::Bytes(encrypted))
     }
 
-    fn decrypt(&self, encrypted_data: &[u8]) -> Result<Vec<u8>> {
-        let decryptor = Decryptor::new(encrypted_data).map_err(|e| Error::Cipher(e.to_string()))?;
+    fn decrypt(&self, encrypted_data: &EncryptedContent) -> Result<EnvMap> {
+        let decryptor = Decryptor::new(Cursor::new(encrypted_data.as_bytes()?))
+            .map_err(|e| Error::Cipher(e.to_string()))?;
 
         let mut decrypted = vec![];
         let mut reader = decryptor
@@ -62,7 +66,7 @@ impl Cipher for AGE {
 
         reader.read_to_end(&mut decrypted)?;
 
-        Ok(decrypted)
+        Ok(decrypted.into())
     }
 
     fn as_any(&self) -> &dyn Any {
