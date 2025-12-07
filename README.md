@@ -5,57 +5,76 @@
 </div>
 
 <div align="center">
-  <img src="assets/icon-color.svg" width="200px">
+  <img src="assets/icon.svg" width="200px">
   <h1>envio</h1>
 </div>
 
 <div align="center">
-  <h2 align="center">A Modern And Secure CLI Tool For Managing Environment Variables</h2>
-
-  [![CICD](https://github.com/humblepenguinn/envio/actions/workflows/CICD.yml/badge.svg)](https://github.com/humblepenguinn/envio/workflows/CICD.yml)
-  [![Version info](https://img.shields.io/crates/v/envio.svg)](https://crates.io/crates/envio)
-  [![Visit Official Site](https://img.shields.io/badge/Visit-Official%20Site-blue)](https://envio-cli.github.io/home)
+  <h2>A secure command-line tool for managing environment variables</h2>  
+  <a href="https://github.com/humblepenguinn/envio/workflows/CICD.yml">
+    <img src="https://github.com/humblepenguinn/envio/actions/workflows/CICD.yml/badge.svg" alt="CICD">
+  </a>
+  <a href="https://crates.io/crates/envio">
+    <img src="https://img.shields.io/crates/v/envio.svg" alt="Version info">
+  </a>
 </div>
 
 <div align='center'>
-  <img alt="Demo" src="assets/envio-passphrase-final.gif" width="600">
+  <img alt="Demo" src="assets/demo.svg">
 </div>
-
-<div align='center'>To see the GPG encryption demo go <a href="https://github.com/envio-cli/envio/blob/main/assets/envio-gpg-final.gif">here</a></div>
 
 ## About
 
-`envio` is an open source CLI tool that helps make managing environment variables a breeze. With `envio`, users can create encrypted profiles that contain a collection of environment variables associated with a specific project or use case. `envio` ensures security and simplifies the development process by allowing users to easily switch between profiles as needed and load them in their current terminal session for immediate use.
+`envio` is a command-line tool for securely managing environment variables. It allows users to create encrypted profiles containing environment variables for a specific project or use case. The tool provides various operations to manage these profiles, such as loading them into terminal sessions or running programs with the specified environment variables.
 
 Some key features of `envio` include:
 
-- **Encrypted** profiles through `passphrase` or `GPG` encryption
-- **Load** profiles into your `terminal sessions`
-- **Persistent** environment variables that are available in `future sessions`
+- **Encrypt** profiles using different encryption methods
+- **Load** profiles into your terminal sessions
 - **Run** programs with your profiles
-- **Importing** profiles stored on the internet into your local installation
-- **Exporting** profiles to a file
+- **Import** profiles stored on the internet
+- **Export** profiles to a plain text file
 
-Sound interesting? Check out the [official website](https://envio-cli.github.io/home) for more information such as how to **install** and **use** the tool on your machine.
+## Installation
 
-`envio` currently supports **Linux**, **MacOS** and **Windows**
+Pre-built binaries are available on the [releases page](https://github.com/envio-cli/envio/releases).
 
-## Contributors
+### Linux
 
-<table>
-  <tbody>
-    <tr>
-      <td align="center" valign="top" width="14.28%"><a href="https://github.com/Vojtch159"><img src="https://avatars.githubusercontent.com/u/73985038?v=4?s=100" width="100px;" alt="Vojtch"/><br /><sub><b>Vojtch</b></sub></a><br /><a href="https://github.com/humblepenguinn/envio/commits?author=Vojtch159" title="Documentation">📖</a></td>
-      <td align="center" valign="top" width="14.28%"><a href="https://github.com/erjanmx"><img src="https://avatars.githubusercontent.com/u/4899432?v=4?s=100" width="100px;" alt="Erjan Kalybek"/><br /><sub><b>Erjan Kalybek</b></sub></a><br /><a href="https://github.com/humblepenguinn/envio/commits?author=erjanmx" title="Documentation">📖</a></td>
-      <td align="center" valign="top" width="14.28%"><a href="https://github.com/afh"><img src="https://avatars.githubusercontent.com/u/16507?v=4?s=100" width="100px;" alt="Alexis Hildebrandt"/><br /><sub><b>Alexis Hildebrandt</b></sub></a><br /><a href="https://github.com/humblepenguinn/envio/commits?author=afh" title="Code">💻</a></td>
-    </tr>
-  </tbody>
-</table>
+**Arch Linux**
+
+Use your favorite AUR helper to install `envio`:
+
+```bash
+paru -S envio      # or envio-bin for pre-built binary
+```
+
+**Debian/Ubuntu**
+
+```bash
+sudo dpkg -i envio_<version>_<arch>.deb
+```
+
+### macOS
+
+```bash
+brew install envio
+```
+
+### Windows
+
+Download the MSI installer or zip archive from the [releases page](https://github.com/envio-cli/envio/releases).
+
+## Usage
+
+See the [Usage Guide](docs/usage.md) for detailed instructions on how to use the tool.
 
 ## Contributing
 
-Contributions to `envio` are always welcome! Please see the [Contributing Guidelines](CONTRIBUTING.md) for more information.
+Take a look at the [Contributing Guide](CONTRIBUTING.md) for more information.
 
 ## License
 
-This project is licensed under the [MIT](LICENSE-MIT) and the [Apache](LICENSE-APACHE) License
+`envio` is available under the terms of either the MIT License or the Apache License 2.0, at your option.
+
+See the [LICENSE-MIT](LICENSE-MIT) and [LICENSE-APACHE](LICENSE-APACHE) files for license details.
