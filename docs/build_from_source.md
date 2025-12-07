@@ -1,28 +1,32 @@
 # Build from source
 
-Verify that you have Rust installed:
+1. **Verify that you have Rust installed:**
 
-```sh
-$ rustc --version
-```
+   ```sh
+   rustc --version
+   ```
 
-If `rust` is not installed, follow the instructions on [the Offical Rust website](https://www.rust-lang.org/tools/install).
+   If Rust is not installed, follow the instructions on the [Official Rust website](https://www.rust-lang.org/tools/install).
 
-Clone this repository:
-```sh
-$ git clone https://github.com/humblepenguinn/envio.git
-$ cd envio
-```
+2. **Install dependencies (Unix only):**
 
-Build the project:
+   Ensure `gpgme` (version 1.13 or later) and its development files are installed.
 
-```sh
-$ cargo build
-```
+3. **Clone the repository:**
 
+   ```sh
+   git clone https://github.com/humblepenguinn/envio.git
+   cd envio
+   ```
 
-Now, Check to see if it worked:
-```sh
-$ cargo run -- version
-```
+4. **Build the project:**
 
+   ```sh
+   cargo build
+   ```
+
+5. **Verify the build:**
+
+   ```sh
+   cargo run -- version
+   ```
