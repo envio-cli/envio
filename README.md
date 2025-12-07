@@ -10,7 +10,7 @@
 </div>
 
 <div align="center">
-  <h2>A secure command-line tool for managing environment variables</h2>  
+  <h2>A secure command-line tool for managing environment variables</h2>
   <a href="https://github.com/humblepenguinn/envio/workflows/CICD.yml">
     <img src="https://github.com/humblepenguinn/envio/actions/workflows/CICD.yml/badge.svg" alt="CICD">
   </a>
@@ -19,9 +19,10 @@
   </a>
 </div>
 
-<div align='center'>
-  <img alt="Demo" src="assets/demo.svg">
+<div align="center" style="margin: 24px 0;">
+  <img src="assets/demo.svg" alt="Demo" width="80%">
 </div>
+
 
 ## About
 
