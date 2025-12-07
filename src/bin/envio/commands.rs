@@ -80,25 +80,39 @@ impl ClapApp {
                             return Err(AppError::Msg("No GPG keys found".to_string()));
                         }
 
-                        let labels: Vec<String> = available_keys
-                            .iter()
-                            .map(|(label, _)| label.clone())
-                            .collect();
+                        if let Ok(env_key) = std::env::var("ENVIO_KEY") {
+                            if available_keys
+                                .iter()
+                                .any(|(_, fingerprint)| *fingerprint == env_key)
+                            {
+                                Some(env_key.into())
+                            } else {
+                                return Err(AppError::Msg(
+                                    "ENVIO_KEY does not match any available GPG fingerprint"
+                                        .to_string(),
+                                ));
+                            }
+                        } else {
+                            let labels: Vec<String> = available_keys
+                                .iter()
+                                .map(|(label, _)| label.clone())
+                                .collect();
 
-                        let selected_label =
-                            prompts::select_prompt(prompts::SelectPromptOptions {
-                                title: "Select the GPG key you want to use for encryption:"
-                                    .to_string(),
-                                options: labels,
-                            })?;
+                            let selected_label =
+                                prompts::select_prompt(prompts::SelectPromptOptions {
+                                    title: "Select the GPG key you want to use for encryption:"
+                                        .to_string(),
+                                    options: labels,
+                                })?;
 
-                        let fingerprint = available_keys
-                            .into_iter()
-                            .find(|(label, _)| *label == selected_label)
-                            .map(|(_, fingerprint)| fingerprint)
-                            .unwrap();
+                            let fingerprint = available_keys
+                                .into_iter()
+                                .find(|(label, _)| *label == selected_label)
+                                .map(|(_, fingerprint)| fingerprint)
+                                .unwrap();
 
-                        Some(fingerprint.into())
+                            Some(fingerprint.into())
+                        }
                     }
 
                     CipherKind::PASSPHRASE | CipherKind::AGE => {
@@ -106,16 +120,16 @@ impl ClapApp {
                             Zeroizing::new(key)
                         } else {
                             prompts::password_prompt(prompts::PasswordPromptOptions {
-                            title: "Enter your encryption key:".to_string(),
-                            help_message: Some(
-                                "Remember this key, you will need it to decrypt your profile later"
-                                    .to_string(),
-                            ),
-                            min_length: Some(8),
-                            with_confirmation: true,
-                            confirmation_error_message: Some("The keys don't match".to_string()),
-                        })?
-                        .into()
+                                title: "Enter your encryption key:".to_string(),
+                                help_message: Some(
+                                    "Remember this key, you will need it to decrypt your profile later"
+                                        .to_string(),
+                                ),
+                                min_length: Some(8),
+                                with_confirmation: true,
+                                confirmation_error_message: Some("The keys don't match".to_string()),
+                            })?
+                            .into()
                         })
                     }
 
