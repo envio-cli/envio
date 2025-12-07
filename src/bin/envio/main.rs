@@ -109,11 +109,6 @@ fn run() -> AppResult<()> {
 }
 
 fn main() {
-    better_panic::Settings::debug()
-        .message("Uh oh! Something went wrong!")
-        .backtrace_first(false)
-        .install();
-
     match run() {
         Ok(_) => std::process::exit(0),
         Err(e) => {
