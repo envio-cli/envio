@@ -88,3 +88,5 @@ semver = "1.0.17"
 
 [profile.release]
 lto = true
+strip = true
+codegen-units = 1

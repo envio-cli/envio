@@ -159,9 +159,6 @@ jobs:
         if: matrix.job.use-cross
         shell: bash
         run: |
-          sudo apt-get install libudev-dev
-          sudo apt-get install libssl-dev
-
           echo "BUILD_CMD=cross" >> $GITHUB_ENV
 
       - name: Build
@@ -169,41 +166,24 @@ jobs:
         run: |
           $BUILD_CMD build --locked --release --target=${{ matrix.job.target }}
 
-      - name: Strip debug information from executable
-        id: strip
+      - name: Set binary path
+        id: bin
         shell: bash
         run: |
-          # Figure out suffix of binary
           EXE_suffix=""
           case ${{ matrix.job.target }} in
             *-pc-windows-*) EXE_suffix=".exe" ;;
           esac;
 
-          STRIP="strip"
-          case ${{ matrix.job.target }} in
-            arm-unknown-linux-*) STRIP="arm-linux-gnueabihf-strip" ;;
-            aarch64-unknown-linux-gnu) STRIP="aarch64-linux-gnu-strip" ;;
-            *-pc-windows-msvc) STRIP="" ;;
-          esac;
-
-          BIN_DIR="${{ env.CICD_INTERMEDIATES_DIR }}/stripped-release-bin/"
-          mkdir -p "${BIN_DIR}"
           BIN_NAME="${{ env.PROJECT_NAME }}${EXE_suffix}"
-          BIN_PATH="${BIN_DIR}/${BIN_NAME}"
-
-          cp "target/${{ matrix.job.target }}/release/${BIN_NAME}" "${BIN_DIR}"
-
-          # Also strip if possible
-          if [ -n "${STRIP}" ]; then
-            "${STRIP}" "${BIN_PATH}"
-          fi
+          BIN_PATH="target/${{ matrix.job.target }}/release/${BIN_NAME}"
 
           echo "BIN_PATH=${BIN_PATH}" >> $GITHUB_OUTPUT
           echo "BIN_NAME=${BIN_NAME}" >> $GITHUB_OUTPUT
 
       - name: Run tests
         shell: bash
-        run: $BUILD_CMD test --locked --target=${{ matrix.job.target }} ${{ steps.test-options.outputs.CARGO_TEST_OPTIONS}}
+        run: $BUILD_CMD test --locked --target=${{ matrix.job.target }}
 
       - name: Create tarball
         id: package
@@ -219,7 +199,7 @@ jobs:
           mkdir -p "${ARCHIVE_DIR}"
           mkdir -p "${ARCHIVE_DIR}/autocomplete"
 
-          cp "${{ steps.strip.outputs.BIN_PATH }}" "$ARCHIVE_DIR"
+          cp "${{ steps.bin.outputs.BIN_PATH }}" "$ARCHIVE_DIR"
 
           cp 'man/${{ env.PROJECT_NAME }}.1' "$ARCHIVE_DIR"
 
@@ -263,7 +243,7 @@ jobs:
           DPKG_NAME="${DPKG_BASENAME}_${DPKG_VERSION}_${DPKG_ARCH}.deb"
           echo "DPKG_NAME=${DPKG_NAME}" >> $GITHUB_OUTPUT
           # Binary
-          install -Dm755 "${{ steps.strip.outputs.BIN_PATH }}" "${DPKG_DIR}/usr/bin/${{ steps.strip.outputs.BIN_NAME }}"
+          install -Dm755 "${{ steps.bin.outputs.BIN_PATH }}" "${DPKG_DIR}/usr/bin/${{ steps.bin.outputs.BIN_NAME }}"
           # Man page
           install -Dm644 'man/${{ env.PROJECT_NAME }}.1' "${DPKG_DIR}/usr/share/man/man1/${{ env.PROJECT_NAME }}.1"
           gzip -n --best "${DPKG_DIR}/usr/share/man/man1/${{ env.PROJECT_NAME }}.1"
