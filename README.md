@@ -11,18 +11,13 @@
 
 <div align="center">
   <h2>A secure command-line tool for managing environment variables</h2>
-  <a href="https://github.com/humblepenguinn/envio/workflows/CICD.yml">
-    <img src="https://github.com/humblepenguinn/envio/actions/workflows/CICD.yml/badge.svg" alt="CICD">
-  </a>
-  <a href="https://crates.io/crates/envio">
-    <img src="https://img.shields.io/crates/v/envio.svg" alt="Version info">
-  </a>
+  <a href="https://github.com/humblepenguinn/envio/workflows/CICD.yml"><img src="https://github.com/humblepenguinn/envio/actions/workflows/CICD.yml/badge.svg" alt="CICD"></a>
+  <a href="https://crates.io/crates/envio"><img src="https://img.shields.io/crates/v/envio.svg" alt="Version info"></a>
 </div>
 
-<div align="center" style="margin: 24px 0;">
-  <img src="assets/demo.svg" alt="Demo" width="80%">
+<div align="center" style="margin-top: 24px; margin-bottom: 24px;">
+  <img alt="Demo" src="assets/demo.svg" width="80%">
 </div>
-
 
 ## About
 
