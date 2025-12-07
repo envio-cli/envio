@@ -24,6 +24,10 @@ use crate::{
 };
 
 fn get_userkey() -> Zeroizing<String> {
+    if let Ok(key) = std::env::var("ENVIO_KEY") {
+        return Zeroizing::new(key);
+    }
+
     match prompts::password_prompt(prompts::PasswordPromptOptions {
         title: "Enter your encryption key:".to_string(),
         help_message: Some("OH NO! you forgot your key! just kidding... or did you?".to_string()),
@@ -97,8 +101,11 @@ impl ClapApp {
                         Some(fingerprint.into())
                     }
 
-                    CipherKind::PASSPHRASE | CipherKind::AGE => Some(
-                        prompts::password_prompt(prompts::PasswordPromptOptions {
+                    CipherKind::PASSPHRASE | CipherKind::AGE => {
+                        Some(if let Ok(key) = std::env::var("ENVIO_KEY") {
+                            Zeroizing::new(key)
+                        } else {
+                            prompts::password_prompt(prompts::PasswordPromptOptions {
                             title: "Enter your encryption key:".to_string(),
                             help_message: Some(
                                 "Remember this key, you will need it to decrypt your profile later"
@@ -108,8 +115,9 @@ impl ClapApp {
                             with_confirmation: true,
                             confirmation_error_message: Some("The keys don't match".to_string()),
                         })?
-                        .into(),
-                    ),
+                        .into()
+                        })
+                    }
 
                     _ => None,
                 };
