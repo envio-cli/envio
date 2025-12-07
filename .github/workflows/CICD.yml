@@ -32,7 +32,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout source code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
       - name: Get the MSRV from the package metadata
         id: msrv
         run: cargo metadata --no-deps --format-version 1 | jq -r '"version=" + (.packages[] | select(.name == "envio").rust_version)' >> $GITHUB_OUTPUT
@@ -86,7 +86,7 @@ jobs:
         run: echo "PKG_CONFIG=/usr/bin/pkg-config" >> $GITHUB_ENV
 
       - name: Checkout source code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Set version
         shell: bash
