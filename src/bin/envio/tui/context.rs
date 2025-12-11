@@ -2,7 +2,7 @@ use envio::Profile;
 use std::collections::HashMap;
 use std::time::{Duration, Instant};
 
-const MAX_AGE: Duration = Duration::from_secs(10); // 5 minutes
+const MAX_AGE: Duration = Duration::from_secs(10); // 10 seconds
 
 #[derive(Clone)]
 struct Cached<T> {
