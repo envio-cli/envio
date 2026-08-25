@@ -2,11 +2,13 @@ use envio::cipher::{CipherKind, create_cipher, gpg::get_gpg_keys};
 use zeroize::Zeroizing;
 
 use crate::{
+    config,
     error::{AppError, AppResult},
     error_msg, profile_ops, prompts, success_msg,
 };
 
 pub fn run(profile_name: &str) -> AppResult<()> {
+    config::warn_if_global_store();
     let mut profile = profile_ops::get_profile_cli(profile_name)?;
     let cipher_kind = profile.metadata.cipher_kind;
 

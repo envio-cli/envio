@@ -11,6 +11,7 @@ use crate::{
 };
 
 pub fn run(source: &str, profile_name: Option<&str>) -> AppResult<()> {
+    config::warn_if_global_store();
     let profile_name = profile_name.map(|s| s.to_string()).unwrap_or_else(|| {
         Path::new(source)
             .file_stem()
