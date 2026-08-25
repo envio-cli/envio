@@ -1,7 +1,7 @@
 use chrono::Local;
 use envio::Env;
 
-use crate::{error::AppResult, profile_ops, prompts, success_msg};
+use crate::{config, error::AppResult, profile_ops, prompts, success_msg};
 
 pub fn run(
     profile_name: &str,
@@ -9,6 +9,7 @@ pub fn run(
     add_comments: bool,
     add_expires: bool,
 ) -> AppResult<()> {
+    config::warn_if_global_store();
     let mut profile = profile_ops::get_profile_cli(profile_name)?;
 
     for mut env in parse_envs(profile_name, &profile, envs)? {

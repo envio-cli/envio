@@ -27,6 +27,35 @@ Initialize `envio` to be used in the current project directory:
 envio init
 ```
 
+### Global Store
+
+By default envio looks for a `.envio` folder in the current directory. If none is
+present, it falls back to a **global store**, so profiles created in the home
+folder can be used from anywhere without running `envio init` in every project.
+
+The global store is resolved in this order:
+
+1. `ENVIO_HOME` environment variable, if set (must be a directory).
+2. `~/.envio`, if it exists.
+
+A local `.envio` in the current directory always takes precedence over the
+global store. `envio init` always creates a local `.envio` in the current
+directory; it is not affected by the global store.
+
+Mutations (`create`, `set`, `unset`, `delete`, `edit`, `import`, `rotate-key`)
+print a warning when the global store is being used, so writes outside a project
+directory are never silent.
+
+For example, to keep personal API keys in a single global store:
+
+```bash
+envio init            # run once in the home folder
+envio create personal
+# from any directory:
+envio set personal OPENAI_API_KEY=sk-...
+envio run personal -- python app.py
+```
+
 ### Creating Profiles
 
 #### Basic Creation
@@ -474,6 +503,16 @@ envio --help
 ```
 
 ## Environment Variables
+
+#### `ENVIO_HOME`
+
+Override the global envio store location. When the current directory has no
+`.envio` folder, envio looks here (and then at `~/.envio`) for its profiles.
+
+```bash
+export ENVIO_HOME=/path/to/my/envio-store
+envio list
+```
 
 #### `ENVIO_KEY`
 

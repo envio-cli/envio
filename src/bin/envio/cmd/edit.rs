@@ -3,11 +3,13 @@ use std::{io::Write, path::PathBuf};
 use envio::{Env, EnvMap, Profile};
 
 use crate::{
+    config,
     error::{AppError, AppResult},
     error_msg, profile_ops, prompts, success_msg,
 };
 
 pub fn run(profile_name: &str) -> AppResult<()> {
+    config::warn_if_global_store();
     let mut profile = profile_ops::get_profile_cli(profile_name)?;
     open_editor_loop(&mut profile)?;
     profile.save()?;

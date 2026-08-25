@@ -22,6 +22,7 @@ pub fn run(
     add_comments: bool,
     add_expires: bool,
 ) -> AppResult<()> {
+    config::warn_if_global_store();
     config::get_profile_dir()?;
 
     let selected_cipher_kind = if let Some(kind) = cipher_kind {
